@@ -32,7 +32,9 @@ export default function Chat() {
   const deleteMessage = useDeleteChatMessage();
   const isSupport = useIsSupport();
   const [newMessage, setNewMessage] = useState('');
+  const [viewportHeight, setViewportHeight] = useState(window.innerHeight);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
 
   const handleDelete = async (messageId: string) => {
     try {
@@ -47,6 +49,22 @@ export default function Chat() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  // Detectar mudanças na altura do viewport quando o teclado aparece/desaparece
+  useEffect(() => {
+    const handleResize = () => {
+      setViewportHeight(window.visualViewport?.height || window.innerHeight);
+    };
+
+    // Usar visualViewport se disponível (melhor para mobile)
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', handleResize);
+      return () => window.visualViewport?.removeEventListener('resize', handleResize);
+    } else {
+      window.addEventListener('resize', handleResize);
+      return () => window.removeEventListener('resize', handleResize);
+    }
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newMessage.trim()) return;
@@ -59,9 +77,16 @@ export default function Chat() {
     }
   };
 
+  // Calcular altura disponível (viewport - navbar - bottom nav)
+  const availableHeight = viewportHeight - 128; // 64px navbar + 64px bottom nav
+
   return (
     <MainLayout>
-      <div className="fixed inset-x-0 top-16 bottom-16 flex flex-col bg-[#0a0a0a] h-[calc(100dvh-8rem)] sm:h-[calc(100vh-8rem)]">
+      <div 
+        ref={chatContainerRef}
+        className="fixed inset-x-0 top-16 bottom-16 flex flex-col bg-[#0a0a0a]"
+        style={{ height: `${availableHeight}px` }}
+      >
         <div className="max-w-2xl mx-auto w-full h-full flex flex-col px-4 sm:px-0">
           <Card className="flex-1 flex flex-col border border-[#2a2a2a] bg-[#1a1a1a] min-h-0 overflow-hidden">
           <CardHeader className="border-b border-[#2a2a2a] pb-4 flex-shrink-0">
@@ -193,10 +218,10 @@ export default function Chat() {
                 onChange={(e) => setNewMessage(e.target.value)}
                 className="flex-1 bg-[#2a2a2a] border-[#3a3a3a] text-white placeholder:text-gray-500"
                 onFocus={(e) => {
-                  // Scroll para o final quando o input receber foco
+                  // Scroll para o final quando o input receber foco (aguardar teclado aparecer)
                   setTimeout(() => {
                     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
-                  }, 300);
+                  }, 500);
                 }}
               />
               <Button 
