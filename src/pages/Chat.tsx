@@ -61,9 +61,9 @@ export default function Chat() {
 
   return (
     <MainLayout>
-      <div className="max-w-2xl mx-auto">
-        <Card className="h-[calc(100vh-12rem)] border border-[#2a2a2a] bg-[#1a1a1a]">
-          <CardHeader className="border-b border-[#2a2a2a] pb-4">
+      <div className="max-w-2xl mx-auto h-[calc(100vh-8rem)] flex flex-col px-4 -mx-4 sm:mx-auto sm:px-0">
+        <Card className="flex-1 flex flex-col border border-[#2a2a2a] bg-[#1a1a1a] min-h-0 max-h-full">
+          <CardHeader className="border-b border-[#2a2a2a] pb-4 flex-shrink-0">
             <CardTitle className="flex items-center gap-2 text-white">
               <div className="bg-primary rounded-lg p-2">
                 <span className="text-lg">💬</span>
@@ -71,8 +71,8 @@ export default function Chat() {
               Chat da Tribo
             </CardTitle>
           </CardHeader>
-          <CardContent className="flex flex-col h-[calc(100%-5rem)] p-0">
-            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+          <CardContent className="flex flex-col flex-1 min-h-0 p-0 overflow-hidden">
+            <div className="flex-1 overflow-y-auto p-4 space-y-3 min-h-0">
               {isLoading ? (
                 <div className="space-y-3">
                   {[1, 2, 3, 4, 5].map((i) => (
@@ -184,7 +184,7 @@ export default function Chat() {
 
             <form 
               onSubmit={handleSubmit} 
-              className="border-t border-[#2a2a2a] p-4 flex gap-2"
+              className="border-t border-[#2a2a2a] p-4 flex gap-2 flex-shrink-0"
             >
               <Input
                 placeholder="Digite sua mensagem..."
