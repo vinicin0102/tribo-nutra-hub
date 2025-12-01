@@ -61,8 +61,9 @@ export default function Chat() {
 
   return (
     <MainLayout>
-      <div className="max-w-2xl mx-auto h-[calc(100vh-8rem)] flex flex-col px-4 -mx-4 sm:mx-auto sm:px-0">
-        <Card className="flex-1 flex flex-col border border-[#2a2a2a] bg-[#1a1a1a] min-h-0 max-h-full">
+      <div className="fixed inset-x-0 top-16 bottom-16 flex flex-col bg-[#0a0a0a]">
+        <div className="max-w-2xl mx-auto w-full h-full flex flex-col px-4 sm:px-0">
+          <Card className="flex-1 flex flex-col border border-[#2a2a2a] bg-[#1a1a1a] min-h-0">
           <CardHeader className="border-b border-[#2a2a2a] pb-4 flex-shrink-0">
             <CardTitle className="flex items-center gap-2 text-white">
               <div className="bg-primary rounded-lg p-2">
