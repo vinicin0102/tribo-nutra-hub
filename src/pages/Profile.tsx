@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Camera, LogOut, Save } from 'lucide-react';
+import { User, Camera, LogOut, Save, FolderOpen, X } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useProfile, useUpdateProfile } from '@/hooks/useProfile';
 import { useAuth } from '@/contexts/AuthContext';
+import { uploadImage, deleteImage } from '@/lib/upload';
 import { toast } from 'sonner';
 
 export default function Profile() {
@@ -17,6 +18,7 @@ export default function Profile() {
   const { user, signOut } = useAuth();
   const { data: profile, isLoading } = useProfile();
   const updateProfile = useUpdateProfile();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [formData, setFormData] = useState({
     username: '',
@@ -24,10 +26,13 @@ export default function Profile() {
     bio: '',
     avatar_url: '',
   });
+  const [selectedAvatar, setSelectedAvatar] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
 
   // Initialize form data when profile loads
-  useState(() => {
+  useEffect(() => {
     if (profile) {
       setFormData({
         username: profile.username || '',
@@ -35,12 +40,53 @@ export default function Profile() {
         bio: profile.bio || '',
         avatar_url: profile.avatar_url || '',
       });
+      setAvatarPreview(profile.avatar_url || null);
     }
-  });
+  }, [profile]);
 
   const handleChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     setHasChanges(true);
+  };
+
+  const handleAvatarSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validar tipo
+      if (!file.type.startsWith('image/')) {
+        toast.error('Por favor, selecione uma imagem');
+        return;
+      }
+
+      // Validar tamanho (5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('Imagem muito grande. Tamanho máximo: 5MB');
+        return;
+      }
+
+      setSelectedAvatar(file);
+      setHasChanges(true);
+      
+      // Criar preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAvatarPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemoveAvatar = () => {
+    setSelectedAvatar(null);
+    setAvatarPreview(formData.avatar_url || null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+    setHasChanges(true);
+  };
+
+  const handleFileButtonClick = () => {
+    fileInputRef.current?.click();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -51,17 +97,44 @@ export default function Profile() {
       return;
     }
 
+    if (!user) {
+      toast.error('Você precisa estar logado');
+      return;
+    }
+
     try {
+      let avatarUrl = formData.avatar_url;
+
+      // Fazer upload do avatar se houver novo arquivo
+      if (selectedAvatar) {
+        setIsUploadingAvatar(true);
+        
+        // Deletar avatar antigo se existir
+        if (formData.avatar_url) {
+          await deleteImage(formData.avatar_url);
+        }
+
+        // Fazer upload do novo avatar
+        avatarUrl = await uploadImage(selectedAvatar, 'avatars', user.id);
+        setIsUploadingAvatar(false);
+      }
+
       await updateProfile.mutateAsync({
         username: formData.username,
         full_name: formData.full_name || null,
         bio: formData.bio || null,
-        avatar_url: formData.avatar_url || null,
+        avatar_url: avatarUrl || null,
       });
+      
+      setSelectedAvatar(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
       toast.success('Perfil atualizado!');
       setHasChanges(false);
-    } catch (error) {
-      toast.error('Erro ao atualizar perfil');
+    } catch (error: any) {
+      toast.error(error?.message || 'Erro ao atualizar perfil');
+      setIsUploadingAvatar(false);
     }
   };
 
@@ -93,14 +166,27 @@ export default function Profile() {
             <div className="flex flex-col items-center -mt-12">
               <div className="relative">
                 <Avatar className="h-24 w-24 border-4 border-card">
-                  <AvatarImage src={formData.avatar_url || profile?.avatar_url || ''} />
+                  <AvatarImage src={avatarPreview || formData.avatar_url || profile?.avatar_url || ''} />
                   <AvatarFallback className="gradient-primary text-primary-foreground text-2xl font-bold">
                     {(formData.username || profile?.username)?.charAt(0).toUpperCase() || 'U'}
                   </AvatarFallback>
                 </Avatar>
-                <div className="absolute bottom-0 right-0 rounded-full bg-secondary p-2 text-secondary-foreground">
+                <button
+                  type="button"
+                  onClick={handleFileButtonClick}
+                  className="absolute bottom-0 right-0 rounded-full bg-secondary p-2 text-secondary-foreground hover:bg-secondary/80 transition-colors"
+                  disabled={isUploadingAvatar}
+                >
                   <Camera className="h-4 w-4" />
-                </div>
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  capture="user"
+                  onChange={handleAvatarSelect}
+                  className="hidden"
+                />
               </div>
               <h2 className="font-display text-xl font-bold mt-4">
                 {formData.username || profile?.username || 'Usuário'}
@@ -151,14 +237,49 @@ export default function Profile() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="avatar_url">URL do avatar</Label>
-                <Input
-                  id="avatar_url"
-                  type="url"
-                  placeholder="https://exemplo.com/sua-foto.jpg"
-                  value={formData.avatar_url || profile?.avatar_url || ''}
-                  onChange={(e) => handleChange('avatar_url', e.target.value)}
-                />
+                <Label>Foto de perfil</Label>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleFileButtonClick}
+                    className="flex-1"
+                    disabled={isUploadingAvatar}
+                  >
+                    <FolderOpen className="h-4 w-4 mr-2" />
+                    Fototeca
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      if (fileInputRef.current) {
+                        fileInputRef.current.setAttribute('capture', 'user');
+                        fileInputRef.current.click();
+                      }
+                    }}
+                    className="flex-1"
+                    disabled={isUploadingAvatar}
+                  >
+                    <Camera className="h-4 w-4 mr-2" />
+                    Tirar Foto
+                  </Button>
+                  {avatarPreview && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleRemoveAvatar}
+                      disabled={isUploadingAvatar}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+                {selectedAvatar && (
+                  <p className="text-xs text-muted-foreground">
+                    Nova foto selecionada: {selectedAvatar.name}
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -175,10 +296,10 @@ export default function Profile() {
               <Button 
                 type="submit" 
                 className="w-full"
-                disabled={updateProfile.isPending || !hasChanges}
+                disabled={updateProfile.isPending || isUploadingAvatar || !hasChanges}
               >
                 <Save className="h-4 w-4 mr-2" />
-                {updateProfile.isPending ? 'Salvando...' : 'Salvar Alterações'}
+                {isUploadingAvatar ? 'Enviando foto...' : updateProfile.isPending ? 'Salvando...' : 'Salvar Alterações'}
               </Button>
             </form>
           </CardContent>

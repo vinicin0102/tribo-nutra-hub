@@ -2,10 +2,28 @@ import { Trophy, Medal, Crown, Star } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import { useRanking, useBadges } from '@/hooks/useRanking';
 import { useProfile } from '@/hooks/useProfile';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
+
+const getTierInfo = (tier?: string) => {
+  switch (tier) {
+    case 'diamond':
+      return { name: 'Diamante', color: 'text-cyan-400', bg: 'bg-cyan-500/20', border: 'border-cyan-500/50', icon: '💎' };
+    case 'platinum':
+      return { name: 'Platina', color: 'text-gray-300', bg: 'bg-gray-300/20', border: 'border-gray-300/50', icon: '⚪' };
+    case 'gold':
+      return { name: 'Ouro', color: 'text-yellow-500', bg: 'bg-yellow-500/20', border: 'border-yellow-500/50', icon: '🥇' };
+    case 'silver':
+      return { name: 'Prata', color: 'text-gray-400', bg: 'bg-gray-400/20', border: 'border-gray-400/50', icon: '🥈' };
+    case 'bronze':
+      return { name: 'Bronze', color: 'text-amber-600', bg: 'bg-amber-600/20', border: 'border-amber-600/50', icon: '🥉' };
+    default:
+      return { name: 'Sem nível', color: 'text-gray-500', bg: 'bg-gray-500/20', border: 'border-gray-500/50', icon: '⚪' };
+  }
+};
 
 const getRankIcon = (rank: number) => {
   switch (rank) {
@@ -16,7 +34,7 @@ const getRankIcon = (rank: number) => {
     case 3:
       return <Medal className="h-5 w-5 text-amber-600" />;
     default:
-      return <span className="text-sm font-bold text-muted-foreground">{rank}º</span>;
+      return <span className="text-sm font-bold text-gray-400">{rank}º</span>;
   }
 };
 
@@ -45,26 +63,41 @@ export default function Ranking() {
       <div className="max-w-2xl mx-auto space-y-6">
         {/* User Stats */}
         {currentProfile && (
-          <Card className="overflow-hidden">
-            <div className="gradient-primary p-4">
+          <Card className="overflow-hidden border border-[#2a2a2a] bg-[#1a1a1a]">
+            <div className="bg-primary p-4">
               <div className="flex items-center gap-4">
-                <Avatar className="h-16 w-16 border-4 border-primary-foreground/20">
+                <Avatar className="h-16 w-16 border-4 border-white/20">
                   <AvatarImage src={currentProfile.avatar_url || ''} />
-                  <AvatarFallback className="bg-primary-foreground/20 text-primary-foreground text-xl font-bold">
+                  <AvatarFallback className="bg-white/20 text-white text-xl font-bold">
                     {currentProfile.username?.charAt(0).toUpperCase() || 'U'}
                   </AvatarFallback>
                 </Avatar>
-                <div className="text-primary-foreground">
+                <div className="text-white flex-1">
                   <h2 className="font-display text-xl font-bold">{currentProfile.username}</h2>
-                  <p className="text-primary-foreground/80">
-                    {currentUserRank ? `${currentUserRank.rank}º lugar` : 'Sem ranking'}
-                  </p>
+                  <div className="flex items-center gap-2 mt-1">
+                    {currentProfile.tier && (
+                      <Badge className={cn(
+                        'text-xs',
+                        getTierInfo(currentProfile.tier).bg,
+                        getTierInfo(currentProfile.tier).border,
+                        getTierInfo(currentProfile.tier).color
+                      )}>
+                        <span className="mr-1">{getTierInfo(currentProfile.tier).icon}</span>
+                        {getTierInfo(currentProfile.tier).name}
+                      </Badge>
+                    )}
+                    {currentUserRank && (
+                      <span className="text-white/80 text-sm">
+                        {currentUserRank.rank}º lugar
+                      </span>
+                    )}
+                  </div>
                 </div>
-                <div className="ml-auto text-right">
-                  <p className="text-3xl font-display font-bold text-primary-foreground">
-                    {currentProfile.points}
+                <div className="text-right">
+                  <p className="text-3xl font-display font-bold text-white">
+                    {currentProfile.points || 0}
                   </p>
-                  <p className="text-sm text-primary-foreground/80">pontos</p>
+                  <p className="text-sm text-white/80">pontos</p>
                 </div>
               </div>
             </div>
@@ -115,9 +148,9 @@ export default function Ranking() {
         </Card>
 
         {/* Ranking List */}
-        <Card>
+        <Card className="border border-[#2a2a2a] bg-[#1a1a1a]">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 text-white">
               <Trophy className="h-5 w-5 text-primary" />
               Ranking Global
             </CardTitle>
@@ -135,8 +168,8 @@ export default function Ranking() {
                   <div
                     key={user.id}
                     className={cn(
-                      'flex items-center gap-3 p-4 transition-colors hover:bg-muted/50',
-                      user.user_id === currentProfile?.user_id && 'bg-accent/50',
+                      'flex items-center gap-3 p-4 transition-colors hover:bg-[#2a2a2a]',
+                      user.user_id === currentProfile?.user_id && 'bg-primary/10',
                       getRankBg(user.rank)
                     )}
                   >
@@ -150,19 +183,31 @@ export default function Ranking() {
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1">
-                      <p className="font-semibold text-sm">
-                        {user.username}
+                      <div className="flex items-center gap-2">
+                        <p className="font-semibold text-sm text-white">
+                          {user.username}
+                        </p>
                         {user.user_id === currentProfile?.user_id && (
-                          <span className="ml-2 text-xs text-primary">(você)</span>
+                          <Badge className="bg-primary text-white text-xs">você</Badge>
                         )}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
+                        {user.tier && (
+                          <Badge className={cn(
+                            'text-xs',
+                            getTierInfo(user.tier).bg,
+                            getTierInfo(user.tier).border,
+                            getTierInfo(user.tier).color
+                          )}>
+                            {getTierInfo(user.tier).icon} {getTierInfo(user.tier).name}
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-400 mt-1">
                         {user.full_name || 'Membro da Tribo'}
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="font-display font-bold text-primary">{user.points}</p>
-                      <p className="text-xs text-muted-foreground">pontos</p>
+                      <p className="font-display font-bold text-primary">{user.points || 0}</p>
+                      <p className="text-xs text-gray-400">pontos</p>
                     </div>
                   </div>
                 ))}

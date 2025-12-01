@@ -10,6 +10,9 @@ export interface Profile {
   avatar_url: string | null;
   bio: string | null;
   points: number;
+  tier?: 'bronze' | 'silver' | 'gold' | 'platinum' | 'diamond';
+  role?: 'user' | 'support' | 'admin';
+  is_banned?: boolean;
   created_at: string;
   updated_at: string;
 }

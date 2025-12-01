@@ -11,12 +11,14 @@ export interface Post {
   video_url: string | null;
   likes_count: number;
   comments_count: number;
+  is_support_post?: boolean;
   created_at: string;
   updated_at: string;
   profiles?: {
     username: string;
     avatar_url: string | null;
     full_name: string | null;
+    role?: 'user' | 'support' | 'admin';
   } | null;
 }
 
@@ -57,7 +59,7 @@ export function usePosts() {
     queryFn: async () => {
       const { data: posts, error: postsError } = await supabase
         .from('posts')
-        .select('*')
+        .select('id, user_id, content, image_url, video_url, likes_count, comments_count, is_support_post, created_at, updated_at')
         .order('created_at', { ascending: false });
       
       if (postsError) throw postsError;
@@ -68,7 +70,7 @@ export function usePosts() {
       // Fetch profiles separately
       const { data: profiles } = await supabase
         .from('profiles')
-        .select('user_id, username, avatar_url, full_name')
+        .select('user_id, username, avatar_url, full_name, role')
         .in('user_id', userIds);
       
       // Create a map for quick lookup
@@ -88,20 +90,38 @@ export function useCreatePost() {
   const { user } = useAuth();
 
   return useMutation({
-    mutationFn: async ({ content, imageUrl }: { content: string; imageUrl?: string }) => {
+    mutationFn: async ({ content, imageUrl, isSupport }: { content: string; imageUrl?: string; isSupport?: boolean }) => {
       if (!user) throw new Error('Not authenticated');
+      
+      // Verificar se é suporte
+      let isSupportPost = isSupport || false;
+      if (!isSupportPost) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('user_id', user.id)
+          .single();
+        isSupportPost = profile?.role === 'support' || profile?.role === 'admin';
+      }
+      
+      // Garantir que content não seja null (usar espaço se vazio, pois o banco exige NOT NULL)
+      const postContent = content?.trim() || ' ';
       
       const { data, error } = await supabase
         .from('posts')
         .insert({
           user_id: user.id,
-          content,
+          content: postContent,
           image_url: imageUrl || null,
+          is_support_post: isSupportPost,
         })
         .select()
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error('Erro ao criar post:', error);
+        throw new Error(error.message || 'Erro ao criar publicação');
+      }
       return data;
     },
     onSuccess: () => {

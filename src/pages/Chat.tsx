@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Send } from 'lucide-react';
+import { Send, Trash2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { MainLayout } from '@/components/layout/MainLayout';
@@ -8,16 +8,40 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useChatMessages, useSendMessage } from '@/hooks/useChat';
+import { useDeleteChatMessage, useIsSupport } from '@/hooks/useSupport';
 import { useAuth } from '@/contexts/AuthContext';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 export default function Chat() {
   const { user } = useAuth();
   const { data: messages, isLoading } = useChatMessages();
   const sendMessage = useSendMessage();
+  const deleteMessage = useDeleteChatMessage();
+  const isSupport = useIsSupport();
   const [newMessage, setNewMessage] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const handleDelete = async (messageId: string) => {
+    try {
+      await deleteMessage.mutateAsync(messageId);
+      toast.success('Mensagem removida');
+    } catch (error) {
+      toast.error('Erro ao remover mensagem');
+    }
+  };
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -38,10 +62,10 @@ export default function Chat() {
   return (
     <MainLayout>
       <div className="max-w-2xl mx-auto">
-        <Card className="h-[calc(100vh-12rem)]">
-          <CardHeader className="border-b border-border pb-4">
-            <CardTitle className="flex items-center gap-2">
-              <div className="gradient-primary rounded-lg p-2">
+        <Card className="h-[calc(100vh-12rem)] border border-[#2a2a2a] bg-[#1a1a1a]">
+          <CardHeader className="border-b border-[#2a2a2a] pb-4">
+            <CardTitle className="flex items-center gap-2 text-white">
+              <div className="bg-primary rounded-lg p-2">
                 <span className="text-lg">💬</span>
               </div>
               Chat da Tribo
@@ -79,12 +103,46 @@ export default function Chat() {
                         </Avatar>
                         <div
                           className={cn(
-                            'max-w-[70%] rounded-2xl px-4 py-2',
+                            'max-w-[70%] rounded-2xl px-4 py-2 relative group',
                             isOwn 
                               ? 'gradient-primary text-primary-foreground rounded-tr-sm' 
-                              : 'bg-muted rounded-tl-sm'
+                              : 'bg-[#2a2a2a] text-white rounded-tl-sm'
                           )}
                         >
+                          {isSupport && (
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="absolute -top-2 -right-2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity bg-red-500/80 hover:bg-red-500 text-white"
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent className="bg-[#1a1a1a] border-[#2a2a2a]">
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle className="text-white">
+                                    Remover mensagem
+                                  </AlertDialogTitle>
+                                  <AlertDialogDescription className="text-gray-400">
+                                    Tem certeza que deseja remover esta mensagem?
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel className="bg-[#2a2a2a] text-white border-[#3a3a3a]">
+                                    Cancelar
+                                  </AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => handleDelete(message.id)}
+                                    className="bg-red-500 hover:bg-red-600"
+                                  >
+                                    Remover
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          )}
                           {!isOwn && (
                             <p className="text-xs font-semibold mb-1 opacity-70">
                               {message.profiles?.username || 'Usuário'}
@@ -93,7 +151,7 @@ export default function Chat() {
                           <p className="text-sm">{message.content}</p>
                           <p className={cn(
                             'text-[10px] mt-1',
-                            isOwn ? 'text-primary-foreground/70' : 'text-muted-foreground'
+                            isOwn ? 'text-primary-foreground/70' : 'text-gray-400'
                           )}>
                             {formatDistanceToNow(new Date(message.created_at), { 
                               addSuffix: true, 
@@ -123,13 +181,13 @@ export default function Chat() {
 
             <form 
               onSubmit={handleSubmit} 
-              className="border-t border-border p-4 flex gap-2"
+              className="border-t border-[#2a2a2a] p-4 flex gap-2"
             >
               <Input
                 placeholder="Digite sua mensagem..."
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
-                className="flex-1"
+                className="flex-1 bg-[#2a2a2a] border-[#3a3a3a] text-white placeholder:text-gray-500"
               />
               <Button 
                 type="submit" 

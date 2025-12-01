@@ -1,0 +1,95 @@
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
+
+export interface Reward {
+  id: string;
+  name: string;
+  description: string | null;
+  image_url: string | null;
+  points_cost: number;
+  stock: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Redemption {
+  id: string;
+  user_id: string;
+  reward_id: string;
+  points_spent: number;
+  status: 'pending' | 'approved' | 'delivered' | 'cancelled';
+  created_at: string;
+  updated_at: string;
+  rewards?: Reward;
+}
+
+export function useRewards() {
+  return useQuery({
+    queryKey: ['rewards'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('rewards')
+        .select('*')
+        .eq('is_active', true)
+        .order('points_cost', { ascending: true });
+
+      if (error) throw error;
+      return data as Reward[];
+    },
+  });
+}
+
+export function useRedemptions() {
+  const { user } = useAuth();
+  
+  return useQuery({
+    queryKey: ['redemptions', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+
+      const { data, error } = await supabase
+        .from('redemptions')
+        .select(`
+          *,
+          rewards (*)
+        `)
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return data as Redemption[];
+    },
+    enabled: !!user,
+  });
+}
+
+export function useRedeemReward() {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+
+  return useMutation({
+    mutationFn: async (rewardId: string) => {
+      if (!user) throw new Error('Not authenticated');
+
+      const { data, error } = await supabase.rpc('redeem_reward', {
+        reward_uuid: rewardId,
+      });
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['rewards'] });
+      queryClient.invalidateQueries({ queryKey: ['redemptions'] });
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
+      toast.success('Prêmio resgatado com sucesso!');
+    },
+    onError: (error: any) => {
+      toast.error(error?.message || 'Erro ao resgatar prêmio');
+    },
+  });
+}
+

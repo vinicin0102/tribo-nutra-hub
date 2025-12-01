@@ -25,17 +25,15 @@ export function Navbar() {
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 border-b border-border bg-card/95 backdrop-blur-md">
+    <header className="fixed top-0 left-0 right-0 z-50 border-b border-[#2a2a2a] bg-[#1a1a1a]/95 backdrop-blur-md">
       <div className="container flex h-16 items-center justify-between">
         <div 
           className="flex items-center gap-2 cursor-pointer" 
           onClick={() => navigate('/')}
         >
-          <div className="gradient-primary rounded-lg p-2">
-            <span className="text-xl font-bold text-primary-foreground">🏋️</span>
-          </div>
-          <span className="font-display text-xl font-bold text-foreground">
-            Tribo Nutra Prime
+          <span className="font-display text-xl font-bold">
+            <span className="text-white">Nutra</span>
+            <span className="text-primary"> Elite</span>
           </span>
         </div>
 

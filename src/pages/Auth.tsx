@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Eye, EyeOff, Mail, Lock, User } from 'lucide-react';
 
@@ -40,8 +41,25 @@ export default function Auth() {
             toast.error(error.message);
           }
         } else {
-          toast.success('Bem-vindo de volta!');
-          navigate('/');
+          // Verificar se é usuário de suporte
+          const { data: { user: loggedUser } } = await supabase.auth.getUser();
+          if (loggedUser) {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('role')
+              .eq('user_id', loggedUser.id)
+              .single();
+
+            if (profile?.role === 'support' || profile?.role === 'admin') {
+              toast.success('Bem-vindo ao painel de suporte!');
+              navigate('/support/dashboard');
+            } else {
+              toast.success('Bem-vindo de volta!');
+              navigate('/');
+            }
+          } else {
+            navigate('/');
+          }
         }
       } else {
         if (!formData.username.trim()) {
@@ -81,8 +99,9 @@ export default function Auth() {
           <div className="inline-flex items-center justify-center gradient-primary rounded-2xl p-4 mb-4 shadow-glow">
             <span className="text-4xl">🏋️</span>
           </div>
-          <h1 className="font-display text-3xl font-bold text-foreground mb-2">
-            Tribo Nutra Prime
+          <h1 className="font-display text-3xl font-bold mb-2">
+            <span className="text-white">Nutra</span>
+            <span className="text-primary"> Elite</span>
           </h1>
           <p className="text-muted-foreground">
             Comunidade de fitness e nutrição

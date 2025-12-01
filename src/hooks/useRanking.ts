@@ -9,6 +9,7 @@ export interface RankingUser {
   full_name: string | null;
   avatar_url: string | null;
   points: number;
+  tier?: 'bronze' | 'silver' | 'gold' | 'platinum' | 'diamond';
   rank: number;
 }
 
