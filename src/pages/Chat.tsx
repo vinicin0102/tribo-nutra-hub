@@ -32,7 +32,9 @@ export default function Chat() {
   const deleteMessage = useDeleteChatMessage();
   const isSupport = useIsSupport();
   const [newMessage, setNewMessage] = useState('');
-  const [viewportHeight, setViewportHeight] = useState(window.innerHeight);
+  const [viewportHeight, setViewportHeight] = useState(
+    window.visualViewport?.height || window.innerHeight
+  );
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
@@ -52,15 +54,23 @@ export default function Chat() {
   // Detectar mudanças na altura do viewport quando o teclado aparece/desaparece
   useEffect(() => {
     const handleResize = () => {
-      setViewportHeight(window.visualViewport?.height || window.innerHeight);
+      // Usar visualViewport.height diretamente quando disponível (melhor para mobile)
+      if (window.visualViewport) {
+        setViewportHeight(window.visualViewport.height);
+      } else {
+        setViewportHeight(window.innerHeight);
+      }
     };
 
     // Usar visualViewport se disponível (melhor para mobile)
     if (window.visualViewport) {
       window.visualViewport.addEventListener('resize', handleResize);
+      // Atualizar imediatamente
+      handleResize();
       return () => window.visualViewport?.removeEventListener('resize', handleResize);
     } else {
       window.addEventListener('resize', handleResize);
+      handleResize();
       return () => window.removeEventListener('resize', handleResize);
     }
   }, []);
@@ -77,15 +87,19 @@ export default function Chat() {
     }
   };
 
-  // Calcular altura disponível (viewport - navbar - bottom nav)
-  const availableHeight = viewportHeight - 128; // 64px navbar + 64px bottom nav
+  // Calcular altura disponível - usar visualViewport diretamente quando disponível
+  // Isso garante que quando o teclado aparecer, a altura seja ajustada imediatamente
+  const availableHeight = (window.visualViewport?.height || viewportHeight) - 128;
 
   return (
     <MainLayout>
       <div 
         ref={chatContainerRef}
         className="fixed inset-x-0 top-16 bottom-16 flex flex-col bg-[#0a0a0a]"
-        style={{ height: `${availableHeight}px` }}
+        style={{ 
+          height: `${availableHeight}px`,
+          maxHeight: `${availableHeight}px`
+        }}
       >
         <div className="max-w-2xl mx-auto w-full h-full flex flex-col px-4 sm:px-0">
           <Card className="flex-1 flex flex-col border border-[#2a2a2a] bg-[#1a1a1a] min-h-0 overflow-hidden">
@@ -218,10 +232,17 @@ export default function Chat() {
                 onChange={(e) => setNewMessage(e.target.value)}
                 className="flex-1 bg-[#2a2a2a] border-[#3a3a3a] text-white placeholder:text-gray-500"
                 onFocus={(e) => {
+                  // Atualizar altura imediatamente quando o input receber foco
+                  if (window.visualViewport) {
+                    setViewportHeight(window.visualViewport.height);
+                  }
                   // Scroll para o final quando o input receber foco (aguardar teclado aparecer)
                   setTimeout(() => {
+                    if (window.visualViewport) {
+                      setViewportHeight(window.visualViewport.height);
+                    }
                     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
-                  }, 500);
+                  }, 300);
                 }}
               />
               <Button 
