@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { processAvatarImage, processPostImage } from './imageProcessing';
 
 /**
  * Upload de imagem para o Supabase Storage
@@ -14,23 +15,33 @@ export async function uploadImage(
       throw new Error('Arquivo deve ser uma imagem');
     }
 
-    // Validar tamanho (máximo 5MB)
+    // Validar tamanho (máximo 5MB antes do processamento)
     const maxSize = 5 * 1024 * 1024; // 5MB
     if (file.size > maxSize) {
       throw new Error('Imagem muito grande. Tamanho máximo: 5MB');
     }
 
-    // Gerar nome único para o arquivo
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${userId}-${Date.now()}.${fileExt}`;
+    // Processar imagem antes do upload
+    let processedFile: File;
+    if (folder === 'avatars') {
+      // Processar avatar: formato quadrado, 512x512, alta qualidade
+      processedFile = await processAvatarImage(file);
+    } else {
+      // Processar post: manter proporção, redimensionar se necessário
+      processedFile = await processPostImage(file);
+    }
+
+    // Gerar nome único para o arquivo (sempre JPG após processamento)
+    const fileName = `${userId}-${Date.now()}.jpg`;
     const filePath = `${folder}/${fileName}`;
 
-    // Fazer upload
+    // Fazer upload do arquivo processado
     const { error: uploadError } = await supabase.storage
       .from('images')
-      .upload(filePath, file, {
+      .upload(filePath, processedFile, {
         cacheControl: '3600',
         upsert: false,
+        contentType: 'image/jpeg',
       });
 
     if (uploadError) {

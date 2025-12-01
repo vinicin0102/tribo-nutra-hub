@@ -64,7 +64,10 @@ export function PostCard({ post }: PostCardProps) {
     )}>
       <CardHeader className="flex-row items-center gap-3 space-y-0 pb-4 pt-4">
         <Avatar className="h-12 w-12 border-2 border-card">
-          <AvatarImage src={profile?.avatar_url || ''} />
+          <AvatarImage 
+            src={profile?.avatar_url || ''} 
+            className="object-cover object-center"
+          />
           <AvatarFallback className="gradient-primary text-primary-foreground font-semibold text-base">
             {profile?.username?.charAt(0).toUpperCase() || 'U'}
           </AvatarFallback>

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FileText, Palette } from 'lucide-react';
+import { FileText, Palette, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -11,16 +11,9 @@ import { CopyAIDialog } from '@/components/ai/CopyAIDialog';
 import { CreativeAIDialog } from '@/components/ai/CreativeAIDialog';
 import { toast } from 'sonner';
 
-// Ícone de estrela rosa/roxo
-const StarIcon = ({ className }: { className?: string }) => (
-  <svg
-    viewBox="0 0 24 24"
-    fill="currentColor"
-    className={className}
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
-  </svg>
+// Ícone de IA (Sparkles)
+const AIIcon = ({ className }: { className?: string }) => (
+  <Sparkles className={className} />
 );
 
 interface AIButtonProps {
@@ -59,8 +52,7 @@ export function AIButton({ onCopyAI, onCreativeAI }: AIButtonProps) {
               className="h-14 w-14 rounded-full bg-primary hover:bg-primary/90 shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 active:scale-95"
             >
               <div className="relative flex items-center justify-center">
-                <StarIcon className="h-6 w-6 fill-white text-white" />
-                <div className="absolute -top-0.5 -right-0.5 h-1.5 w-1.5 bg-white rounded-full" />
+                <AIIcon className="h-7 w-7 text-white fill-white" />
               </div>
             </Button>
           </DropdownMenuTrigger>

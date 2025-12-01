@@ -1,4 +1,4 @@
-import { Bell, User, LogOut, Settings } from 'lucide-react';
+import { User, LogOut, Settings } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -11,13 +11,11 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/useProfile';
-import { useUnreadCount } from '@/hooks/useNotifications';
 
 export function Navbar() {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const { data: profile } = useProfile();
-  const { data: unreadCount = 0 } = useUnreadCount();
 
   const handleSignOut = async () => {
     await signOut();
@@ -38,25 +36,15 @@ export function Navbar() {
         </div>
 
         <div className="flex items-center gap-2">
-          <Button
-            variant="icon"
-            size="icon"
-            className="relative"
-            onClick={() => navigate('/notifications')}
-          >
-            <Bell className="h-5 w-5" />
-            {unreadCount > 0 && (
-              <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-xs font-bold text-destructive-foreground">
-                {unreadCount > 9 ? '9+' : unreadCount}
-              </span>
-            )}
-          </Button>
-
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative h-10 w-10 rounded-full p-0">
                 <Avatar className="h-10 w-10 border-2 border-primary/20">
-                  <AvatarImage src={profile?.avatar_url || ''} alt={profile?.username} />
+                  <AvatarImage 
+                    src={profile?.avatar_url || ''} 
+                    alt={profile?.username}
+                    className="object-cover object-center"
+                  />
                   <AvatarFallback className="gradient-primary text-primary-foreground font-semibold">
                     {profile?.username?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || 'U'}
                   </AvatarFallback>
@@ -66,7 +54,10 @@ export function Navbar() {
             <DropdownMenuContent className="w-56" align="end" forceMount>
               <div className="flex items-center gap-2 p-2">
                 <Avatar className="h-10 w-10">
-                  <AvatarImage src={profile?.avatar_url || ''} />
+                  <AvatarImage 
+                    src={profile?.avatar_url || ''} 
+                    className="object-cover object-center"
+                  />
                   <AvatarFallback className="gradient-primary text-primary-foreground">
                     {profile?.username?.charAt(0).toUpperCase() || 'U'}
                   </AvatarFallback>

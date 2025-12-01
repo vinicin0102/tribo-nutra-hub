@@ -136,7 +136,10 @@ export function CreatePostCard() {
         <form onSubmit={handleSubmit}>
           <div className="flex gap-3">
             <Avatar className="h-12 w-12 flex-shrink-0 border-2 border-card">
-              <AvatarImage src={profile?.avatar_url || ''} />
+              <AvatarImage 
+                src={profile?.avatar_url || ''} 
+                className="object-cover object-center"
+              />
               <AvatarFallback className="gradient-primary text-primary-foreground font-semibold">
                 {profile?.username?.charAt(0).toUpperCase() || 'U'}
               </AvatarFallback>

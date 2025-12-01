@@ -96,7 +96,10 @@ export default function Chat() {
                         )}
                       >
                         <Avatar className="h-8 w-8 flex-shrink-0">
-                          <AvatarImage src={message.profiles?.avatar_url || ''} />
+                          <AvatarImage 
+                            src={message.profiles?.avatar_url || ''} 
+                            className="object-cover object-center"
+                          />
                           <AvatarFallback className="text-xs gradient-primary text-primary-foreground">
                             {message.profiles?.username?.charAt(0).toUpperCase() || 'U'}
                           </AvatarFallback>

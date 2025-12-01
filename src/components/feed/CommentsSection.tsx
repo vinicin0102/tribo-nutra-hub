@@ -73,7 +73,10 @@ export function CommentsSection({ postId }: CommentsSectionProps) {
           {comments.map((comment) => (
             <div key={comment.id} className="flex gap-2 animate-fade-in">
               <Avatar className="h-8 w-8 flex-shrink-0">
-                <AvatarImage src={comment.profiles?.avatar_url || ''} />
+                <AvatarImage 
+                  src={comment.profiles?.avatar_url || ''} 
+                  className="object-cover object-center"
+                />
                 <AvatarFallback className="text-xs gradient-primary text-primary-foreground">
                   {comment.profiles?.username?.charAt(0).toUpperCase() || 'U'}
                 </AvatarFallback>

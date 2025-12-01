@@ -78,12 +78,90 @@ export default function Support() {
     }
   }, [isSupport]);
 
-  // Carregar mensagens quando selecionar um usuário
+  // Carregar mensagens quando selecionar um usuário (suporte) ou quando for aluno
   useEffect(() => {
     if (isSupport && selectedUserId) {
       loadMessages(selectedUserId);
+      // Subscribe para atualizações em tempo real
+      const channel = supabase
+        .channel(`support-chat-${selectedUserId}`)
+        .on('postgres_changes', 
+          { event: '*', schema: 'public', table: 'support_chat', filter: `user_id=eq.${selectedUserId}` },
+          () => {
+            loadMessages(selectedUserId);
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    } else if (!isSupport && user) {
+      // Aluno: carregar suas próprias mensagens
+      loadUserMessages();
+      
+      // Subscribe para atualizações em tempo real
+      const channel = supabase
+        .channel(`user-support-chat-${user.id}`)
+        .on('postgres_changes', 
+          { event: '*', schema: 'public', table: 'support_chat', filter: `user_id=eq.${user.id}` },
+          () => {
+            loadUserMessages();
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
     }
-  }, [isSupport, selectedUserId]);
+  }, [isSupport, selectedUserId, user]);
+
+  // Carregar mensagens do aluno
+  const loadUserMessages = async () => {
+    if (!user) return;
+    
+    setLoadingMessages(true);
+    try {
+      const { data: messagesData, error } = await supabase
+        .from('support_chat')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+
+      // Carregar perfis para mensagens
+      const messagesWithProfiles = await Promise.all(
+        (messagesData || []).map(async (msg: any) => {
+          if (msg.is_from_support && msg.support_user_id) {
+            // Buscar perfil do suporte
+            const { data: supportProfile } = await supabase
+              .from('profiles')
+              .select('username, avatar_url, full_name')
+              .eq('user_id', msg.support_user_id)
+              .single();
+            return { ...msg, profiles: supportProfile || { username: 'Suporte', avatar_url: null, full_name: 'Equipe de Suporte' } };
+          } else {
+            // Buscar perfil do aluno
+            const { data: userProfile } = await supabase
+              .from('profiles')
+              .select('username, avatar_url, full_name')
+              .eq('user_id', msg.user_id)
+              .single();
+            return { ...msg, profiles: userProfile || null };
+          }
+        })
+      );
+
+      setMessages(messagesWithProfiles);
+    } catch (error) {
+      console.error('Erro ao carregar mensagens:', error);
+      toast.error('Erro ao carregar mensagens');
+    } finally {
+      setLoadingMessages(false);
+    }
+  };
 
   // Scroll para última mensagem
   useEffect(() => {
@@ -223,25 +301,34 @@ export default function Support() {
       return;
     }
 
-    if (!formData.subject.trim() || !formData.message.trim()) {
-      toast.error('Preencha todos os campos');
+    if (!formData.message.trim()) {
+      toast.error('Digite uma mensagem');
       return;
     }
 
     setLoading(true);
     try {
+      const messageText = formData.subject.trim() 
+        ? `[${formData.subject}] ${formData.message}`
+        : formData.message;
+
       const { error } = await supabase
         .from('support_chat')
         .insert({
           user_id: user.id,
-          message: `[${formData.subject}] ${formData.message}`,
+          message: messageText,
           is_from_support: false,
         });
 
       if (error) throw error;
 
-      toast.success('Mensagem enviada com sucesso! Nossa equipe responderá em breve.');
+      toast.success('Mensagem enviada com sucesso!');
       setFormData({ subject: '', message: '' });
+      
+      // Recarregar mensagens para mostrar a nova
+      if (!isSupport) {
+        loadUserMessages();
+      }
     } catch (error) {
       toast.error('Erro ao enviar mensagem');
     } finally {
@@ -279,7 +366,10 @@ export default function Support() {
                       >
                         <div className="flex items-center gap-3">
                           <Avatar className="h-10 w-10">
-                            <AvatarImage src={conv.avatar || ''} />
+                            <AvatarImage 
+                              src={conv.avatar || ''} 
+                              className="object-cover object-center"
+                            />
                             <AvatarFallback className="bg-primary text-white">
                               {conv.username.charAt(0).toUpperCase()}
                             </AvatarFallback>
@@ -326,7 +416,10 @@ export default function Support() {
                 <CardHeader className="border-b border-[#2a2a2a]">
                   <div className="flex items-center gap-3">
                     <Avatar>
-                      <AvatarImage src={selectedUserProfile?.avatar_url || ''} />
+                      <AvatarImage 
+                        src={selectedUserProfile?.avatar_url || ''} 
+                        className="object-cover object-center"
+                      />
                       <AvatarFallback className="bg-primary text-white">
                         {selectedUserProfile?.username?.charAt(0).toUpperCase() || 'U'}
                       </AvatarFallback>
@@ -355,7 +448,10 @@ export default function Support() {
                           )}
                         >
                           <Avatar className="h-8 w-8 flex-shrink-0">
-                            <AvatarImage src={msg.profiles?.avatar_url || ''} />
+                            <AvatarImage 
+                              src={msg.profiles?.avatar_url || ''} 
+                              className="object-cover object-center"
+                            />
                             <AvatarFallback className="text-xs bg-primary text-white">
                               {msg.is_from_support ? 'S' : (msg.profiles?.username?.charAt(0).toUpperCase() || 'U')}
                             </AvatarFallback>
@@ -423,42 +519,42 @@ export default function Support() {
     );
   }
 
-  // Interface normal para alunos
+  // Interface para alunos - Chat com suporte
   return (
     <MainLayout>
-      <div className="max-w-2xl mx-auto space-y-6">
+      <div className="max-w-4xl mx-auto space-y-6 px-4 pb-20">
         {/* Header */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center gradient-primary rounded-2xl p-4 mb-4">
-            <HelpCircle className="h-8 w-8 text-primary-foreground" />
+        <div className="text-center mb-6">
+          <div className="inline-flex items-center justify-center bg-primary rounded-2xl p-4 mb-4">
+            <HelpCircle className="h-8 w-8 text-white" />
           </div>
-          <h1 className="font-display text-2xl font-bold mb-2">Central de Ajuda</h1>
-          <p className="text-muted-foreground">
-            Encontre respostas para suas dúvidas ou entre em contato conosco
+          <h1 className="font-display text-2xl font-bold text-white mb-2">Central de Ajuda</h1>
+          <p className="text-gray-400">
+            Converse com nossa equipe de suporte
           </p>
         </div>
 
-        {/* FAQ */}
-        <Card>
+        {/* FAQ (colapsável) */}
+        <Card className="border border-[#2a2a2a] bg-[#1a1a1a]">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 text-white">
               <MessageSquare className="h-5 w-5 text-primary" />
               Perguntas Frequentes
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
-            <div className="divide-y divide-border">
+            <div className="divide-y divide-[#2a2a2a]">
               {faqs.map((faq, index) => (
                 <div key={index} className="p-4">
                   <button
                     onClick={() => setExpandedFaq(expandedFaq === index ? null : index)}
                     className="flex items-center justify-between w-full text-left"
                   >
-                    <span className="font-medium text-sm pr-4">{faq.question}</span>
+                    <span className="font-medium text-sm pr-4 text-white">{faq.question}</span>
                     {expandedFaq === index ? (
-                      <ChevronUp className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                      <ChevronUp className="h-4 w-4 text-gray-400 flex-shrink-0" />
                     ) : (
-                      <ChevronDown className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                      <ChevronDown className="h-4 w-4 text-gray-400 flex-shrink-0" />
                     )}
                   </button>
                   <div
@@ -467,7 +563,7 @@ export default function Support() {
                       expandedFaq === index ? 'mt-3 max-h-40' : 'max-h-0'
                     )}
                   >
-                    <p className="text-sm text-muted-foreground">{faq.answer}</p>
+                    <p className="text-sm text-gray-400">{faq.answer}</p>
                   </div>
                 </div>
               ))}
@@ -475,44 +571,121 @@ export default function Support() {
           </CardContent>
         </Card>
 
-        {/* Contact Form */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Send className="h-5 w-5 text-secondary" />
-              Enviar Mensagem
+        {/* Chat com Suporte */}
+        <Card className="border border-[#2a2a2a] bg-[#1a1a1a]">
+          <CardHeader className="border-b border-[#2a2a2a]">
+            <CardTitle className="flex items-center gap-2 text-white">
+              <MessageSquare className="h-5 w-5 text-primary" />
+              Chat com Suporte
             </CardTitle>
-            <CardDescription>
-              Não encontrou o que procurava? Entre em contato conosco
+            <CardDescription className="text-gray-400">
+              Envie sua dúvida e nossa equipe responderá em breve
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="subject">Assunto</Label>
-                <Input
-                  id="subject"
-                  placeholder="Qual o assunto da sua mensagem?"
-                  value={formData.subject}
-                  onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="message">Mensagem</Label>
-                <Textarea
-                  id="message"
-                  placeholder="Descreva sua dúvida ou problema..."
-                  className="min-h-[120px] resize-none"
-                  value={formData.message}
-                  onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                  required
-                />
-              </div>
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? 'Enviando...' : 'Enviar Mensagem'}
-              </Button>
-            </form>
+          <CardContent className="p-0">
+            {/* Mensagens */}
+            <div className="h-[400px] overflow-y-auto p-4 space-y-3">
+              {loadingMessages ? (
+                <div className="text-center text-gray-400 py-8">Carregando mensagens...</div>
+              ) : messages.length > 0 ? (
+                messages.map((msg) => (
+                  <div
+                    key={msg.id}
+                    className={cn(
+                      'flex gap-2',
+                      msg.is_from_support && 'flex-row-reverse'
+                    )}
+                  >
+                    <Avatar className="h-8 w-8 flex-shrink-0">
+                      <AvatarImage 
+                        src={msg.profiles?.avatar_url || ''} 
+                        className="object-cover object-center"
+                      />
+                      <AvatarFallback className={cn(
+                        'text-xs',
+                        msg.is_from_support 
+                          ? 'bg-primary text-white' 
+                          : 'bg-[#2a2a2a] text-white'
+                      )}>
+                        {msg.is_from_support 
+                          ? 'S' 
+                          : (msg.profiles?.username?.charAt(0).toUpperCase() || 'U')}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div
+                      className={cn(
+                        'max-w-[70%] rounded-2xl px-4 py-2',
+                        msg.is_from_support
+                          ? 'bg-primary text-white rounded-tr-sm'
+                          : 'bg-[#2a2a2a] text-white rounded-tl-sm'
+                      )}
+                    >
+                      {msg.is_from_support ? (
+                        <p className="text-xs font-semibold mb-1 opacity-70">
+                          Suporte
+                        </p>
+                      ) : (
+                        <p className="text-xs font-semibold mb-1 opacity-70">
+                          Você
+                        </p>
+                      )}
+                      <p className="text-sm whitespace-pre-wrap">{msg.message}</p>
+                      <p className={cn(
+                        'text-[10px] mt-1',
+                        msg.is_from_support ? 'text-white/70' : 'text-gray-400'
+                      )}>
+                        {formatDistanceToNow(new Date(msg.created_at), { addSuffix: true, locale: ptBR })}
+                      </p>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center text-gray-400 py-12">
+                  <MessageSquare className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                  <p>Nenhuma mensagem ainda</p>
+                  <p className="text-sm mt-2">Envie uma mensagem para começar a conversa</p>
+                </div>
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+
+            {/* Formulário de envio */}
+            <div className="border-t border-[#2a2a2a] p-4">
+              <form onSubmit={handleSubmit} className="space-y-3">
+                <div className="space-y-2">
+                  <Label htmlFor="subject" className="text-white text-sm">Assunto (opcional)</Label>
+                  <Input
+                    id="subject"
+                    placeholder="Ex: Problema com login, Dúvida sobre pontos..."
+                    value={formData.subject}
+                    onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
+                    className="bg-[#2a2a2a] border-[#3a3a3a] text-white placeholder:text-gray-500"
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Textarea
+                    placeholder="Digite sua mensagem..."
+                    value={formData.message}
+                    onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                    className="flex-1 bg-[#2a2a2a] border-[#3a3a3a] text-white placeholder:text-gray-500 min-h-[80px] resize-none"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSubmit(e as any);
+                      }
+                    }}
+                    required
+                  />
+                  <Button
+                    type="submit"
+                    disabled={loading || !formData.message.trim()}
+                    className="bg-primary hover:bg-primary/90"
+                  >
+                    <Send className="h-4 w-4" />
+                  </Button>
+                </div>
+              </form>
+            </div>
           </CardContent>
         </Card>
       </div>

@@ -49,7 +49,7 @@ export default function Profile() {
     setHasChanges(true);
   };
 
-  const handleAvatarSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       // Validar tipo
@@ -64,19 +64,56 @@ export default function Profile() {
         return;
       }
 
-      setSelectedAvatar(file);
-      setHasChanges(true);
-      
-      // Criar preview
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setAvatarPreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+      try {
+        // Processar imagem para preview (formato quadrado)
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const img = new Image();
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const size = Math.min(img.width, img.height, 512);
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            
+            if (ctx) {
+              const sourceSize = Math.min(img.width, img.height);
+              const sourceX = (img.width - sourceSize) / 2;
+              const sourceY = (img.height - sourceSize) / 2;
+              
+              ctx.drawImage(
+                img,
+                sourceX, sourceY, sourceSize, sourceSize,
+                0, 0, size, size
+              );
+              
+              // Criar preview processado
+              canvas.toBlob((blob) => {
+                if (blob) {
+                  const previewUrl = URL.createObjectURL(blob);
+                  setAvatarPreview(previewUrl);
+                }
+              }, 'image/jpeg', 0.95);
+            }
+          };
+          img.src = e.target?.result as string;
+        };
+        reader.readAsDataURL(file);
+        
+        setSelectedAvatar(file);
+        setHasChanges(true);
+      } catch (error) {
+        toast.error('Erro ao processar imagem');
+      }
     }
   };
 
   const handleRemoveAvatar = () => {
+    // Limpar preview anterior se for um blob URL
+    if (avatarPreview && avatarPreview.startsWith('blob:')) {
+      URL.revokeObjectURL(avatarPreview);
+    }
+    
     setSelectedAvatar(null);
     setAvatarPreview(formData.avatar_url || null);
     if (fileInputRef.current) {
@@ -127,6 +164,11 @@ export default function Profile() {
       });
       
       setSelectedAvatar(null);
+      // Limpar preview blob URL se existir
+      if (avatarPreview && avatarPreview.startsWith('blob:')) {
+        URL.revokeObjectURL(avatarPreview);
+      }
+      setAvatarPreview(avatarUrl || null);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
@@ -165,8 +207,11 @@ export default function Profile() {
           <CardContent className="relative pt-0 pb-6">
             <div className="flex flex-col items-center -mt-12">
               <div className="relative">
-                <Avatar className="h-24 w-24 border-4 border-card">
-                  <AvatarImage src={avatarPreview || formData.avatar_url || profile?.avatar_url || ''} />
+                <Avatar className="h-24 w-24 border-4 border-card shadow-lg">
+                  <AvatarImage 
+                    src={avatarPreview || formData.avatar_url || profile?.avatar_url || ''} 
+                    className="object-cover object-center"
+                  />
                   <AvatarFallback className="gradient-primary text-primary-foreground text-2xl font-bold">
                     {(formData.username || profile?.username)?.charAt(0).toUpperCase() || 'U'}
                   </AvatarFallback>

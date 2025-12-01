@@ -92,28 +92,47 @@ export default function Auth() {
     }
   };
 
+  // Logo da comunidade - ícone de tribo/comunidade
+  const CommunityLogo = () => (
+    <div className="relative">
+      <div className="bg-primary rounded-full p-3 shadow-glow">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          className="h-8 w-8 text-white"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          {/* Ícone de pessoas/comunidade */}
+          <circle cx="9" cy="7" r="4" stroke="currentColor" strokeWidth="2" fill="none" />
+          <path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2" stroke="currentColor" strokeWidth="2" fill="none" />
+          <circle cx="16" cy="7" r="4" stroke="currentColor" strokeWidth="2" fill="none" />
+          <path d="M21 21v-2a4 4 0 0 0-4-4h-2" stroke="currentColor" strokeWidth="2" fill="none" />
+        </svg>
+      </div>
+      {/* Decoração - pequenos pontos representando energia/nutrição */}
+      <div className="absolute -top-1 -right-1 w-3 h-3 bg-primary rounded-full animate-pulse" />
+    </div>
+  );
+
   return (
-    <div className="min-h-screen gradient-hero flex items-center justify-center p-4">
+    <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-4">
       <div className="w-full max-w-md animate-fade-in">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center gradient-primary rounded-2xl p-4 mb-4 shadow-glow">
-            <span className="text-4xl">🏋️</span>
+          <div className="inline-flex items-center justify-center mb-4">
+            <CommunityLogo />
           </div>
           <h1 className="font-display text-3xl font-bold mb-2">
             <span className="text-white">Nutra</span>
             <span className="text-primary"> Elite</span>
           </h1>
-          <p className="text-muted-foreground">
-            Comunidade de fitness e nutrição
-          </p>
         </div>
 
-        <Card className="border-0 shadow-lg">
+        <Card className="border border-[#2a2a2a] bg-[#1a1a1a] shadow-lg">
           <CardHeader className="space-y-1 pb-4">
-            <CardTitle className="text-2xl font-display text-center">
+            <CardTitle className="text-2xl font-display text-center text-white">
               {isLogin ? 'Entrar' : 'Criar conta'}
             </CardTitle>
-            <CardDescription className="text-center">
+            <CardDescription className="text-center text-gray-400">
               {isLogin 
                 ? 'Entre para acessar a comunidade'
                 : 'Junte-se à tribo e alcance seus objetivos'
@@ -124,14 +143,14 @@ export default function Auth() {
             <form onSubmit={handleSubmit} className="space-y-4">
               {!isLogin && (
                 <div className="space-y-2">
-                  <Label htmlFor="username">Nome de usuário</Label>
+                  <Label htmlFor="username" className="text-white">Nome de usuário</Label>
                   <div className="relative">
-                    <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                     <Input
                       id="username"
                       type="text"
                       placeholder="seunome"
-                      className="pl-10"
+                      className="pl-10 bg-[#2a2a2a] border-[#3a3a3a] text-white placeholder:text-gray-500"
                       value={formData.username}
                       onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                       required={!isLogin}
@@ -141,14 +160,14 @@ export default function Auth() {
               )}
 
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email" className="text-white">Email</Label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                   <Input
                     id="email"
                     type="email"
                     placeholder="seu@email.com"
-                    className="pl-10"
+                    className="pl-10 bg-[#2a2a2a] border-[#3a3a3a] text-white placeholder:text-gray-500"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     required
@@ -157,14 +176,14 @@ export default function Auth() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password">Senha</Label>
+                <Label htmlFor="password" className="text-white">Senha</Label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                   <Input
                     id="password"
                     type={showPassword ? 'text' : 'password'}
                     placeholder="••••••••"
-                    className="pl-10 pr-10"
+                    className="pl-10 pr-10 bg-[#2a2a2a] border-[#3a3a3a] text-white placeholder:text-gray-500"
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                     required
@@ -172,14 +191,14 @@ export default function Auth() {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
                   >
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
               </div>
 
-              <Button type="submit" className="w-full" disabled={loading}>
+              <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-white" disabled={loading}>
                 {loading ? 'Carregando...' : isLogin ? 'Entrar' : 'Criar conta'}
               </Button>
             </form>
@@ -188,7 +207,7 @@ export default function Auth() {
               <button
                 type="button"
                 onClick={() => setIsLogin(!isLogin)}
-                className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                className="text-sm text-gray-400 hover:text-primary transition-colors"
               >
                 {isLogin 
                   ? 'Não tem conta? Cadastre-se'

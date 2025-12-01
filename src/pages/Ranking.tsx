@@ -67,7 +67,10 @@ export default function Ranking() {
             <div className="bg-primary p-4">
               <div className="flex items-center gap-4">
                 <Avatar className="h-16 w-16 border-4 border-white/20">
-                  <AvatarImage src={currentProfile.avatar_url || ''} />
+                  <AvatarImage 
+                    src={currentProfile.avatar_url || ''} 
+                    className="object-cover object-center"
+                  />
                   <AvatarFallback className="bg-white/20 text-white text-xl font-bold">
                     {currentProfile.username?.charAt(0).toUpperCase() || 'U'}
                   </AvatarFallback>
@@ -177,7 +180,10 @@ export default function Ranking() {
                       {getRankIcon(user.rank)}
                     </div>
                     <Avatar className="h-10 w-10">
-                      <AvatarImage src={user.avatar_url || ''} />
+                      <AvatarImage 
+                        src={user.avatar_url || ''} 
+                        className="object-cover object-center"
+                      />
                       <AvatarFallback className="gradient-primary text-primary-foreground text-sm font-semibold">
                         {user.username?.charAt(0).toUpperCase() || 'U'}
                       </AvatarFallback>
