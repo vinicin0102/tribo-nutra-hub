@@ -343,11 +343,46 @@ export default function Support() {
 
       mediaRecorder.onstop = async () => {
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        // TODO: Implementar upload do áudio para Supabase Storage
-        toast.success('Áudio gravado! Upload em desenvolvimento...');
+        const audioDuration = Math.round(audioChunksRef.current.length / 10); // Estimativa
         
         // Parar todas as tracks do stream
         stream.getTracks().forEach(track => track.stop());
+        
+        // Enviar mensagem indicando áudio gravado
+        try {
+          if (isSupport && selectedUserId) {
+            // Suporte enviando para aluno
+            const { error } = await supabase
+              .from('support_chat')
+              .insert({
+                user_id: selectedUserId,
+                support_user_id: user?.id,
+                message: `🎤 Áudio gravado (${audioDuration}s)`,
+                is_from_support: true,
+              });
+            
+            if (error) throw error;
+            loadMessages(selectedUserId);
+            loadConversations();
+            toast.success('Áudio enviado!');
+          } else if (!isSupport && user) {
+            // Aluno enviando para suporte
+            const { error } = await supabase
+              .from('support_chat')
+              .insert({
+                user_id: user.id,
+                message: `🎤 Áudio gravado (${audioDuration}s)`,
+                is_from_support: false,
+              });
+            
+            if (error) throw error;
+            loadUserMessages();
+            toast.success('Áudio enviado!');
+          }
+        } catch (error: any) {
+          console.error('Erro ao enviar áudio:', error);
+          toast.error('Erro ao enviar áudio');
+        }
       };
 
       mediaRecorder.start();
