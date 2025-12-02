@@ -49,18 +49,30 @@ export function AudioPlayer({ audioUrl, duration, isOwn = false }: AudioPlayerPr
 
   const togglePlay = async () => {
     const audio = audioRef.current;
-    if (!audio) return;
+    if (!audio) {
+      console.error('Audio element not found');
+      return;
+    }
+
+    console.log('Audio URL:', audioUrl);
+    console.log('Audio ready state:', audio.readyState);
+    console.log('Audio error:', audio.error);
 
     try {
       if (isPlaying) {
         audio.pause();
         setIsPlaying(false);
       } else {
-        await audio.play();
-        setIsPlaying(true);
+        const playPromise = audio.play();
+        if (playPromise !== undefined) {
+          await playPromise;
+          setIsPlaying(true);
+        }
       }
     } catch (error) {
       console.error('Erro ao reproduzir áudio:', error);
+      console.error('Audio src:', audio.src);
+      console.error('Audio error code:', audio.error?.code);
       setIsPlaying(false);
     }
   };
@@ -76,7 +88,11 @@ export function AudioPlayer({ audioUrl, duration, isOwn = false }: AudioPlayerPr
 
   return (
     <div className="flex items-center gap-2 min-w-[200px] max-w-[280px]">
-      <audio ref={audioRef} src={audioUrl} preload="metadata" />
+      <audio ref={audioRef} preload="metadata">
+        <source src={audioUrl} type="audio/webm" />
+        <source src={audioUrl} type="audio/mp4" />
+        <source src={audioUrl} type="audio/ogg" />
+      </audio>
       
       <Button
         type="button"
