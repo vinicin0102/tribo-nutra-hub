@@ -734,8 +734,8 @@ export default function Support() {
   // Interface para alunos - Chat com suporte
   return (
     <MainLayout>
-      <div className="fixed inset-x-0 top-16 bottom-16 bg-[#0a0a0a] overflow-hidden">
-        <div className="max-w-2xl mx-auto h-full flex flex-col px-2 sm:px-0">
+      <div className="fixed inset-x-0 top-16 bottom-16 bg-[#0a0a0a] overflow-hidden" style={{ touchAction: 'pan-y' }}>
+        <div className="max-w-2xl mx-auto h-full flex flex-col px-2 sm:px-0" style={{ touchAction: 'pan-y' }}>
           <Card className="flex-1 flex flex-col border border-[#2a2a2a] bg-[#1a1a1a] overflow-hidden">
             <CardHeader className="border-b border-[#2a2a2a] py-3 flex-shrink-0">
               <CardTitle className="flex items-center gap-2 text-white text-base">
