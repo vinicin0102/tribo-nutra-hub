@@ -600,21 +600,21 @@ export default function Support() {
   // Interface para alunos - Chat com suporte
   return (
     <MainLayout>
-      <div className="max-w-4xl mx-auto space-y-6 px-4 pb-20">
-        {/* Chat com Suporte */}
-        <Card className="border border-[#2a2a2a] bg-[#1a1a1a]">
-          <CardHeader className="border-b border-[#2a2a2a] py-3">
-            <CardTitle className="flex items-center gap-2 text-white text-base">
-              <MessageSquare className="h-5 w-5 text-primary" />
-              Chat com Suporte
-            </CardTitle>
-            <CardDescription className="text-gray-400 text-sm">
-              Envie sua dúvida e nossa equipe responderá em breve
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-col h-[calc(100vh-28rem)] sm:h-[400px] p-0">
-            {/* Mensagens */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+      <div className="fixed inset-x-0 top-16 bottom-16 bg-[#0a0a0a] overflow-hidden">
+        <div className="max-w-2xl mx-auto h-full flex flex-col px-2 sm:px-0">
+          <Card className="flex-1 flex flex-col border border-[#2a2a2a] bg-[#1a1a1a] overflow-hidden">
+            <CardHeader className="border-b border-[#2a2a2a] py-3 flex-shrink-0">
+              <CardTitle className="flex items-center gap-2 text-white text-base">
+                <MessageSquare className="h-5 w-5 text-primary" />
+                Chat com Suporte
+              </CardTitle>
+              <CardDescription className="text-gray-400 text-sm">
+                Envie sua dúvida e nossa equipe responderá em breve
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col flex-1 p-0 overflow-hidden">
+              {/* Mensagens */}
+              <div className="flex-1 overflow-y-auto p-4 space-y-3">
               {loadingMessages ? (
                 <div className="text-center text-gray-400 py-8">Carregando mensagens...</div>
               ) : messages.length > 0 ? (
@@ -676,11 +676,11 @@ export default function Support() {
                   <p className="text-sm mt-2">Envie uma mensagem para começar a conversa</p>
                 </div>
               )}
-              <div ref={messagesEndRef} />
-            </div>
+                <div ref={messagesEndRef} />
+              </div>
 
-            {/* Formulário de envio */}
-            <div className="border-t border-[#2a2a2a] p-4 flex-shrink-0 bg-[#1a1a1a]">
+              {/* Formulário de envio */}
+              <div className="border-t border-[#2a2a2a] p-3 flex-shrink-0 bg-[#1a1a1a]">
               <form onSubmit={handleSubmit} className="space-y-3">
                 <div className="flex gap-2 items-end">
                   <div className="flex gap-1 flex-shrink-0">
@@ -752,9 +752,10 @@ export default function Support() {
                   }}
                 />
               </form>
-            </div>
-          </CardContent>
-        </Card>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </MainLayout>
   );
