@@ -89,16 +89,18 @@ export default function Chat() {
 
   // Calcular altura disponível - usar visualViewport diretamente quando disponível
   // Isso garante que quando o teclado aparecer, a altura seja ajustada imediatamente
-  const availableHeight = (window.visualViewport?.height || viewportHeight) - 128;
+  // Subtrair apenas a navbar (64px), o bottom nav será coberto pelo teclado
+  const availableHeight = (window.visualViewport?.height || viewportHeight) - 64;
 
   return (
     <MainLayout>
       <div 
         ref={chatContainerRef}
-        className="fixed inset-x-0 top-16 bottom-16 flex flex-col bg-[#0a0a0a] overflow-hidden"
+        className="fixed inset-x-0 top-16 flex flex-col bg-[#0a0a0a] overflow-hidden"
         style={{ 
           height: `${availableHeight}px`,
-          maxHeight: `${availableHeight}px`
+          maxHeight: `${availableHeight}px`,
+          bottom: 0
         }}
       >
         <div className="max-w-2xl mx-auto w-full h-full flex flex-col px-2 sm:px-0">
