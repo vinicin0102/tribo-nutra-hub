@@ -199,22 +199,6 @@ export default function Support() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Prevenir scroll da página no mobile quando estiver no chat
-  useEffect(() => {
-    if (!isSupport && user) {
-      // Apenas para alunos na visualização de chat
-      document.body.style.overflow = 'hidden';
-      document.body.style.position = 'fixed';
-      document.body.style.width = '100%';
-      
-      return () => {
-        document.body.style.overflow = '';
-        document.body.style.position = '';
-        document.body.style.width = '';
-      };
-    }
-  }, [isSupport, user]);
-
   const loadConversations = async () => {
     try {
       const { data: allMessages, error } = await supabase
