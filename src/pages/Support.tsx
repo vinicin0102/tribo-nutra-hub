@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { HelpCircle, Send, ChevronDown, ChevronUp, MessageSquare, ArrowLeft, User, Image as ImageIcon, Mic } from 'lucide-react';
+import { HelpCircle, Send, ChevronDown, ChevronUp, MessageSquare, ArrowLeft, User, Image as ImageIcon, Mic, Play, Pause } from 'lucide-react';
+import { uploadAudio } from '@/lib/audioUpload';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -45,6 +46,9 @@ interface SupportMessage {
   message: string;
   is_from_support: boolean;
   created_at: string;
+  audio_url?: string | null;
+  audio_duration?: number | null;
+  image_url?: string | null;
   profiles?: {
     username: string;
     avatar_url: string | null;
@@ -343,21 +347,33 @@ export default function Support() {
 
       mediaRecorder.onstop = async () => {
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        const audioDuration = Math.round(audioChunksRef.current.length / 10); // Estimativa
         
         // Parar todas as tracks do stream
         stream.getTracks().forEach(track => track.stop());
         
-        // Enviar mensagem indicando áudio gravado
+        // Enviar áudio
         try {
+          if (!user) {
+            toast.error('Você precisa estar logado');
+            return;
+          }
+
+          toast.info('Enviando áudio...');
+
+          // Fazer upload do áudio
+          const audioUrl = await uploadAudio(audioBlob, user.id);
+          const audioDuration = Math.round(audioBlob.size / 16000); // Estimativa baseada no tamanho
+          
           if (isSupport && selectedUserId) {
             // Suporte enviando para aluno
             const { error } = await supabase
               .from('support_chat')
               .insert({
                 user_id: selectedUserId,
-                support_user_id: user?.id,
-                message: `🎤 Áudio gravado (${audioDuration}s)`,
+                support_user_id: user.id,
+                message: '🎤 Mensagem de áudio',
+                audio_url: audioUrl,
+                audio_duration: audioDuration,
                 is_from_support: true,
               });
             
@@ -365,13 +381,15 @@ export default function Support() {
             loadMessages(selectedUserId);
             loadConversations();
             toast.success('Áudio enviado!');
-          } else if (!isSupport && user) {
+          } else if (!isSupport) {
             // Aluno enviando para suporte
             const { error } = await supabase
               .from('support_chat')
               .insert({
                 user_id: user.id,
-                message: `🎤 Áudio gravado (${audioDuration}s)`,
+                message: '🎤 Mensagem de áudio',
+                audio_url: audioUrl,
+                audio_duration: audioDuration,
                 is_from_support: false,
               });
             
@@ -381,7 +399,7 @@ export default function Support() {
           }
         } catch (error: any) {
           console.error('Erro ao enviar áudio:', error);
-          toast.error('Erro ao enviar áudio');
+          toast.error('Erro ao enviar áudio. Tente novamente.');
         }
       };
 
@@ -584,7 +602,18 @@ export default function Support() {
                                 {msg.profiles?.username || 'Usuário'}
                               </p>
                             )}
-                            <p className="text-sm whitespace-pre-wrap">{msg.message}</p>
+                            {msg.audio_url ? (
+                              <div className="space-y-2">
+                                <p className="text-sm">{msg.message}</p>
+                                <audio controls className="w-full max-w-xs">
+                                  <source src={msg.audio_url} type="audio/webm" />
+                                  <source src={msg.audio_url} type="audio/mp4" />
+                                  Seu navegador não suporta áudio.
+                                </audio>
+                              </div>
+                            ) : (
+                              <p className="text-sm whitespace-pre-wrap">{msg.message}</p>
+                            )}
                             <p className={cn(
                               'text-[10px] mt-1',
                               msg.is_from_support ? 'text-white/70' : 'text-gray-400'
@@ -748,7 +777,18 @@ export default function Support() {
                           Você
                         </p>
                       )}
-                      <p className="text-sm whitespace-pre-wrap">{msg.message}</p>
+                      {msg.audio_url ? (
+                        <div className="space-y-2">
+                          <p className="text-sm">{msg.message}</p>
+                          <audio controls className="w-full max-w-xs">
+                            <source src={msg.audio_url} type="audio/webm" />
+                            <source src={msg.audio_url} type="audio/mp4" />
+                            Seu navegador não suporta áudio.
+                          </audio>
+                        </div>
+                      ) : (
+                        <p className="text-sm whitespace-pre-wrap">{msg.message}</p>
+                      )}
                       <p className={cn(
                         'text-[10px] mt-1',
                         msg.is_from_support ? 'text-white/70' : 'text-gray-400'
