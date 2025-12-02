@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Zap } from 'lucide-react';
+import { Zap, Copy, Check } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -8,6 +8,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 
 interface CopyAIDialogProps {
@@ -19,6 +20,8 @@ export function CopyAIDialog({ open, onOpenChange }: CopyAIDialogProps) {
   const [productName, setProductName] = useState('');
   const [targetAudience, setTargetAudience] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [generatedCopy, setGeneratedCopy] = useState('');
+  const [copied, setCopied] = useState(false);
 
   const handleGenerate = async () => {
     if (!productName.trim()) {
@@ -27,13 +30,62 @@ export function CopyAIDialog({ open, onOpenChange }: CopyAIDialogProps) {
     }
 
     setIsGenerating(true);
+    setGeneratedCopy('');
     
-    // Simular geração (aqui você pode integrar com a API real)
+    // Simular geração de copy (aqui você pode integrar com uma API de IA real)
     setTimeout(() => {
+      const audienceText = targetAudience ? ` para ${targetAudience}` : '';
+      
+      const copy = `🔥 ATENÇÃO${audienceText}! 🔥
+
+Você está cansado de tentar sem resultados? Chegou a hora de conhecer ${productName}!
+
+✨ O QUE TORNA ${productName.toUpperCase()} ESPECIAL?
+
+${productName} foi desenvolvido especialmente${audienceText} que buscam resultados reais e duradouros.
+
+💪 BENEFÍCIOS COMPROVADOS:
+• Resultados visíveis em poucos dias
+• Fórmula exclusiva e natural
+• Aprovado por milhares de clientes satisfeitos
+• Garantia de satisfação ou seu dinheiro de volta
+
+🎯 POR QUE ESCOLHER ${productName.toUpperCase()}?
+
+Diferente de outros produtos no mercado, ${productName} oferece uma solução completa e eficaz. Nossa fórmula foi testada e aprovada, garantindo que você alcance seus objetivos.
+
+⚡ OFERTA ESPECIAL - POR TEMPO LIMITADO!
+
+Aproveite agora nosso desconto exclusivo e transforme sua vida!
+
+👉 Não perca essa oportunidade única!
+
+🛡️ GARANTIA TOTAL: Se não ficar satisfeito, devolvemos 100% do seu dinheiro!
+
+#${productName.replace(/\s+/g, '')} #Transformação #Resultados`;
+
+      setGeneratedCopy(copy);
       setIsGenerating(false);
       toast.success('Copy gerada com sucesso!');
-      // Aqui você pode abrir um modal com o resultado ou copiar para área de transferência
     }, 2000);
+  };
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(generatedCopy);
+      setCopied(true);
+      toast.success('Copy copiada para a área de transferência!');
+      setTimeout(() => setCopied(false), 2000);
+    } catch (error) {
+      toast.error('Erro ao copiar copy');
+    }
+  };
+
+  const handleReset = () => {
+    setProductName('');
+    setTargetAudience('');
+    setGeneratedCopy('');
+    setCopied(false);
   };
 
   return (
@@ -98,6 +150,55 @@ export function CopyAIDialog({ open, onOpenChange }: CopyAIDialogProps) {
               {isGenerating ? 'Gerando Copy...' : 'Gerar Copy Completa'}
             </Button>
           </div>
+
+          {/* Resultado da Copy Gerada */}
+          {generatedCopy && (
+            <div className="bg-[#2a2a2a] rounded-lg p-6 space-y-4 animate-fade-in">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-white">Copy Gerada</h3>
+                <Button
+                  onClick={handleCopy}
+                  variant="outline"
+                  size="sm"
+                  className="border-primary text-primary hover:bg-primary hover:text-white"
+                >
+                  {copied ? (
+                    <>
+                      <Check className="h-4 w-4 mr-2" />
+                      Copiado!
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="h-4 w-4 mr-2" />
+                      Copiar Copy
+                    </>
+                  )}
+                </Button>
+              </div>
+              
+              <Textarea
+                value={generatedCopy}
+                readOnly
+                className="min-h-[400px] bg-[#1a1a1a] border-[#3a3a3a] text-white font-mono text-sm resize-none"
+              />
+
+              <div className="flex gap-3">
+                <Button
+                  onClick={handleReset}
+                  variant="outline"
+                  className="flex-1 border-[#3a3a3a] text-white hover:bg-[#3a3a3a]"
+                >
+                  Gerar Nova Copy
+                </Button>
+                <Button
+                  onClick={() => onOpenChange(false)}
+                  className="flex-1 bg-primary hover:bg-primary/90"
+                >
+                  Fechar
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>

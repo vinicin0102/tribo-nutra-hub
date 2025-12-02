@@ -71,10 +71,26 @@ export default function Support() {
   const [loadingMessages, setLoadingMessages] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Carregar conversas para suporte
+  // Carregar conversas para suporte e configurar realtime
   useEffect(() => {
     if (isSupport) {
       loadConversations();
+      
+      // Subscribe para atualizações em tempo real das conversas
+      const conversationsChannel = supabase
+        .channel('support-conversations')
+        .on('postgres_changes', 
+          { event: '*', schema: 'public', table: 'support_chat' },
+          (payload) => {
+            console.log('Nova mensagem no suporte:', payload);
+            loadConversations();
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(conversationsChannel);
+      };
     }
   }, [isSupport]);
 
@@ -82,37 +98,50 @@ export default function Support() {
   useEffect(() => {
     if (isSupport && selectedUserId) {
       loadMessages(selectedUserId);
-      // Subscribe para atualizações em tempo real
-      const channel = supabase
-        .channel(`support-chat-${selectedUserId}`)
+      
+      // Subscribe para atualizações em tempo real das mensagens específicas
+      const messagesChannel = supabase
+        .channel(`support-messages-${selectedUserId}`)
         .on('postgres_changes', 
-          { event: '*', schema: 'public', table: 'support_chat', filter: `user_id=eq.${selectedUserId}` },
-          () => {
+          { 
+            event: '*', 
+            schema: 'public', 
+            table: 'support_chat', 
+            filter: `user_id=eq.${selectedUserId}` 
+          },
+          (payload) => {
+            console.log('Nova mensagem do usuário:', payload);
             loadMessages(selectedUserId);
           }
         )
         .subscribe();
 
       return () => {
-        supabase.removeChannel(channel);
+        supabase.removeChannel(messagesChannel);
       };
     } else if (!isSupport && user) {
       // Aluno: carregar suas próprias mensagens
       loadUserMessages();
       
-      // Subscribe para atualizações em tempo real
-      const channel = supabase
-        .channel(`user-support-chat-${user.id}`)
+      // Subscribe para atualizações em tempo real (aluno)
+      const userMessagesChannel = supabase
+        .channel(`user-support-messages-${user.id}`)
         .on('postgres_changes', 
-          { event: '*', schema: 'public', table: 'support_chat', filter: `user_id=eq.${user.id}` },
-          () => {
+          { 
+            event: '*', 
+            schema: 'public', 
+            table: 'support_chat', 
+            filter: `user_id=eq.${user.id}` 
+          },
+          (payload) => {
+            console.log('Nova mensagem para o aluno:', payload);
             loadUserMessages();
           }
         )
         .subscribe();
 
       return () => {
-        supabase.removeChannel(channel);
+        supabase.removeChannel(userMessagesChannel);
       };
     }
   }, [isSupport, selectedUserId, user]);

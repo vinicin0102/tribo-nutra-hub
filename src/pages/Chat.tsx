@@ -254,6 +254,7 @@ export default function Chat() {
             </form>
           </CardContent>
         </Card>
+        </div>
       </div>
     </MainLayout>
   );
