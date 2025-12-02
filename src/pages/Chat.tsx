@@ -87,26 +87,11 @@ export default function Chat() {
     }
   };
 
-  // Calcular altura disponível - usar visualViewport diretamente quando disponível
-  // Quando o teclado não está aberto, considerar navbar + bottom nav (128px)
-  // Quando o teclado está aberto, considerar apenas navbar (64px)
-  const currentViewportHeight = window.visualViewport?.height || viewportHeight;
-  const windowHeight = window.innerHeight;
-  
-  // Se a altura do viewport for menor que a altura da janela, o teclado está aberto
-  const isKeyboardOpen = currentViewportHeight < windowHeight - 100;
-  const availableHeight = currentViewportHeight - (isKeyboardOpen ? 64 : 128);
-
   return (
     <MainLayout>
       <div 
         ref={chatContainerRef}
-        className="fixed inset-x-0 top-16 flex flex-col bg-[#0a0a0a] overflow-hidden"
-        style={{ 
-          height: `${availableHeight}px`,
-          maxHeight: `${availableHeight}px`,
-          bottom: isKeyboardOpen ? 0 : '64px'
-        }}
+        className="fixed inset-x-0 top-16 bottom-16 flex flex-col bg-[#0a0a0a] overflow-hidden"
       >
         <div className="max-w-2xl mx-auto w-full h-full flex flex-col px-2 sm:px-0">
           <Card className="flex-1 flex flex-col border border-[#2a2a2a] bg-[#1a1a1a] min-h-0 overflow-hidden h-full">
