@@ -89,7 +89,7 @@ export default function Chat() {
 
   return (
     <MainLayout>
-      <div className="max-w-2xl mx-auto h-[calc(100vh-8rem)] flex flex-col px-2 sm:px-0">
+      <div className="max-w-2xl mx-auto h-full flex flex-col px-2 sm:px-0">
         <Card className="flex-1 flex flex-col border border-[#2a2a2a] bg-[#1a1a1a] overflow-hidden">
           <CardHeader className="border-b border-[#2a2a2a] py-3 flex-shrink-0">
             <CardTitle className="flex items-center gap-2 text-white text-base">
