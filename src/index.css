@@ -111,6 +111,20 @@
   body {
     @apply bg-background text-foreground font-sans antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
+    touch-action: pan-x pan-y;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  
+  /* Desabilitar zoom por pinch em todos os elementos */
+  * {
+    touch-action: manipulation;
+  }
+  
+  /* Permitir seleção de texto em inputs e textareas */
+  input, textarea, [contenteditable] {
+    -webkit-user-select: text;
+    user-select: text;
   }
 
   h1, h2, h3, h4, h5, h6 {
