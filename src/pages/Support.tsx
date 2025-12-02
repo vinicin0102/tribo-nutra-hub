@@ -351,56 +351,66 @@ export default function Support() {
         // Parar todas as tracks do stream
         stream.getTracks().forEach(track => track.stop());
         
-        // Enviar áudio
-        try {
-          if (!user) {
-            toast.error('Você precisa estar logado');
-            return;
-          }
-
-          toast.info('Enviando áudio...');
-
-          // Fazer upload do áudio
-          const audioUrl = await uploadAudio(audioBlob, user.id);
-          const audioDuration = Math.round(audioBlob.size / 16000); // Estimativa baseada no tamanho
+        // Converter áudio para base64 para envio temporário
+        const reader = new FileReader();
+        reader.onloadend = async () => {
+          const base64Audio = reader.result as string;
+          const audioDuration = Math.round(audioBlob.size / 16000); // Estimativa
           
-          if (isSupport && selectedUserId) {
-            // Suporte enviando para aluno
-            const { error } = await supabase
-              .from('support_chat')
-              .insert({
-                user_id: selectedUserId,
-                support_user_id: user.id,
-                message: '🎤 Mensagem de áudio',
-                audio_url: audioUrl,
-                audio_duration: audioDuration,
-                is_from_support: true,
-              });
+          try {
+            if (!user) {
+              toast.error('Você precisa estar logado');
+              return;
+            }
+
+            toast.info('Enviando áudio...');
             
-            if (error) throw error;
-            loadMessages(selectedUserId);
-            loadConversations();
-            toast.success('Áudio enviado!');
-          } else if (!isSupport) {
-            // Aluno enviando para suporte
-            const { error } = await supabase
-              .from('support_chat')
-              .insert({
-                user_id: user.id,
-                message: '🎤 Mensagem de áudio',
-                audio_url: audioUrl,
-                audio_duration: audioDuration,
-                is_from_support: false,
-              });
-            
-            if (error) throw error;
-            loadUserMessages();
-            toast.success('Áudio enviado!');
+            if (isSupport && selectedUserId) {
+              // Suporte enviando para aluno
+              const { error } = await supabase
+                .from('support_chat')
+                .insert({
+                  user_id: selectedUserId,
+                  support_user_id: user.id,
+                  message: '🎤 Mensagem de áudio',
+                  audio_url: base64Audio,
+                  audio_duration: audioDuration,
+                  is_from_support: true,
+                });
+              
+              if (error) {
+                console.error('Erro SQL:', error);
+                throw error;
+              }
+              loadMessages(selectedUserId);
+              loadConversations();
+              toast.success('Áudio enviado!');
+            } else if (!isSupport) {
+              // Aluno enviando para suporte
+              const { error } = await supabase
+                .from('support_chat')
+                .insert({
+                  user_id: user.id,
+                  message: '🎤 Mensagem de áudio',
+                  audio_url: base64Audio,
+                  audio_duration: audioDuration,
+                  is_from_support: false,
+                });
+              
+              if (error) {
+                console.error('Erro SQL:', error);
+                throw error;
+              }
+              loadUserMessages();
+              toast.success('Áudio enviado!');
+            }
+          } catch (error: any) {
+            console.error('Erro ao enviar áudio:', error);
+            toast.error(`Erro: ${error?.message || 'Tente novamente'}`);
           }
-        } catch (error: any) {
-          console.error('Erro ao enviar áudio:', error);
-          toast.error('Erro ao enviar áudio. Tente novamente.');
-        }
+        };
+        
+        reader.readAsDataURL(audioBlob);
       };
 
       mediaRecorder.start();
