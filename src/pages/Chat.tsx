@@ -75,6 +75,23 @@ export default function Chat() {
     }
   }, []);
 
+  // Prevenir scroll da página quando o teclado abrir
+  useEffect(() => {
+    // Bloquear scroll do body quando o componente montar
+    document.body.style.overflow = 'hidden';
+    document.body.style.position = 'fixed';
+    document.body.style.width = '100%';
+    document.body.style.height = '100%';
+    
+    return () => {
+      // Restaurar scroll quando o componente desmontar
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+      document.body.style.height = '';
+    };
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newMessage.trim()) return;
@@ -89,8 +106,9 @@ export default function Chat() {
 
   return (
     <MainLayout>
-      <div className="max-w-2xl mx-auto h-full flex flex-col px-2 sm:px-0">
-        <Card className="flex-1 flex flex-col border border-[#2a2a2a] bg-[#1a1a1a] overflow-hidden">
+      <div className="fixed inset-0 top-16 bottom-0 bg-[#0a0a0a] overflow-hidden">
+        <div className="max-w-2xl mx-auto h-full flex flex-col px-2 sm:px-0">
+          <Card className="flex-1 flex flex-col border border-[#2a2a2a] bg-[#1a1a1a] overflow-hidden mb-16">
           <CardHeader className="border-b border-[#2a2a2a] py-3 flex-shrink-0">
             <CardTitle className="flex items-center gap-2 text-white text-base">
               <div className="bg-primary rounded-lg p-2">
@@ -242,6 +260,7 @@ export default function Chat() {
             </form>
           </CardContent>
         </Card>
+        </div>
       </div>
     </MainLayout>
   );
