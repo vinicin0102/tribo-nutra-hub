@@ -89,16 +89,8 @@ export default function Chat() {
 
   return (
     <MainLayout>
-      <div 
-        ref={chatContainerRef}
-        className="fixed inset-x-0 top-16 bottom-16 flex flex-col bg-[#0a0a0a]"
-        style={{ 
-          height: 'calc(100vh - 8rem)',
-          maxHeight: 'calc(100vh - 8rem)'
-        }}
-      >
-        <div className="max-w-2xl mx-auto w-full h-full flex flex-col px-2 sm:px-0">
-          <Card className="flex-1 flex flex-col border border-[#2a2a2a] bg-[#1a1a1a] min-h-0 overflow-hidden">
+      <div className="max-w-2xl mx-auto h-[calc(100vh-8rem)] flex flex-col px-2 sm:px-0">
+        <Card className="flex-1 flex flex-col border border-[#2a2a2a] bg-[#1a1a1a] overflow-hidden">
           <CardHeader className="border-b border-[#2a2a2a] py-3 flex-shrink-0">
             <CardTitle className="flex items-center gap-2 text-white text-base">
               <div className="bg-primary rounded-lg p-2">
@@ -107,8 +99,8 @@ export default function Chat() {
               Chat da Tribo
             </CardTitle>
           </CardHeader>
-          <CardContent className="flex flex-col flex-1 min-h-0 p-0 overflow-hidden">
-            <div className="flex-1 overflow-y-auto p-4 space-y-3 min-h-0">
+          <CardContent className="flex flex-col flex-1 p-0 overflow-hidden">
+            <div className="flex-1 overflow-y-auto p-4 space-y-3">
               {isLoading ? (
                 <div className="space-y-3">
                   {[1, 2, 3, 4, 5].map((i) => (
@@ -220,7 +212,7 @@ export default function Chat() {
 
             <form 
               onSubmit={handleSubmit} 
-              className="border-t border-[#2a2a2a] p-4 flex gap-2 flex-shrink-0 bg-[#1a1a1a]"
+              className="border-t border-[#2a2a2a] p-3 flex gap-2 flex-shrink-0 bg-[#1a1a1a]"
             >
               <Input
                 placeholder="Digite sua mensagem..."
@@ -250,7 +242,6 @@ export default function Chat() {
             </form>
           </CardContent>
         </Card>
-        </div>
       </div>
     </MainLayout>
   );
