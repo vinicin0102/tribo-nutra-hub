@@ -586,8 +586,8 @@ export default function Support() {
                     </div>
                   </div>
                 </CardHeader>
-                <CardContent className="flex flex-col h-[calc(100vh-20rem)] p-0">
-                  <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                <CardContent className="flex flex-col h-[calc(100vh-20rem)] p-0" style={{ touchAction: 'manipulation' }}>
+                  <div className="flex-1 overflow-y-auto p-4 space-y-3" style={{ touchAction: 'manipulation' }}>
                     {loadingMessages ? (
                       <div className="text-center text-gray-400 py-8">Carregando mensagens...</div>
                     ) : messages.length > 0 ? (
@@ -746,9 +746,9 @@ export default function Support() {
                 Envie sua dúvida e nossa equipe responderá em breve
               </CardDescription>
             </CardHeader>
-            <CardContent className="flex flex-col flex-1 p-0 overflow-hidden">
+            <CardContent className="flex flex-col flex-1 p-0 overflow-hidden" style={{ touchAction: 'manipulation' }}>
               {/* Mensagens */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-3">
+              <div className="flex-1 overflow-y-auto p-4 space-y-3" style={{ touchAction: 'manipulation' }}>
               {loadingMessages ? (
                 <div className="text-center text-gray-400 py-8">Carregando mensagens...</div>
               ) : messages.length > 0 ? (

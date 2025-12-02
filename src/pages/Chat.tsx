@@ -117,8 +117,8 @@ export default function Chat() {
               Chat da Tribo
             </CardTitle>
           </CardHeader>
-          <CardContent className="flex flex-col flex-1 p-0 overflow-hidden">
-            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+          <CardContent className="flex flex-col flex-1 p-0 overflow-hidden" style={{ touchAction: 'manipulation' }}>
+            <div className="flex-1 overflow-y-auto p-4 space-y-3" style={{ touchAction: 'manipulation' }}>
               {isLoading ? (
                 <div className="space-y-3">
                   {[1, 2, 3, 4, 5].map((i) => (
