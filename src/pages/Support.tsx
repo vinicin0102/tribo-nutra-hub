@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { HelpCircle, Send, ChevronDown, ChevronUp, MessageSquare, ArrowLeft, User } from 'lucide-react';
+import { HelpCircle, Send, ChevronDown, ChevronUp, MessageSquare, ArrowLeft, User, Image as ImageIcon, Mic } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -70,6 +70,8 @@ export default function Support() {
   const [replyMessage, setReplyMessage] = useState('');
   const [loadingMessages, setLoadingMessages] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const audioInputRef = useRef<HTMLInputElement>(null);
 
   // Carregar conversas para suporte e configurar realtime
   useEffect(() => {
@@ -196,6 +198,22 @@ export default function Support() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  // Prevenir scroll da página no mobile quando estiver no chat
+  useEffect(() => {
+    if (!isSupport && user) {
+      // Apenas para alunos na visualização de chat
+      document.body.style.overflow = 'hidden';
+      document.body.style.position = 'fixed';
+      document.body.style.width = '100%';
+      
+      return () => {
+        document.body.style.overflow = '';
+        document.body.style.position = '';
+        document.body.style.width = '';
+      };
+    }
+  }, [isSupport, user]);
 
   const loadConversations = async () => {
     try {
@@ -463,10 +481,10 @@ export default function Support() {
                     </div>
                   </div>
                 </CardHeader>
-                <CardContent className="p-0">
-                  <div className="h-[400px] overflow-y-auto p-4 space-y-3">
+                <CardContent className="flex flex-col h-[calc(100vh-20rem)] p-0">
+                  <div className="flex-1 overflow-y-auto p-4 space-y-3">
                     {loadingMessages ? (
-                      <div className="text-center text-gray-400">Carregando mensagens...</div>
+                      <div className="text-center text-gray-400 py-8">Carregando mensagens...</div>
                     ) : messages.length > 0 ? (
                       messages.map((msg) => (
                         <div
@@ -516,13 +534,33 @@ export default function Support() {
                     <div ref={messagesEndRef} />
                   </div>
 
-                  <div className="border-t border-[#2a2a2a] p-4">
-                    <div className="flex gap-2">
+                  <div className="border-t border-[#2a2a2a] p-4 flex-shrink-0 bg-[#1a1a1a]">
+                    <div className="flex gap-2 items-end">
+                      <div className="flex gap-1 flex-shrink-0">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => imageInputRef.current?.click()}
+                          className="text-gray-400 hover:text-white h-9 w-9"
+                        >
+                          <ImageIcon className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => audioInputRef.current?.click()}
+                          className="text-gray-400 hover:text-white h-9 w-9"
+                        >
+                          <Mic className="h-4 w-4" />
+                        </Button>
+                      </div>
                       <Textarea
                         placeholder="Digite sua resposta..."
                         value={replyMessage}
                         onChange={(e) => setReplyMessage(e.target.value)}
-                        className="flex-1 bg-[#2a2a2a] border-[#3a3a3a] text-white placeholder:text-gray-500 min-h-[80px] resize-none"
+                        className="flex-1 bg-[#2a2a2a] border-[#3a3a3a] text-white placeholder:text-gray-500 min-h-[60px] max-h-[120px] resize-none"
                         onKeyDown={(e) => {
                           if (e.key === 'Enter' && !e.shiftKey) {
                             e.preventDefault();
@@ -533,11 +571,38 @@ export default function Support() {
                       <Button
                         onClick={handleSendReply}
                         disabled={!replyMessage.trim()}
-                        className="bg-primary hover:bg-primary/90"
+                        className="bg-primary hover:bg-primary/90 h-9 w-9 p-0 flex-shrink-0"
+                        size="icon"
                       >
                         <Send className="h-4 w-4" />
                       </Button>
                     </div>
+                    <input
+                      ref={imageInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          toast.info('Envio de imagens em desenvolvimento');
+                          // TODO: Implementar upload de imagem
+                        }
+                      }}
+                    />
+                    <input
+                      ref={audioInputRef}
+                      type="file"
+                      accept="audio/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          toast.info('Envio de áudio em desenvolvimento');
+                          // TODO: Implementar upload de áudio
+                        }
+                      }}
+                    />
                   </div>
                 </CardContent>
               </Card>
@@ -602,18 +667,18 @@ export default function Support() {
 
         {/* Chat com Suporte */}
         <Card className="border border-[#2a2a2a] bg-[#1a1a1a]">
-          <CardHeader className="border-b border-[#2a2a2a]">
-            <CardTitle className="flex items-center gap-2 text-white">
+          <CardHeader className="border-b border-[#2a2a2a] py-3">
+            <CardTitle className="flex items-center gap-2 text-white text-base">
               <MessageSquare className="h-5 w-5 text-primary" />
               Chat com Suporte
             </CardTitle>
-            <CardDescription className="text-gray-400">
+            <CardDescription className="text-gray-400 text-sm">
               Envie sua dúvida e nossa equipe responderá em breve
             </CardDescription>
           </CardHeader>
-          <CardContent className="p-0">
+          <CardContent className="flex flex-col h-[calc(100vh-28rem)] sm:h-[400px] p-0">
             {/* Mensagens */}
-            <div className="h-[400px] overflow-y-auto p-4 space-y-3">
+            <div className="flex-1 overflow-y-auto p-4 space-y-3">
               {loadingMessages ? (
                 <div className="text-center text-gray-400 py-8">Carregando mensagens...</div>
               ) : messages.length > 0 ? (
@@ -679,24 +744,34 @@ export default function Support() {
             </div>
 
             {/* Formulário de envio */}
-            <div className="border-t border-[#2a2a2a] p-4">
+            <div className="border-t border-[#2a2a2a] p-4 flex-shrink-0 bg-[#1a1a1a]">
               <form onSubmit={handleSubmit} className="space-y-3">
-                <div className="space-y-2">
-                  <Label htmlFor="subject" className="text-white text-sm">Assunto (opcional)</Label>
-                  <Input
-                    id="subject"
-                    placeholder="Ex: Problema com login, Dúvida sobre pontos..."
-                    value={formData.subject}
-                    onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                    className="bg-[#2a2a2a] border-[#3a3a3a] text-white placeholder:text-gray-500"
-                  />
-                </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 items-end">
+                  <div className="flex gap-1 flex-shrink-0">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => imageInputRef.current?.click()}
+                      className="text-gray-400 hover:text-white h-9 w-9"
+                    >
+                      <ImageIcon className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => audioInputRef.current?.click()}
+                      className="text-gray-400 hover:text-white h-9 w-9"
+                    >
+                      <Mic className="h-4 w-4" />
+                    </Button>
+                  </div>
                   <Textarea
                     placeholder="Digite sua mensagem..."
                     value={formData.message}
                     onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                    className="flex-1 bg-[#2a2a2a] border-[#3a3a3a] text-white placeholder:text-gray-500 min-h-[80px] resize-none"
+                    className="flex-1 bg-[#2a2a2a] border-[#3a3a3a] text-white placeholder:text-gray-500 min-h-[60px] max-h-[120px] resize-none"
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && !e.shiftKey) {
                         e.preventDefault();
@@ -708,11 +783,38 @@ export default function Support() {
                   <Button
                     type="submit"
                     disabled={loading || !formData.message.trim()}
-                    className="bg-primary hover:bg-primary/90"
+                    className="bg-primary hover:bg-primary/90 h-9 w-9 p-0 flex-shrink-0"
+                    size="icon"
                   >
                     <Send className="h-4 w-4" />
                   </Button>
                 </div>
+                <input
+                  ref={imageInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      toast.info('Envio de imagens em desenvolvimento');
+                      // TODO: Implementar upload de imagem
+                    }
+                  }}
+                />
+                <input
+                  ref={audioInputRef}
+                  type="file"
+                  accept="audio/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      toast.info('Envio de áudio em desenvolvimento');
+                      // TODO: Implementar upload de áudio
+                    }
+                  }}
+                />
               </form>
             </div>
           </CardContent>
