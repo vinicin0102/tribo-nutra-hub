@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { HelpCircle, Send, ChevronDown, ChevronUp, MessageSquare, ArrowLeft, User, Image as ImageIcon, Mic, Play, Pause } from 'lucide-react';
-import { uploadAudio } from '@/lib/audioUpload';
+import { HelpCircle, Send, ChevronDown, ChevronUp, MessageSquare, ArrowLeft, User, Image as ImageIcon, Mic } from 'lucide-react';
+import { AudioPlayer } from '@/components/chat/AudioPlayer';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -613,14 +613,11 @@ export default function Support() {
                               </p>
                             )}
                             {msg.audio_url ? (
-                              <div className="space-y-2">
-                                <p className="text-sm">{msg.message}</p>
-                                <audio controls className="w-full max-w-xs">
-                                  <source src={msg.audio_url} type="audio/webm" />
-                                  <source src={msg.audio_url} type="audio/mp4" />
-                                  Seu navegador não suporta áudio.
-                                </audio>
-                              </div>
+                              <AudioPlayer 
+                                audioUrl={msg.audio_url} 
+                                duration={msg.audio_duration || undefined}
+                                isOwn={msg.is_from_support}
+                              />
                             ) : (
                               <p className="text-sm whitespace-pre-wrap">{msg.message}</p>
                             )}
@@ -788,14 +785,11 @@ export default function Support() {
                         </p>
                       )}
                       {msg.audio_url ? (
-                        <div className="space-y-2">
-                          <p className="text-sm">{msg.message}</p>
-                          <audio controls className="w-full max-w-xs">
-                            <source src={msg.audio_url} type="audio/webm" />
-                            <source src={msg.audio_url} type="audio/mp4" />
-                            Seu navegador não suporta áudio.
-                          </audio>
-                        </div>
+                        <AudioPlayer 
+                          audioUrl={msg.audio_url} 
+                          duration={msg.audio_duration || undefined}
+                          isOwn={!msg.is_from_support}
+                        />
                       ) : (
                         <p className="text-sm whitespace-pre-wrap">{msg.message}</p>
                       )}
