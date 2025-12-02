@@ -13,7 +13,7 @@ SET role = 'support', username = 'suporte', full_name = 'Equipe de Suporte'
 WHERE user_id = (SELECT id FROM auth.users WHERE email = 'suporte@gmail.com');
 
 -- Confirmar email
-UPDATE auth.users
+UPDATE auth.usersh
 SET email_confirmed_at = NOW()
 WHERE email = 'suporte@gmail.com' AND email_confirmed_at IS NULL;
 

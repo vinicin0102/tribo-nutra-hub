@@ -88,9 +88,14 @@ export default function Chat() {
   };
 
   // Calcular altura disponível - usar visualViewport diretamente quando disponível
-  // Isso garante que quando o teclado aparecer, a altura seja ajustada imediatamente
-  // Subtrair apenas a navbar (64px), o bottom nav será coberto pelo teclado
-  const availableHeight = (window.visualViewport?.height || viewportHeight) - 64;
+  // Quando o teclado não está aberto, considerar navbar + bottom nav (128px)
+  // Quando o teclado está aberto, considerar apenas navbar (64px)
+  const currentViewportHeight = window.visualViewport?.height || viewportHeight;
+  const windowHeight = window.innerHeight;
+  
+  // Se a altura do viewport for menor que a altura da janela, o teclado está aberto
+  const isKeyboardOpen = currentViewportHeight < windowHeight - 100;
+  const availableHeight = currentViewportHeight - (isKeyboardOpen ? 64 : 128);
 
   return (
     <MainLayout>
@@ -100,7 +105,7 @@ export default function Chat() {
         style={{ 
           height: `${availableHeight}px`,
           maxHeight: `${availableHeight}px`,
-          bottom: 0
+          bottom: isKeyboardOpen ? 0 : '64px'
         }}
       >
         <div className="max-w-2xl mx-auto w-full h-full flex flex-col px-2 sm:px-0">
