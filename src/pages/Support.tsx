@@ -601,54 +601,6 @@ export default function Support() {
   return (
     <MainLayout>
       <div className="max-w-4xl mx-auto space-y-6 px-4 pb-20">
-        {/* Header */}
-        <div className="text-center mb-6">
-          <div className="inline-flex items-center justify-center bg-primary rounded-2xl p-4 mb-4">
-            <HelpCircle className="h-8 w-8 text-white" />
-          </div>
-          <h1 className="font-display text-2xl font-bold text-white mb-2">Central de Ajuda</h1>
-          <p className="text-gray-400">
-            Converse com nossa equipe de suporte
-          </p>
-        </div>
-
-        {/* FAQ (colapsável) */}
-        <Card className="border border-[#2a2a2a] bg-[#1a1a1a]">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-white">
-              <MessageSquare className="h-5 w-5 text-primary" />
-              Perguntas Frequentes
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="divide-y divide-[#2a2a2a]">
-              {faqs.map((faq, index) => (
-                <div key={index} className="p-4">
-                  <button
-                    onClick={() => setExpandedFaq(expandedFaq === index ? null : index)}
-                    className="flex items-center justify-between w-full text-left"
-                  >
-                    <span className="font-medium text-sm pr-4 text-white">{faq.question}</span>
-                    {expandedFaq === index ? (
-                      <ChevronUp className="h-4 w-4 text-gray-400 flex-shrink-0" />
-                    ) : (
-                      <ChevronDown className="h-4 w-4 text-gray-400 flex-shrink-0" />
-                    )}
-                  </button>
-                  <div
-                    className={cn(
-                      'overflow-hidden transition-all duration-200',
-                      expandedFaq === index ? 'mt-3 max-h-40' : 'max-h-0'
-                    )}
-                  >
-                    <p className="text-sm text-gray-400">{faq.answer}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
         {/* Chat com Suporte */}
         <Card className="border border-[#2a2a2a] bg-[#1a1a1a]">
           <CardHeader className="border-b border-[#2a2a2a] py-3">
