@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Send, Trash2 } from 'lucide-react';
+import { Send, Trash2, Mic } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { MainLayout } from '@/components/layout/MainLayout';
@@ -11,6 +11,7 @@ import { useChatMessages, useSendMessage } from '@/hooks/useChat';
 import { useDeleteChatMessage, useIsSupport } from '@/hooks/useSupport';
 import { useAuth } from '@/contexts/AuthContext';
 import { Skeleton } from '@/components/ui/skeleton';
+import { AudioPlayer } from '@/components/chat/AudioPlayer';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,6 +25,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function Chat() {
   const { user } = useAuth();
@@ -37,6 +39,9 @@ export default function Chat() {
   );
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
 
   const handleDelete = async (messageId: string) => {
     try {
@@ -91,6 +96,88 @@ export default function Chat() {
       document.body.style.height = '';
     };
   }, []);
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        
+        // Parar todas as tracks do stream
+        stream.getTracks().forEach(track => track.stop());
+        
+        // Converter áudio para base64
+        const reader = new FileReader();
+        reader.onloadend = async () => {
+          const base64Audio = reader.result as string;
+          const audioDuration = Math.round(audioBlob.size / 16000);
+          
+          try {
+            if (!user) {
+              toast.error('Você precisa estar logado');
+              return;
+            }
+
+            toast.info('Enviando áudio...');
+            
+            // Enviar mensagem com áudio
+            const { error } = await supabase
+              .from('chat_messages')
+              .insert({
+                user_id: user.id,
+                content: '🎤 Mensagem de áudio',
+                audio_url: base64Audio,
+                audio_duration: audioDuration,
+              });
+            
+            if (error) {
+              console.error('Erro SQL:', error);
+              throw error;
+            }
+            
+            toast.success('Áudio enviado!');
+          } catch (error: any) {
+            console.error('Erro ao enviar áudio:', error);
+            toast.error(`Erro: ${error?.message || 'Tente novamente'}`);
+          }
+        };
+        
+        reader.readAsDataURL(audioBlob);
+      };
+
+      mediaRecorder.start();
+      setIsRecording(true);
+      toast.info('Gravando áudio... Clique novamente para parar');
+    } catch (error) {
+      console.error('Erro ao acessar microfone:', error);
+      toast.error('Não foi possível acessar o microfone');
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+    }
+  };
+
+  const handleAudioClick = () => {
+    if (isRecording) {
+      stopRecording();
+    } else {
+      startRecording();
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -197,7 +284,15 @@ export default function Chat() {
                               {message.profiles?.username || 'Usuário'}
                             </p>
                           )}
-                          <p className="text-sm">{message.content}</p>
+                          {(message as any).audio_url ? (
+                            <AudioPlayer 
+                              audioUrl={(message as any).audio_url} 
+                              duration={(message as any).audio_duration || undefined}
+                              isOwn={isOwn}
+                            />
+                          ) : (
+                            <p className="text-sm">{message.content}</p>
+                          )}
                           <p className={cn(
                             'text-[10px] mt-1',
                             isOwn ? 'text-primary-foreground/70' : 'text-gray-400'
@@ -230,8 +325,22 @@ export default function Chat() {
 
             <form 
               onSubmit={handleSubmit} 
-              className="border-t border-[#2a2a2a] p-3 flex gap-2 flex-shrink-0 bg-[#1a1a1a]"
+              className="border-t border-[#2a2a2a] p-3 flex gap-2 items-center flex-shrink-0 bg-[#1a1a1a]"
             >
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={handleAudioClick}
+                className={cn(
+                  "h-9 w-9 flex-shrink-0",
+                  isRecording 
+                    ? "text-red-500 hover:text-red-600 animate-pulse" 
+                    : "text-gray-400 hover:text-white"
+                )}
+              >
+                <Mic className="h-4 w-4" />
+              </Button>
               <Input
                 placeholder="Digite sua mensagem..."
                 value={newMessage}
@@ -254,6 +363,8 @@ export default function Chat() {
               <Button 
                 type="submit" 
                 disabled={sendMessage.isPending || !newMessage.trim()}
+                size="icon"
+                className="h-9 w-9 flex-shrink-0"
               >
                 <Send className="h-4 w-4" />
               </Button>
