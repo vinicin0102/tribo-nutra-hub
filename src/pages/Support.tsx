@@ -72,6 +72,9 @@ export default function Support() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const audioInputRef = useRef<HTMLInputElement>(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
 
   // Carregar conversas para suporte e configurar realtime
   useEffect(() => {
@@ -325,6 +328,52 @@ export default function Support() {
     }
   };
 
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        // TODO: Implementar upload do áudio para Supabase Storage
+        toast.success('Áudio gravado! Upload em desenvolvimento...');
+        
+        // Parar todas as tracks do stream
+        stream.getTracks().forEach(track => track.stop());
+      };
+
+      mediaRecorder.start();
+      setIsRecording(true);
+      toast.info('Gravando áudio... Clique novamente para parar');
+    } catch (error) {
+      console.error('Erro ao acessar microfone:', error);
+      toast.error('Não foi possível acessar o microfone');
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+    }
+  };
+
+  const handleAudioClick = () => {
+    if (isRecording) {
+      stopRecording();
+    } else {
+      startRecording();
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) {
@@ -534,8 +583,13 @@ export default function Support() {
                           type="button"
                           variant="ghost"
                           size="icon"
-                          onClick={() => audioInputRef.current?.click()}
-                          className="text-gray-400 hover:text-white h-9 w-9"
+                          onClick={handleAudioClick}
+                          className={cn(
+                            "h-9 w-9",
+                            isRecording 
+                              ? "text-red-500 hover:text-red-600 animate-pulse" 
+                              : "text-gray-400 hover:text-white"
+                          )}
                         >
                           <Mic className="h-4 w-4" />
                         </Button>
@@ -697,8 +751,13 @@ export default function Support() {
                       type="button"
                       variant="ghost"
                       size="icon"
-                      onClick={() => audioInputRef.current?.click()}
-                      className="text-gray-400 hover:text-white h-9 w-9"
+                      onClick={handleAudioClick}
+                      className={cn(
+                        "h-9 w-9",
+                        isRecording 
+                          ? "text-red-500 hover:text-red-600 animate-pulse" 
+                          : "text-gray-400 hover:text-white"
+                      )}
                     >
                       <Mic className="h-4 w-4" />
                     </Button>
