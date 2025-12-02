@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { HelpCircle, Send, ChevronDown, ChevronUp, MessageSquare, ArrowLeft, User, Image as ImageIcon, Mic } from 'lucide-react';
 import { AudioPlayer } from '@/components/chat/AudioPlayer';
+import { uploadImage } from '@/lib/upload';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -621,7 +622,16 @@ export default function Support() {
                                 {msg.profiles?.username || 'Usuário'}
                               </p>
                             )}
-                            {msg.audio_url ? (
+                            {msg.image_url ? (
+                              <div className="space-y-2">
+                                <p className="text-sm">{msg.message}</p>
+                                <img 
+                                  src={msg.image_url} 
+                                  alt="Imagem enviada" 
+                                  className="max-w-full rounded-lg max-h-64 object-cover"
+                                />
+                              </div>
+                            ) : msg.audio_url ? (
                               <AudioPlayer 
                                 audioUrl={msg.audio_url} 
                                 duration={msg.audio_duration || undefined}
@@ -700,11 +710,40 @@ export default function Support() {
                       type="file"
                       accept="image/*"
                       className="hidden"
-                      onChange={(e) => {
+                      onChange={async (e) => {
                         const file = e.target.files?.[0];
-                        if (file) {
-                          toast.info('Envio de imagens em desenvolvimento');
-                          // TODO: Implementar upload de imagem
+                        if (file && user && selectedUserId) {
+                          try {
+                            toast.info('Enviando imagem...');
+                            
+                            // Upload da imagem
+                            const imageUrl = await uploadImage(file, 'posts', user.id);
+                            
+                            // Enviar mensagem com imagem
+                            const { error } = await supabase
+                              .from('support_chat')
+                              .insert({
+                                user_id: selectedUserId,
+                                support_user_id: user.id,
+                                message: '📷 Imagem',
+                                image_url: imageUrl,
+                                is_from_support: true,
+                              });
+                            
+                            if (error) throw error;
+                            
+                            loadMessages(selectedUserId);
+                            loadConversations();
+                            toast.success('Imagem enviada!');
+                            
+                            // Limpar input
+                            if (imageInputRef.current) {
+                              imageInputRef.current.value = '';
+                            }
+                          } catch (error: any) {
+                            console.error('Erro ao enviar imagem:', error);
+                            toast.error('Erro ao enviar imagem');
+                          }
                         }
                       }}
                     />
@@ -793,7 +832,16 @@ export default function Support() {
                           Você
                         </p>
                       )}
-                      {msg.audio_url ? (
+                      {msg.image_url ? (
+                        <div className="space-y-2">
+                          <p className="text-sm">{msg.message}</p>
+                          <img 
+                            src={msg.image_url} 
+                            alt="Imagem enviada" 
+                            className="max-w-full rounded-lg max-h-64 object-cover"
+                          />
+                        </div>
+                      ) : msg.audio_url ? (
                         <AudioPlayer 
                           audioUrl={msg.audio_url} 
                           duration={msg.audio_duration || undefined}
@@ -877,11 +925,38 @@ export default function Support() {
                   type="file"
                   accept="image/*"
                   className="hidden"
-                  onChange={(e) => {
+                  onChange={async (e) => {
                     const file = e.target.files?.[0];
-                    if (file) {
-                      toast.info('Envio de imagens em desenvolvimento');
-                      // TODO: Implementar upload de imagem
+                    if (file && user) {
+                      try {
+                        toast.info('Enviando imagem...');
+                        
+                        // Upload da imagem
+                        const imageUrl = await uploadImage(file, 'posts', user.id);
+                        
+                        // Enviar mensagem com imagem
+                        const { error } = await supabase
+                          .from('support_chat')
+                          .insert({
+                            user_id: user.id,
+                            message: '📷 Imagem',
+                            image_url: imageUrl,
+                            is_from_support: false,
+                          });
+                        
+                        if (error) throw error;
+                        
+                        loadUserMessages();
+                        toast.success('Imagem enviada!');
+                        
+                        // Limpar input
+                        if (imageInputRef.current) {
+                          imageInputRef.current.value = '';
+                        }
+                      } catch (error: any) {
+                        console.error('Erro ao enviar imagem:', error);
+                        toast.error('Erro ao enviar imagem');
+                      }
                     }
                   }}
                 />
