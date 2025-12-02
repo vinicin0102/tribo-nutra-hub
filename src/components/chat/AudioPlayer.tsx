@@ -20,30 +20,49 @@ export function AudioPlayer({ audioUrl, duration, isOwn = false }: AudioPlayerPr
     if (!audio) return;
 
     const updateTime = () => setCurrentTime(audio.currentTime);
-    const updateDuration = () => setAudioDuration(audio.duration);
-    const handleEnded = () => setIsPlaying(false);
+    const updateDuration = () => {
+      if (!isNaN(audio.duration) && audio.duration > 0) {
+        setAudioDuration(audio.duration);
+      }
+    };
+    const handleEnded = () => {
+      setIsPlaying(false);
+      setCurrentTime(0);
+    };
+    const handleError = (e: Event) => {
+      console.error('Erro ao carregar áudio:', e);
+      setIsPlaying(false);
+    };
 
     audio.addEventListener('timeupdate', updateTime);
     audio.addEventListener('loadedmetadata', updateDuration);
     audio.addEventListener('ended', handleEnded);
+    audio.addEventListener('error', handleError);
 
     return () => {
       audio.removeEventListener('timeupdate', updateTime);
       audio.removeEventListener('loadedmetadata', updateDuration);
       audio.removeEventListener('ended', handleEnded);
+      audio.removeEventListener('error', handleError);
     };
-  }, []);
+  }, [audioUrl]);
 
-  const togglePlay = () => {
+  const togglePlay = async () => {
     const audio = audioRef.current;
     if (!audio) return;
 
-    if (isPlaying) {
-      audio.pause();
-    } else {
-      audio.play();
+    try {
+      if (isPlaying) {
+        audio.pause();
+        setIsPlaying(false);
+      } else {
+        await audio.play();
+        setIsPlaying(true);
+      }
+    } catch (error) {
+      console.error('Erro ao reproduzir áudio:', error);
+      setIsPlaying(false);
     }
-    setIsPlaying(!isPlaying);
   };
 
   const formatTime = (time: number) => {
