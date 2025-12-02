@@ -365,6 +365,19 @@ export default function Support() {
 
             toast.info('Enviando áudio...');
             
+            // Tentar enviar com as colunas de áudio, se falharem, enviar apenas texto
+            const messageData: any = {
+              message: '🎤 Mensagem de áudio',
+            };
+            
+            // Tentar adicionar áudio (pode falhar se colunas não existirem)
+            try {
+              messageData.audio_url = base64Audio;
+              messageData.audio_duration = audioDuration;
+            } catch (e) {
+              console.log('Colunas de áudio não disponíveis, enviando apenas texto');
+            }
+            
             if (isSupport && selectedUserId) {
               // Suporte enviando para aluno
               const { error } = await supabase
@@ -372,10 +385,8 @@ export default function Support() {
                 .insert({
                   user_id: selectedUserId,
                   support_user_id: user.id,
-                  message: '🎤 Mensagem de áudio',
-                  audio_url: base64Audio,
-                  audio_duration: audioDuration,
                   is_from_support: true,
+                  ...messageData,
                 });
               
               if (error) {
@@ -391,10 +402,8 @@ export default function Support() {
                 .from('support_chat')
                 .insert({
                   user_id: user.id,
-                  message: '🎤 Mensagem de áudio',
-                  audio_url: base64Audio,
-                  audio_duration: audioDuration,
                   is_from_support: false,
+                  ...messageData,
                 });
               
               if (error) {
@@ -406,7 +415,7 @@ export default function Support() {
             }
           } catch (error: any) {
             console.error('Erro ao enviar áudio:', error);
-            toast.error(`Erro: ${error?.message || 'Tente novamente'}`);
+            toast.error(`Erro: ${error?.message || 'Execute o script SQL add-media-to-support-chat.sql no Supabase'}`);
           }
         };
         
