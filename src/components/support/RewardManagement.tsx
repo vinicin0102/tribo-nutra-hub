@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Gift, Check, X, MessageCircle } from 'lucide-react';
+import { Gift, Check, X, MessageCircle, RefreshCw } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -72,9 +72,19 @@ export function RewardManagement() {
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
 
   // Buscar resgates
-  const { data: redemptions, isLoading } = useQuery({
+  const { data: redemptions, isLoading, refetch } = useQuery({
     queryKey: ['support_redemptions', selectedStatus],
     queryFn: async () => {
+      console.log('Buscando resgates...');
+      
+      // Query simples para debug
+      const { data: allData, error: allError, count } = await supabase
+        .from('redemptions')
+        .select('*', { count: 'exact' });
+      
+      console.log('Total de resgates no banco:', count);
+      console.log('Resgates brutos:', allData);
+      
       let query = supabase
         .from('redemptions')
         .select(`
@@ -93,9 +103,10 @@ export function RewardManagement() {
         console.error('Erro ao buscar resgates:', error);
         throw error;
       }
-      console.log('Resgates encontrados:', data);
+      console.log('Resgates com joins:', data);
       return data as Redemption[];
     },
+    refetchInterval: 5000, // Atualizar a cada 5 segundos
   });
 
   // Atualização em tempo real
@@ -146,10 +157,21 @@ export function RewardManagement() {
       {/* Header e filtros */}
       <Card className="border border-[#2a2a2a] bg-[#1a1a1a]">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-white">
-            <Gift className="h-5 w-5 text-primary" />
-            Resgates de Prêmios
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2 text-white">
+              <Gift className="h-5 w-5 text-primary" />
+              Resgates de Prêmios
+            </CardTitle>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => refetch()}
+              className="border-primary text-primary hover:bg-primary hover:text-white"
+            >
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Atualizar
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="flex gap-2 flex-wrap">
