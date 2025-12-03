@@ -158,19 +158,32 @@ export function RewardManagement() {
   // Mutation para atualizar status do resgate
   const updateStatus = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
-      const { error } = await supabase
+      console.log('Atualizando resgate:', id, 'para status:', status);
+      
+      const { data, error } = await supabase
         .from('redemptions')
         .update({ status, updated_at: new Date().toISOString() })
-        .eq('id', id);
+        .eq('id', id)
+        .select();
 
-      if (error) throw error;
+      console.log('Resultado update:', data);
+      console.log('Erro update:', error);
+
+      if (error) {
+        console.error('Erro completo:', error);
+        throw error;
+      }
+      
+      return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('Update bem sucedido:', data);
       queryClient.invalidateQueries({ queryKey: ['support_redemptions'] });
       toast.success('Status atualizado!');
     },
     onError: (error: any) => {
-      toast.error(error?.message || 'Erro ao atualizar status');
+      console.error('Erro na mutation:', error);
+      toast.error(error?.message || 'Erro ao atualizar status. Verifique as permissões RLS.');
     },
   });
 
