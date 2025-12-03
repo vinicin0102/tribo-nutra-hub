@@ -1,4 +1,4 @@
-import { Trophy, Medal, Crown, Star } from 'lucide-react';
+import { Trophy, Medal, Crown, Star, Award, Gem, Sparkles } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -11,17 +11,53 @@ import { cn } from '@/lib/utils';
 const getTierInfo = (tier?: string) => {
   switch (tier) {
     case 'diamond':
-      return { name: 'Diamante', color: 'text-cyan-400', bg: 'bg-cyan-500/20', border: 'border-cyan-500/50', icon: '💎' };
+      return { 
+        name: 'Diamante', 
+        color: 'text-cyan-400', 
+        bg: 'bg-cyan-500/20', 
+        border: 'border-cyan-500/50', 
+        icon: <Gem className="h-5 w-5 text-cyan-400" />
+      };
     case 'platinum':
-      return { name: 'Platina', color: 'text-gray-300', bg: 'bg-gray-300/20', border: 'border-gray-300/50', icon: '⚪' };
+      return { 
+        name: 'Platina', 
+        color: 'text-gray-300', 
+        bg: 'bg-gray-300/20', 
+        border: 'border-gray-300/50', 
+        icon: <Sparkles className="h-5 w-5 text-gray-300" />
+      };
     case 'gold':
-      return { name: 'Ouro', color: 'text-yellow-500', bg: 'bg-yellow-500/20', border: 'border-yellow-500/50', icon: '🥇' };
+      return { 
+        name: 'Ouro', 
+        color: 'text-yellow-500', 
+        bg: 'bg-yellow-500/20', 
+        border: 'border-yellow-500/50', 
+        icon: <Award className="h-5 w-5 text-yellow-500" />
+      };
     case 'silver':
-      return { name: 'Prata', color: 'text-gray-400', bg: 'bg-gray-400/20', border: 'border-gray-400/50', icon: '🥈' };
+      return { 
+        name: 'Prata', 
+        color: 'text-gray-400', 
+        bg: 'bg-gray-400/20', 
+        border: 'border-gray-400/50', 
+        icon: <Medal className="h-5 w-5 text-gray-400" />
+      };
     case 'bronze':
-      return { name: 'Bronze', color: 'text-amber-600', bg: 'bg-amber-600/20', border: 'border-amber-600/50', icon: '🥉' };
+      return { 
+        name: 'Bronze', 
+        color: 'text-amber-600', 
+        bg: 'bg-amber-600/20', 
+        border: 'border-amber-600/50', 
+        icon: <Medal className="h-5 w-5 text-amber-600" />
+      };
     default:
-      return { name: 'Sem nível', color: 'text-gray-500', bg: 'bg-gray-500/20', border: 'border-gray-500/50', icon: '⚪' };
+      return { 
+        name: 'Sem nível', 
+        color: 'text-gray-500', 
+        bg: 'bg-gray-500/20', 
+        border: 'border-gray-500/50', 
+        icon: <Star className="h-5 w-5 text-gray-500" />
+      };
   }
 };
 
@@ -80,12 +116,12 @@ export default function Ranking() {
                   <div className="flex items-center gap-2 mt-1">
                     {currentProfile.tier && (
                       <Badge className={cn(
-                        'text-xs',
+                        'text-xs flex items-center gap-1.5',
                         getTierInfo(currentProfile.tier).bg,
                         getTierInfo(currentProfile.tier).border,
                         getTierInfo(currentProfile.tier).color
                       )}>
-                        <span className="mr-1">{getTierInfo(currentProfile.tier).icon}</span>
+                        {getTierInfo(currentProfile.tier).icon}
                         {getTierInfo(currentProfile.tier).name}
                       </Badge>
                     )}
@@ -198,12 +234,13 @@ export default function Ranking() {
                         )}
                         {user.tier && (
                           <Badge className={cn(
-                            'text-xs',
+                            'text-xs flex items-center gap-1.5',
                             getTierInfo(user.tier).bg,
                             getTierInfo(user.tier).border,
                             getTierInfo(user.tier).color
                           )}>
-                            {getTierInfo(user.tier).icon} {getTierInfo(user.tier).name}
+                            {getTierInfo(user.tier).icon}
+                            {getTierInfo(user.tier).name}
                           </Badge>
                         )}
                       </div>
