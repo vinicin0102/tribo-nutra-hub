@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Shield, Users, MessageSquare, Trash2, Ban, CheckCircle, LogOut, Home } from 'lucide-react';
+import { Shield, Users, MessageSquare, Trash2, Ban, CheckCircle, LogOut, Home, Gift } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -10,6 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { SupportChat } from '@/components/support/SupportChat';
 import { UserManagement } from '@/components/support/UserManagement';
+import { RewardManagement } from '@/components/support/RewardManagement';
 
 export default function SupportDashboard() {
   const navigate = useNavigate();
@@ -79,6 +80,10 @@ export default function SupportDashboard() {
               <MessageSquare className="h-4 w-4 mr-2" />
               Chat de Suporte
             </TabsTrigger>
+            <TabsTrigger value="rewards" className="data-[state=active]:bg-primary">
+              <Gift className="h-4 w-4 mr-2" />
+              Resgates de Prêmios
+            </TabsTrigger>
             <TabsTrigger value="users" className="data-[state=active]:bg-primary">
               <Users className="h-4 w-4 mr-2" />
               Gerenciar Usuários
@@ -87,6 +92,10 @@ export default function SupportDashboard() {
 
           <TabsContent value="chat" className="space-y-4">
             <SupportChat />
+          </TabsContent>
+
+          <TabsContent value="rewards" className="space-y-4">
+            <RewardManagement />
           </TabsContent>
 
           <TabsContent value="users" className="space-y-4">
