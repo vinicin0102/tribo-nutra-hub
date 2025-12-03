@@ -77,34 +77,62 @@ export function RewardManagement() {
     queryFn: async () => {
       console.log('Buscando resgates...');
       
-      // Query simples para debug
-      const { data: allData, error: allError, count } = await supabase
-        .from('redemptions')
-        .select('*', { count: 'exact' });
-      
-      console.log('Total de resgates no banco:', count);
-      console.log('Resgates brutos:', allData);
-      
-      let query = supabase
-        .from('redemptions')
-        .select(`
-          *,
-          profiles:user_id (username, avatar_url, full_name),
-          rewards:reward_id (name, description)
-        `)
-        .order('created_at', { ascending: false });
+      try {
+        // Query simples primeiro
+        let simpleQuery = supabase
+          .from('redemptions')
+          .select('*')
+          .order('created_at', { ascending: false });
 
-      if (selectedStatus !== 'all') {
-        query = query.eq('status', selectedStatus);
-      }
+        if (selectedStatus !== 'all') {
+          simpleQuery = simpleQuery.eq('status', selectedStatus);
+        }
 
-      const { data, error } = await query;
-      if (error) {
-        console.error('Erro ao buscar resgates:', error);
+        const { data: simpleData, error: simpleError, count } = await simpleQuery;
+        
+        console.log('Total de resgates:', count);
+        console.log('Resgates simples:', simpleData);
+        
+        if (simpleError) {
+          console.error('Erro na query simples:', simpleError);
+          throw simpleError;
+        }
+
+        if (!simpleData || simpleData.length === 0) {
+          console.log('Nenhum resgate encontrado');
+          return [];
+        }
+
+        // Buscar dados dos usuários e recompensas separadamente
+        const userIds = [...new Set(simpleData.map(r => r.user_id))];
+        const rewardIds = [...new Set(simpleData.map(r => r.reward_id))];
+
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('user_id, username, avatar_url, full_name')
+          .in('user_id', userIds);
+
+        const { data: rewards } = await supabase
+          .from('rewards')
+          .select('id, name, description')
+          .in('id', rewardIds);
+
+        console.log('Profiles:', profiles);
+        console.log('Rewards:', rewards);
+
+        // Combinar dados
+        const enrichedData = simpleData.map(redemption => ({
+          ...redemption,
+          profiles: profiles?.find(p => p.user_id === redemption.user_id) || null,
+          rewards: rewards?.find(r => r.id === redemption.reward_id) || null,
+        }));
+
+        console.log('Resgates enriquecidos:', enrichedData);
+        return enrichedData as Redemption[];
+      } catch (error) {
+        console.error('Erro geral:', error);
         throw error;
       }
-      console.log('Resgates com joins:', data);
-      return data as Redemption[];
     },
     refetchInterval: 5000, // Atualizar a cada 5 segundos
   });
