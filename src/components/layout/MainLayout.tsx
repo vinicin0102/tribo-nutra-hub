@@ -5,6 +5,7 @@ import { BottomNav } from './BottomNav';
 import { AIButton } from '@/components/feed/AIButton';
 import { useHasDiamondAccess } from '@/hooks/useSubscription';
 import { useIsSupport } from '@/hooks/useSupport';
+import { useDailyLogin } from '@/hooks/useDailyLogin';
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -14,6 +15,9 @@ export function MainLayout({ children }: MainLayoutProps) {
   const location = useLocation();
   const hasDiamondAccess = useHasDiamondAccess();
   const isSupport = useIsSupport();
+  
+  // Verificar login diário e dar 100 pontos
+  useDailyLogin();
   
   // Páginas onde o botão de IA NÃO deve aparecer
   const hideAIButton = location.pathname === '/chat' || location.pathname === '/support';
