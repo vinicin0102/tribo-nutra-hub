@@ -27,31 +27,20 @@ interface PostCardProps {
   post: Post;
 }
 
-const getTierIcon = (tier?: string) => {
+const getTierBadge = (tier?: string) => {
   switch (tier) {
     case 'diamond':
-      return <Gem className="h-3 w-3 text-cyan-400" />;
+      return { emoji: '💎', label: 'Diamante', color: 'text-cyan-400' };
     case 'platinum':
-      return <Sparkles className="h-3 w-3 text-gray-300" />;
+      return { emoji: '✨', label: 'Platina', color: 'text-gray-300' };
     case 'gold':
-      return <Award className="h-3 w-3 text-yellow-500" />;
+      return { emoji: '🏆', label: 'Ouro', color: 'text-yellow-500' };
     case 'silver':
-      return <Medal className="h-3 w-3 text-gray-400" />;
+      return { emoji: '🥈', label: 'Prata', color: 'text-gray-400' };
     case 'bronze':
-      return <Medal className="h-3 w-3 text-amber-600" />;
+      return { emoji: '🥉', label: 'Bronze', color: 'text-amber-600' };
     default:
-      return <Star className="h-3 w-3 text-gray-500" />;
-  }
-};
-
-const getTierLabel = (tier?: string) => {
-  switch (tier) {
-    case 'diamond': return 'Diamante';
-    case 'platinum': return 'Platina';
-    case 'gold': return 'Ouro';
-    case 'silver': return 'Prata';
-    case 'bronze': return 'Bronze';
-    default: return '';
+      return null;
   }
 };
 
@@ -120,14 +109,15 @@ export function PostCard({ post }: PostCardProps) {
           <div className="flex items-center gap-2 mt-1 flex-wrap">
             {(profile as any)?.subscription_plan === 'diamond' && (
               <Badge className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white border-0 text-[10px] px-1.5 py-0">
-                <Gem className="h-2.5 w-2.5 mr-0.5" />
-                Diamond
+                💎 Diamond
               </Badge>
             )}
-            {(profile as any)?.tier && getTierLabel((profile as any).tier) && (
-              <Badge className="bg-transparent border border-gray-600/50 text-gray-300 text-[10px] px-1.5 py-0 flex items-center gap-0.5">
-                {getTierIcon((profile as any).tier)}
-                {getTierLabel((profile as any).tier)}
+            {(profile as any)?.tier && getTierBadge((profile as any).tier) && (
+              <Badge className={cn(
+                "bg-transparent border border-gray-600/50 text-[10px] px-1.5 py-0",
+                getTierBadge((profile as any).tier)?.color
+              )}>
+                {getTierBadge((profile as any).tier)?.emoji} {getTierBadge((profile as any).tier)?.label}
               </Badge>
             )}
           </div>
