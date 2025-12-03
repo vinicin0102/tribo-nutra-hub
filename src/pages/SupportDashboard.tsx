@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Shield, Users, MessageSquare, Trash2, Ban, CheckCircle, LogOut, Home, Gift } from 'lucide-react';
+// Dashboard do suporte com 3 abas: Chat, Resgates e Usuários
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
