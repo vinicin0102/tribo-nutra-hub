@@ -2,6 +2,7 @@ import { Home, MessageCircle, Trophy, Gift, HelpCircle, Lock } from 'lucide-reac
 import { useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useHasDiamondAccess } from '@/hooks/useSubscription';
+import { useIsSupport } from '@/hooks/useSupport';
 
 const navItems = [
   { icon: Home, label: 'Feed', path: '/', requiresDiamond: false },
@@ -15,6 +16,7 @@ export function BottomNav() {
   const location = useLocation();
   const navigate = useNavigate();
   const hasDiamondAccess = useHasDiamondAccess();
+  const isSupport = useIsSupport();
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-[#2a2a2a] bg-[#1a1a1a]/95 backdrop-blur-md">
@@ -22,7 +24,8 @@ export function BottomNav() {
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
           const Icon = item.icon;
-          const isLocked = item.requiresDiamond && !hasDiamondAccess;
+          // Suporte sempre tem acesso total
+          const isLocked = item.requiresDiamond && !hasDiamondAccess && !isSupport;
 
           return (
             <button

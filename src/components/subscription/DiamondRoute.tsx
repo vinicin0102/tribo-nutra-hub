@@ -2,6 +2,7 @@ import { ReactNode } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useHasDiamondAccess } from '@/hooks/useSubscription';
 import { useAuth } from '@/contexts/AuthContext';
+import { useIsSupport } from '@/hooks/useSupport';
 
 interface DiamondRouteProps {
   children: ReactNode;
@@ -10,6 +11,7 @@ interface DiamondRouteProps {
 export function DiamondRoute({ children }: DiamondRouteProps) {
   const { user, loading } = useAuth();
   const hasDiamondAccess = useHasDiamondAccess();
+  const isSupport = useIsSupport();
 
   if (loading) {
     return (
@@ -23,6 +25,11 @@ export function DiamondRoute({ children }: DiamondRouteProps) {
 
   if (!user) {
     return <Navigate to="/auth" replace />;
+  }
+
+  // Suporte sempre tem acesso total
+  if (isSupport) {
+    return <>{children}</>;
   }
 
   if (!hasDiamondAccess) {
