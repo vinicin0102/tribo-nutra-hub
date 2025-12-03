@@ -45,6 +45,11 @@ CREATE TABLE IF NOT EXISTS public.payments (
 -- 3. Políticas RLS para payments
 ALTER TABLE public.payments ENABLE ROW LEVEL SECURITY;
 
+-- Remover políticas antigas se existirem
+DROP POLICY IF EXISTS "Users can view own payments" ON public.payments;
+DROP POLICY IF EXISTS "Users can create payments" ON public.payments;
+
+-- Criar novas políticas
 CREATE POLICY "Users can view own payments" ON public.payments FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "Users can create payments" ON public.payments FOR INSERT WITH CHECK (auth.uid() = user_id);
 
