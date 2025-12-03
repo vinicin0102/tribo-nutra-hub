@@ -16,6 +16,8 @@ import NotFound from "./pages/NotFound";
 import SupportLogin from "./pages/SupportLogin";
 import SupportDashboard from "./pages/SupportDashboard";
 import Rewards from "./pages/Rewards";
+import Upgrade from "./pages/Upgrade";
+import { DiamondRoute } from "./components/subscription/DiamondRoute";
 
 const queryClient = new QueryClient();
 
@@ -66,9 +68,10 @@ function AppRoutes() {
       <Route path="/support/login" element={<SupportLogin />} />
       <Route path="/support/dashboard" element={<SupportRoute><SupportDashboard /></SupportRoute>} />
       <Route path="/" element={<ProtectedRoute><Feed /></ProtectedRoute>} />
-      <Route path="/chat" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
-      <Route path="/ranking" element={<ProtectedRoute><Ranking /></ProtectedRoute>} />
-      <Route path="/rewards" element={<ProtectedRoute><Rewards /></ProtectedRoute>} />
+      <Route path="/upgrade" element={<ProtectedRoute><Upgrade /></ProtectedRoute>} />
+      <Route path="/chat" element={<ProtectedRoute><DiamondRoute><Chat /></DiamondRoute></ProtectedRoute>} />
+      <Route path="/ranking" element={<ProtectedRoute><DiamondRoute><Ranking /></DiamondRoute></ProtectedRoute>} />
+      <Route path="/rewards" element={<ProtectedRoute><DiamondRoute><Rewards /></DiamondRoute></ProtectedRoute>} />
       <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
       <Route path="/support" element={<ProtectedRoute><Support /></ProtectedRoute>} />
       <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
