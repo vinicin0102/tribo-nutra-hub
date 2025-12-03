@@ -19,6 +19,8 @@ export interface Post {
     avatar_url: string | null;
     full_name: string | null;
     role?: 'user' | 'support' | 'admin';
+    subscription_plan?: string;
+    tier?: string;
   } | null;
 }
 
@@ -70,7 +72,7 @@ export function usePosts() {
       // Fetch profiles separately
       const { data: profiles } = await supabase
         .from('profiles')
-        .select('user_id, username, avatar_url, full_name, role')
+        .select('user_id, username, avatar_url, full_name, role, subscription_plan, tier')
         .in('user_id', userIds);
       
       // Create a map for quick lookup
