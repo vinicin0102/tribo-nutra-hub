@@ -327,12 +327,19 @@ export function RewardManagement() {
         </div>
       ) : (
         <Card className="border border-[#2a2a2a] bg-[#1a1a1a]">
-          <CardContent className="py-12 text-center">
-            <Gift className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-400">
+          <CardContent className="py-16 text-center">
+            <div className="bg-primary/10 rounded-full p-6 w-fit mx-auto mb-4">
+              <Gift className="h-12 w-12 text-primary" />
+            </div>
+            <h3 className="text-lg font-semibold text-white mb-2">
+              {selectedStatus === 'pending' ? 'Nenhum resgate pendente' : 'Nenhum resgate'}
+            </h3>
+            <p className="text-gray-400 text-sm">
               {selectedStatus === 'all' 
-                ? 'Nenhum resgate no momento' 
-                : `Nenhum resgate ${getStatusLabel(selectedStatus).toLowerCase()}`
+                ? 'Quando alunos resgatarem prêmios, eles aparecerão aqui' 
+                : selectedStatus === 'pending'
+                ? 'Nenhum resgate aguardando aprovação no momento'
+                : `Nenhum resgate ${getStatusLabel(selectedStatus).toLowerCase()} no momento`
               }
             </p>
           </CardContent>

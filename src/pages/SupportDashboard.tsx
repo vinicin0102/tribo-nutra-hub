@@ -73,20 +73,23 @@ export default function SupportDashboard() {
         </div>
       </header>
 
-      <div className="container py-6">
+      <div className="container py-6 px-4">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList className="bg-[#1a1a1a] border border-[#2a2a2a]">
+          <TabsList className="bg-[#1a1a1a] border border-[#2a2a2a] w-full grid grid-cols-3">
             <TabsTrigger value="chat" className="data-[state=active]:bg-primary">
               <MessageSquare className="h-4 w-4 mr-2" />
-              Chat de Suporte
+              <span className="hidden sm:inline">Chat de Suporte</span>
+              <span className="sm:hidden">Chat</span>
             </TabsTrigger>
             <TabsTrigger value="rewards" className="data-[state=active]:bg-primary">
               <Gift className="h-4 w-4 mr-2" />
-              Resgates de Prêmios
+              <span className="hidden sm:inline">Resgates</span>
+              <span className="sm:hidden">Prêmios</span>
             </TabsTrigger>
             <TabsTrigger value="users" className="data-[state=active]:bg-primary">
               <Users className="h-4 w-4 mr-2" />
-              Gerenciar Usuários
+              <span className="hidden sm:inline">Usuários</span>
+              <span className="sm:hidden">Users</span>
             </TabsTrigger>
           </TabsList>
 
