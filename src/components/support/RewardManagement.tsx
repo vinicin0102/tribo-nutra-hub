@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Gift, Check, X, MessageCircle, RefreshCw, CheckCircle } from 'lucide-react';
+import { Gift, Check, X, MessageCircle, RefreshCw, CheckCircle, Gem, Medal, Award, Sparkles, Star } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -34,6 +34,9 @@ interface Redemption {
     username: string;
     avatar_url: string | null;
     full_name: string | null;
+    subscription_plan?: string;
+    tier?: string;
+    points?: number;
   } | null;
   rewards: {
     name: string;
@@ -65,6 +68,56 @@ const getStatusLabel = (status: string) => {
     default:
       return 'Pendente';
   }
+};
+
+const getTierIcon = (tier?: string) => {
+  switch (tier) {
+    case 'diamond':
+      return <Gem className="h-4 w-4 text-cyan-400" />;
+    case 'platinum':
+      return <Sparkles className="h-4 w-4 text-gray-300" />;
+    case 'gold':
+      return <Award className="h-4 w-4 text-yellow-500" />;
+    case 'silver':
+      return <Medal className="h-4 w-4 text-gray-400" />;
+    case 'bronze':
+      return <Medal className="h-4 w-4 text-amber-600" />;
+    default:
+      return <Star className="h-4 w-4 text-gray-500" />;
+  }
+};
+
+const getTierLabel = (tier?: string) => {
+  switch (tier) {
+    case 'diamond':
+      return 'Diamante';
+    case 'platinum':
+      return 'Platina';
+    case 'gold':
+      return 'Ouro';
+    case 'silver':
+      return 'Prata';
+    case 'bronze':
+      return 'Bronze';
+    default:
+      return 'Sem nível';
+  }
+};
+
+const getPlanBadge = (plan?: string) => {
+  if (plan === 'diamond') {
+    return (
+      <Badge className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white border-0">
+        <Gem className="h-3 w-3 mr-1" />
+        Diamond
+      </Badge>
+    );
+  }
+  return (
+    <Badge className="bg-gray-600/20 text-gray-400 border-gray-600/50">
+      Gratuito
+    </Badge>
+  );
 };
 
 export function RewardManagement() {
@@ -109,7 +162,7 @@ export function RewardManagement() {
 
         const { data: profiles } = await supabase
           .from('profiles')
-          .select('user_id, username, avatar_url, full_name')
+          .select('user_id, username, avatar_url, full_name, subscription_plan, tier, points')
           .in('user_id', userIds);
 
         const { data: rewards } = await supabase
@@ -280,13 +333,27 @@ export function RewardManagement() {
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-4 mb-2">
-                      <div>
+                      <div className="space-y-2">
                         <h3 className="font-semibold text-white text-lg">
                           {redemption.rewards?.name || 'Prêmio'}
                         </h3>
-                        <p className="text-sm text-gray-400">
-                          Resgatado por <span className="text-white font-medium">{redemption.profiles?.username || 'Usuário'}</span>
-                        </p>
+                        <div className="space-y-1">
+                          <p className="text-sm text-gray-400">
+                            Resgatado por <span className="text-white font-medium">{redemption.profiles?.username || 'Usuário'}</span>
+                          </p>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            {getPlanBadge(redemption.profiles?.subscription_plan)}
+                            <Badge className="bg-transparent border border-gray-600 text-gray-300 flex items-center gap-1">
+                              {getTierIcon(redemption.profiles?.tier)}
+                              {getTierLabel(redemption.profiles?.tier)}
+                            </Badge>
+                            {redemption.profiles?.points !== undefined && (
+                              <span className="text-xs text-gray-500">
+                                {redemption.profiles.points} pts totais
+                              </span>
+                            )}
+                          </div>
+                        </div>
                       </div>
                       <Badge className={getStatusColor(redemption.status)}>
                         {getStatusLabel(redemption.status)}
