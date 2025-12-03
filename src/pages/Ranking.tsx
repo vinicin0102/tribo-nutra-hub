@@ -17,7 +17,7 @@ const getTierInfo = (tier?: string) => {
         color: 'text-cyan-400', 
         bg: 'bg-cyan-500/20', 
         border: 'border-cyan-500/50', 
-        icon: <Gem className="h-5 w-5 text-cyan-400" />
+        icon: '💎'
       };
     case 'platinum':
       return { 
@@ -25,7 +25,7 @@ const getTierInfo = (tier?: string) => {
         color: 'text-gray-300', 
         bg: 'bg-gray-300/20', 
         border: 'border-gray-300/50', 
-        icon: <Sparkles className="h-5 w-5 text-gray-300" />
+        icon: '✨'
       };
     case 'gold':
       return { 
@@ -33,7 +33,7 @@ const getTierInfo = (tier?: string) => {
         color: 'text-yellow-500', 
         bg: 'bg-yellow-500/20', 
         border: 'border-yellow-500/50', 
-        icon: <Award className="h-5 w-5 text-yellow-500" />
+        icon: '🏆'
       };
     case 'silver':
       return { 
@@ -41,7 +41,7 @@ const getTierInfo = (tier?: string) => {
         color: 'text-gray-400', 
         bg: 'bg-gray-400/20', 
         border: 'border-gray-400/50', 
-        icon: <Medal className="h-5 w-5 text-gray-400" />
+        icon: '🥈'
       };
     case 'bronze':
       return { 
@@ -49,7 +49,7 @@ const getTierInfo = (tier?: string) => {
         color: 'text-amber-600', 
         bg: 'bg-amber-600/20', 
         border: 'border-amber-600/50', 
-        icon: <Medal className="h-5 w-5 text-amber-600" />
+        icon: '🥉'
       };
     default:
       return { 
@@ -57,7 +57,7 @@ const getTierInfo = (tier?: string) => {
         color: 'text-gray-500', 
         bg: 'bg-gray-500/20', 
         border: 'border-gray-500/50', 
-        icon: <Star className="h-5 w-5 text-gray-500" />
+        icon: '⚪'
       };
   }
 };
