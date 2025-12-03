@@ -1,5 +1,6 @@
 import { Trophy, Medal, Crown, Star, Award, Gem, Sparkles } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
+// Ícones de medalhas profissionais para níveis
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
