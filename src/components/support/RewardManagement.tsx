@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Gift, Check, X, MessageCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -89,10 +89,32 @@ export function RewardManagement() {
       }
 
       const { data, error } = await query;
-      if (error) throw error;
+      if (error) {
+        console.error('Erro ao buscar resgates:', error);
+        throw error;
+      }
+      console.log('Resgates encontrados:', data);
       return data as Redemption[];
     },
   });
+
+  // Atualização em tempo real
+  useEffect(() => {
+    const channel = supabase
+      .channel('redemptions_changes')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'redemptions' },
+        (payload) => {
+          console.log('Mudança em redemptions:', payload);
+          queryClient.invalidateQueries({ queryKey: ['support_redemptions'] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
 
   // Mutation para atualizar status do resgate
   const updateStatus = useMutation({
