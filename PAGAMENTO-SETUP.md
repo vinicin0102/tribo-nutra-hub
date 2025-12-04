@@ -310,14 +310,16 @@ supabase functions deploy payment-webhook
 
 Vá em: **Project Settings > Edge Functions > Secrets**
 
-Adicione:
+Adicione **APENAS ESTAS 2 VARIÁVEIS**:
 
 ```env
-MERCADOPAGO_ACCESS_TOKEN=APP-XXXXXXXXXX (ou TEST-XXXXXXXXXX para teste)
-APP_URL=https://seudominio.com (ou https://seuapp.vercel.app)
-SUPABASE_URL=https://[project-id].supabase.co
-SUPABASE_SERVICE_ROLE_KEY=seu-service-role-key
+MERCADOPAGO_ACCESS_TOKEN=TEST-XXXXXXXXXX (use TEST- para desenvolvimento)
+APP_URL=https://seuapp.vercel.app (ou seu domínio customizado)
 ```
+
+⚠️ **IMPORTANTE**: 
+- `SUPABASE_URL` e `SUPABASE_SERVICE_ROLE_KEY` **JÁ ESTÃO DISPONÍVEIS automaticamente** nas Edge Functions
+- NÃO adicione variáveis com prefixo `SUPABASE_` - o sistema não permite e não é necessário!
 
 ### 2. No Arquivo .env.local (Frontend)
 
