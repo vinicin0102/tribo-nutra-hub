@@ -22,9 +22,6 @@ export function MainLayout({ children }: MainLayoutProps) {
   // Páginas onde o botão de IA NÃO deve aparecer
   const hideAIButton = location.pathname === '/chat' || location.pathname === '/support';
   
-  // Apenas usuários Diamond e Suporte podem ver as IAs
-  const canAccessAI = hasDiamondAccess || isSupport;
-  
   return (
     <div className="min-h-screen bg-[#0a0a0a]">
       <Navbar />
@@ -32,7 +29,7 @@ export function MainLayout({ children }: MainLayoutProps) {
         {children}
       </main>
       <BottomNav />
-      {!hideAIButton && canAccessAI && (
+      {!hideAIButton && (
         <AIButton
           onCopyAI={() => {
             // Aqui você pode adicionar a lógica da IA de Copy

@@ -11,6 +11,9 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { useHasDiamondAccess } from '@/hooks/useSubscription';
+import { useIsSupport } from '@/hooks/useSupport';
+import { useNavigate } from 'react-router-dom';
 
 interface CreativeAIDialogProps {
   open: boolean;
@@ -25,10 +28,29 @@ export function CreativeAIDialog({ open, onOpenChange }: CreativeAIDialogProps) 
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedScript, setGeneratedScript] = useState('');
   const [copied, setCopied] = useState(false);
+  const hasDiamondAccess = useHasDiamondAccess();
+  const isSupport = useIsSupport();
+  const navigate = useNavigate();
 
   const handleGenerate = async () => {
     if (!productName.trim()) {
       toast.error('Por favor, informe o nome do produto');
+      return;
+    }
+
+    // Verificar acesso Diamond (suporte sempre tem acesso)
+    if (!isSupport && !hasDiamondAccess) {
+      toast.error('🔒 IA de Criativo - Recurso Premium', {
+        description: 'Assine o plano Diamond para usar as IAs!',
+        action: {
+          label: 'Assinar Diamond',
+          onClick: () => {
+            onOpenChange(false);
+            navigate('/upgrade');
+          }
+        },
+        duration: 5000,
+      });
       return;
     }
 
