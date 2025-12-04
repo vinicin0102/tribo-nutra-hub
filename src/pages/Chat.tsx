@@ -26,6 +26,8 @@ import {
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { useHasDiamondAccess } from '@/hooks/useSubscription';
+import { useNavigate } from 'react-router-dom';
 
 export default function Chat() {
   const { user } = useAuth();
@@ -33,6 +35,8 @@ export default function Chat() {
   const sendMessage = useSendMessage();
   const deleteMessage = useDeleteChatMessage();
   const isSupport = useIsSupport();
+  const hasDiamondAccess = useHasDiamondAccess();
+  const navigate = useNavigate();
   const [newMessage, setNewMessage] = useState('');
   const [viewportHeight, setViewportHeight] = useState(
     window.visualViewport?.height || window.innerHeight
@@ -171,7 +175,28 @@ export default function Chat() {
     }
   };
 
+  const checkDiamondAccess = () => {
+    // Suporte sempre tem acesso
+    if (isSupport) return true;
+    
+    // Verificar se tem plano Diamond
+    if (!hasDiamondAccess) {
+      toast.error('Recurso exclusivo para assinantes Diamond', {
+        description: 'Faça upgrade para enviar mensagens no chat!',
+        action: {
+          label: 'Assinar Diamond',
+          onClick: () => navigate('/upgrade')
+        },
+        duration: 5000,
+      });
+      return false;
+    }
+    return true;
+  };
+
   const handleAudioClick = () => {
+    if (!checkDiamondAccess()) return;
+    
     if (isRecording) {
       stopRecording();
     } else {
@@ -182,6 +207,8 @@ export default function Chat() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newMessage.trim()) return;
+
+    if (!checkDiamondAccess()) return;
 
     try {
       await sendMessage.mutateAsync(newMessage);
