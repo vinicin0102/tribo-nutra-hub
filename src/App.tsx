@@ -18,6 +18,8 @@ import SupportLogin from "./pages/SupportLogin";
 import SupportDashboard from "./pages/SupportDashboard";
 import Rewards from "./pages/Rewards";
 import Upgrade from "./pages/Upgrade";
+import PaymentSuccess from "./pages/PaymentSuccess";
+import PaymentFailure from "./pages/PaymentFailure";
 import { DiamondRoute } from "./components/subscription/DiamondRoute";
 
 const queryClient = new QueryClient();
@@ -70,6 +72,8 @@ function AppRoutes() {
       <Route path="/support/dashboard" element={<SupportRoute><SupportDashboard /></SupportRoute>} />
       <Route path="/" element={<ProtectedRoute><Feed /></ProtectedRoute>} />
       <Route path="/upgrade" element={<ProtectedRoute><Upgrade /></ProtectedRoute>} />
+      <Route path="/payment/success" element={<ProtectedRoute><PaymentSuccess /></ProtectedRoute>} />
+      <Route path="/payment/failure" element={<ProtectedRoute><PaymentFailure /></ProtectedRoute>} />
       <Route path="/chat" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
       <Route path="/ranking" element={<ProtectedRoute><Ranking /></ProtectedRoute>} />
       <Route path="/rewards" element={<ProtectedRoute><Rewards /></ProtectedRoute>} />
