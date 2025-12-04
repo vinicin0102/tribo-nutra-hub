@@ -81,7 +81,7 @@ export function usePaymentHistory() {
   });
 }
 
-// Hook para criar preferência de pagamento do Mercado Pago
+// Hook para criar checkout na Doppus
 export function useCreatePaymentPreference() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -91,10 +91,9 @@ export function useCreatePaymentPreference() {
       if (!user) throw new Error('User not authenticated');
 
       // Chamar edge function do Supabase
-      const { data, error } = await supabase.functions.invoke('create-payment', {
+      const { data, error } = await supabase.functions.invoke('create-doppus-checkout', {
         body: { 
           planType,
-          userId: user.id,
         }
       });
 
@@ -103,13 +102,13 @@ export function useCreatePaymentPreference() {
       return data;
     },
     onSuccess: (data) => {
-      // Redirecionar para página de pagamento do Mercado Pago
-      if (data.init_point) {
-        window.location.href = data.init_point;
+      // Redirecionar para checkout da Doppus
+      if (data.checkout_url) {
+        window.location.href = data.checkout_url;
       }
     },
     onError: (error: any) => {
-      console.error('Erro ao criar pagamento:', error);
+      console.error('Erro ao criar checkout:', error);
       toast.error(error?.message || 'Erro ao processar pagamento');
     },
   });

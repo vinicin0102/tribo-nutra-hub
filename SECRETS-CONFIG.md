@@ -9,7 +9,37 @@ No Supabase Dashboard:
 
 ---
 
-## ✅ Secret 1: Token do Mercado Pago
+## 🎯 Escolha seu Gateway de Pagamento
+
+### Opção A: Doppus (Recomendado para assinaturas)
+### Opção B: Mercado Pago
+
+---
+
+## ✅ Secret 1: Token da Doppus (se escolher Doppus)
+
+**Name:**
+```
+DOPPUS_API_TOKEN
+```
+
+**Value:**
+```
+sk_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+👆 Substitua pelo seu token real da Doppus
+
+### Como obter:
+1. Acesse: https://doppus.com/
+2. Faça login
+3. Vá em: **Configurações** → **API**
+4. Copie o **API Token de TESTE** (começa com `sk_test_`)
+5. Para produção, use o token que começa com `sk_live_`
+
+---
+
+## ✅ Secret 1 (Alternativa): Token do Mercado Pago
 
 **Name:**
 ```
