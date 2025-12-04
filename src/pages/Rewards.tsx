@@ -8,6 +8,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useRewards, useRedemptions, useRedeemReward } from '@/hooks/useRewards';
 import { useProfile } from '@/hooks/useProfile';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useHasDiamondAccess } from '@/hooks/useSubscription';
+import { useIsSupport } from '@/hooks/useSupport';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -55,8 +59,24 @@ export default function Rewards() {
   const { data: redemptions, isLoading: redemptionsLoading } = useRedemptions();
   const redeemReward = useRedeemReward();
   const [selectedReward, setSelectedReward] = useState<string | null>(null);
+  const hasDiamondAccess = useHasDiamondAccess();
+  const isSupport = useIsSupport();
+  const navigate = useNavigate();
 
   const handleRedeem = async (rewardId: string) => {
+    // Verificar se tem acesso Diamond (suporte sempre tem acesso)
+    if (!isSupport && !hasDiamondAccess) {
+      toast.error('Recurso exclusivo para assinantes Diamond', {
+        description: 'Faça upgrade para resgatar prêmios!',
+        action: {
+          label: 'Assinar Diamond',
+          onClick: () => navigate('/upgrade')
+        },
+        duration: 5000,
+      });
+      return;
+    }
+
     try {
       await redeemReward.mutateAsync(rewardId);
       setSelectedReward(null);
