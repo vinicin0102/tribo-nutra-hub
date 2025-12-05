@@ -20,9 +20,15 @@ export function useSupportUsers() {
   const canAccess = isSupport || isAdmin;
 
   return useQuery({
-    queryKey: ['support-users'],
+    queryKey: ['support-users', user?.email],
     queryFn: async () => {
-      if (!canAccess) return [];
+      // Se for admin, sempre permitir acesso
+      if (!canAccess && user?.email !== ADMIN_EMAIL) {
+        console.log('Acesso negado - não é suporte nem admin');
+        return [];
+      }
+
+      console.log('Buscando usuários...', { isSupport, isAdmin, canAccess, userEmail: user?.email });
 
       const { data, error } = await supabase
         .from('profiles')
@@ -34,9 +40,11 @@ export function useSupportUsers() {
         throw error;
       }
       
+      console.log('Usuários encontrados:', data?.length || 0);
       return data || [];
     },
-    enabled: canAccess,
+    enabled: !!user && (canAccess || user?.email === ADMIN_EMAIL),
+    retry: 1,
   });
 }
 
