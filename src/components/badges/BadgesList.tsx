@@ -82,41 +82,33 @@ export function BadgesList() {
                 <div
                   key={badge.id}
                   className={cn(
-                    'rounded-lg border p-4 transition-all flex flex-col items-center gap-3',
+                    'rounded-lg border p-6 transition-all flex flex-col items-center justify-center gap-4 min-h-[160px]',
                     isEarned 
-                      ? 'border-secondary/50 bg-secondary/5 shadow-lg' 
-                      : 'border-border opacity-60'
+                      ? 'border-secondary/50 bg-secondary/5 shadow-lg ring-2 ring-secondary/20' 
+                      : 'border-border opacity-50'
                   )}
                 >
                   <MedalIcon 
                     type={medalType} 
-                    size={64}
+                    size={80}
                     className={cn(
                       'transition-all',
-                      isEarned ? 'scale-110' : 'scale-100 opacity-50'
+                      isEarned ? 'scale-110 animate-pulse' : 'scale-100'
                     )}
                   />
-                  <div className="text-center w-full">
-                    {!isEarned && (
-                      <div className="space-y-2">
-                        <Progress value={progress.percentage} className="h-2" />
-                        <p className="text-[10px] text-muted-foreground">
-                          {progress.current}/{progress.target}
-                        </p>
-                        {progress.details && (
-                          <p className="text-[9px] text-muted-foreground">
-                            {progress.details}
-                          </p>
-                        )}
-                      </div>
-                    )}
-                    {isEarned && (
-                      <div className="space-y-1">
-                        <p className="text-xs text-green-500 font-semibold">✓ Conquistada!</p>
-                        <p className="text-[10px] text-muted-foreground">{badge.description}</p>
-                      </div>
-                    )}
-                  </div>
+                  {!isEarned && (
+                    <div className="text-center w-full space-y-2">
+                      <Progress value={progress.percentage} className="h-2" />
+                      <p className="text-[10px] text-muted-foreground">
+                        {progress.current}/{progress.target}
+                      </p>
+                    </div>
+                  )}
+                  {isEarned && (
+                    <div className="text-center">
+                      <p className="text-xs text-green-500 font-semibold">✓ Conquistada!</p>
+                    </div>
+                  )}
                 </div>
               );
             })}
