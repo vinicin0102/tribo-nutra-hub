@@ -95,7 +95,7 @@ export function InstallPrompt() {
           </CardHeader>
           <CardContent className="space-y-3">
             <p className="text-gray-300 text-sm">
-              Instale o Nutra Elite no seu iPhone para acesso rápido, melhor performance e experiência nativa!
+              Instale o Nutra Elite no seu iPhone para acesso rápido e melhor experiência!
             </p>
             <div className="bg-[#2a2a2a] rounded-lg p-4 space-y-3 text-sm">
               <p className="text-white font-semibold flex items-center gap-2">
