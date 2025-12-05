@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useSupportUsers, useBanUser, useUnbanUser, useIsSupport } from '@/hooks/useSupport';
+import { useIsAdmin } from '@/hooks/useAdmin';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -17,7 +18,12 @@ export default function SupportDashboard() {
   const navigate = useNavigate();
   const { signOut } = useAuth();
   const isSupport = useIsSupport();
+  const isAdmin = useIsAdmin();
   const [activeTab, setActiveTab] = useState('chat');
+
+  // Apenas admin@gmail.com pode acessar o painel admin (aba Usuários)
+  // Suporte normal pode acessar Chat e Resgates
+  const canAccessAdminPanel = isAdmin;
 
   if (!isSupport) {
     return (
@@ -76,7 +82,7 @@ export default function SupportDashboard() {
 
       <div className="container py-6 px-4">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList className="bg-[#1a1a1a] border border-[#2a2a2a] w-full grid grid-cols-3">
+          <TabsList className={`bg-[#1a1a1a] border border-[#2a2a2a] w-full ${canAccessAdminPanel ? 'grid-cols-3' : 'grid-cols-2'}`}>
             <TabsTrigger value="chat" className="data-[state=active]:bg-primary">
               <MessageSquare className="h-4 w-4 mr-2" />
               <span className="hidden sm:inline">Chat de Suporte</span>
@@ -87,11 +93,13 @@ export default function SupportDashboard() {
               <span className="hidden sm:inline">Resgates</span>
               <span className="sm:hidden">Prêmios</span>
             </TabsTrigger>
-            <TabsTrigger value="users" className="data-[state=active]:bg-primary">
-              <Users className="h-4 w-4 mr-2" />
-              <span className="hidden sm:inline">Usuários</span>
-              <span className="sm:hidden">Users</span>
-            </TabsTrigger>
+            {canAccessAdminPanel && (
+              <TabsTrigger value="users" className="data-[state=active]:bg-primary">
+                <Users className="h-4 w-4 mr-2" />
+                <span className="hidden sm:inline">Usuários</span>
+                <span className="sm:hidden">Users</span>
+              </TabsTrigger>
+            )}
           </TabsList>
 
           <TabsContent value="chat" className="space-y-4">
@@ -102,9 +110,11 @@ export default function SupportDashboard() {
             <RewardManagement />
           </TabsContent>
 
-          <TabsContent value="users" className="space-y-4">
-            <UserManagement />
-          </TabsContent>
+          {canAccessAdminPanel && (
+            <TabsContent value="users" className="space-y-4">
+              <UserManagement />
+            </TabsContent>
+          )}
         </Tabs>
       </div>
     </div>

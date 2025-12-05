@@ -3,6 +3,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from './useProfile';
 
+const ADMIN_EMAIL = 'admin@gmail.com';
+
 export function useIsSupport() {
   const { data: profile } = useProfile();
   return profile?.role === 'support' || profile?.role === 'admin';
@@ -10,7 +12,9 @@ export function useIsSupport() {
 
 export function useSupportUsers() {
   const { data: profile } = useProfile();
+  const { user } = useAuth();
   const isSupport = profile?.role === 'support' || profile?.role === 'admin';
+  const isAdmin = user?.email === 'admin@gmail.com';
 
   return useQuery({
     queryKey: ['support-users'],
@@ -36,12 +40,12 @@ export function useBanUser() {
 
 export function useUnbanUser() {
   const queryClient = useQueryClient();
-  const { data: profile } = useProfile();
-  const isSupport = profile?.role === 'support' || profile?.role === 'admin';
+  const { user } = useAuth();
+  const isAdmin = user?.email === ADMIN_EMAIL;
 
   return useMutation({
     mutationFn: async (userId: string) => {
-      if (!isSupport) throw new Error('Sem permissão');
+      if (!isAdmin) throw new Error('Sem permissão. Apenas admin@gmail.com pode executar esta ação.');
 
       const { error } = await supabase
         .from('profiles')
@@ -126,12 +130,12 @@ export function useDeleteChatMessage() {
 
 export function useBanUserTemporary() {
   const queryClient = useQueryClient();
-  const { data: profile } = useProfile();
-  const isSupport = profile?.role === 'support' || profile?.role === 'admin';
+  const { user } = useAuth();
+  const isAdmin = user?.email === ADMIN_EMAIL;
 
   return useMutation({
     mutationFn: async ({ userId, days = 3 }: { userId: string; days?: number }) => {
-      if (!isSupport) throw new Error('Sem permissão');
+      if (!isAdmin) throw new Error('Sem permissão. Apenas admin@gmail.com pode executar esta ação.');
 
       const { error } = await supabase.rpc('ban_user_temporary', {
         p_user_id: userId,
@@ -149,12 +153,12 @@ export function useBanUserTemporary() {
 
 export function useMuteUser() {
   const queryClient = useQueryClient();
-  const { data: profile } = useProfile();
-  const isSupport = profile?.role === 'support' || profile?.role === 'admin';
+  const { user } = useAuth();
+  const isAdmin = user?.email === ADMIN_EMAIL;
 
   return useMutation({
     mutationFn: async ({ userId, days }: { userId: string; days?: number }) => {
-      if (!isSupport) throw new Error('Sem permissão');
+      if (!isAdmin) throw new Error('Sem permissão. Apenas admin@gmail.com pode executar esta ação.');
 
       const { error } = await supabase.rpc('mute_user', {
         p_user_id: userId,
@@ -172,12 +176,12 @@ export function useMuteUser() {
 
 export function useUnmuteUser() {
   const queryClient = useQueryClient();
-  const { data: profile } = useProfile();
-  const isSupport = profile?.role === 'support' || profile?.role === 'admin';
+  const { user } = useAuth();
+  const isAdmin = user?.email === ADMIN_EMAIL;
 
   return useMutation({
     mutationFn: async (userId: string) => {
-      if (!isSupport) throw new Error('Sem permissão');
+      if (!isAdmin) throw new Error('Sem permissão. Apenas admin@gmail.com pode executar esta ação.');
 
       const { error } = await supabase.rpc('unmute_user', {
         p_user_id: userId,
@@ -194,12 +198,12 @@ export function useUnmuteUser() {
 
 export function useDeleteUser() {
   const queryClient = useQueryClient();
-  const { data: profile } = useProfile();
-  const isSupport = profile?.role === 'support' || profile?.role === 'admin';
+  const { user } = useAuth();
+  const isAdmin = user?.email === ADMIN_EMAIL;
 
   return useMutation({
     mutationFn: async (userId: string) => {
-      if (!isSupport) throw new Error('Sem permissão');
+      if (!isAdmin) throw new Error('Sem permissão. Apenas admin@gmail.com pode executar esta ação.');
 
       const { error } = await supabase.rpc('delete_user_account', {
         p_user_id: userId,
@@ -216,8 +220,8 @@ export function useDeleteUser() {
 
 export function useChangeUserPlan() {
   const queryClient = useQueryClient();
-  const { data: profile } = useProfile();
-  const isSupport = profile?.role === 'support' || profile?.role === 'admin';
+  const { user } = useAuth();
+  const isAdmin = user?.email === ADMIN_EMAIL;
 
   return useMutation({
     mutationFn: async ({ 
@@ -229,7 +233,7 @@ export function useChangeUserPlan() {
       plan: 'free' | 'diamond'; 
       expiresAt?: string | null;
     }) => {
-      if (!isSupport) throw new Error('Sem permissão');
+      if (!isAdmin) throw new Error('Sem permissão. Apenas admin@gmail.com pode executar esta ação.');
 
       const { error } = await supabase.rpc('change_user_plan', {
         p_user_id: userId,
@@ -248,8 +252,8 @@ export function useChangeUserPlan() {
 
 export function useUpdateUserPoints() {
   const queryClient = useQueryClient();
-  const { data: profile } = useProfile();
-  const isSupport = profile?.role === 'support' || profile?.role === 'admin';
+  const { user } = useAuth();
+  const isAdmin = user?.email === ADMIN_EMAIL;
 
   return useMutation({
     mutationFn: async ({ 
@@ -261,7 +265,7 @@ export function useUpdateUserPoints() {
       points: number; 
       reason?: string;
     }) => {
-      if (!isSupport) throw new Error('Sem permissão');
+      if (!isAdmin) throw new Error('Sem permissão. Apenas admin@gmail.com pode executar esta ação.');
 
       const { error } = await supabase.rpc('update_user_points', {
         p_user_id: userId,

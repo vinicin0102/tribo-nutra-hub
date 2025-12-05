@@ -14,6 +14,7 @@ import {
   useChangeUserPlan,
   useUpdateUserPoints
 } from '@/hooks/useSupport';
+import { useIsAdmin } from '@/hooks/useAdmin';
 import { toast } from 'sonner';
 import {
   AlertDialog,
@@ -45,6 +46,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export function UserManagement() {
+  const isAdmin = useIsAdmin();
   const { data: users = [], isLoading } = useSupportUsers();
   const banUserTemporary = useBanUserTemporary();
   const unbanUser = useUnbanUser();
@@ -148,6 +150,16 @@ export function UserManagement() {
       toast.error('Erro ao alterar pontuação');
     }
   };
+
+  if (!isAdmin) {
+    return (
+      <Card className="border border-[#2a2a2a] bg-[#1a1a1a]">
+        <CardContent className="pt-6">
+          <p className="text-white text-center">Acesso negado. Apenas admin@gmail.com pode acessar esta área.</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (isLoading) {
     return (
