@@ -1,0 +1,55 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- Fundo laranja vibrante -->
+  <rect width="512" height="512" fill="#FF6B00"/>
+  
+  <!-- Cabeça do leão em perfil (facing left) -->
+  <g id="lion-head">
+    <!-- Contorno e base do leão em marrom escuro e bege -->
+    <path d="M360 200 Q330 180 290 190 Q250 200 230 220 Q210 240 200 270 Q190 300 195 330 Q200 360 210 380 Q220 400 240 410 Q260 420 280 415 Q300 410 320 400 Q340 390 350 370 Q360 350 365 330 Q370 310 368 290 Q366 270 360 250 Q354 230 360 200 Z" 
+          fill="#8B4513" stroke="#D4A574" stroke-width="3"/>
+    
+    <!-- Juba com detalhes em bege claro e marrom -->
+    <path d="M370 180 Q350 160 310 170 Q270 180 240 200 Q210 220 190 250 Q170 280 160 310 Q150 340 155 370 Q160 400 170 420 Q180 440 200 450 Q220 460 240 455 Q260 450 280 440 Q300 430 315 415 Q330 400 340 385 Q350 370 355 355 Q360 340 362 325 Q364 310 365 295 Q366 280 368 265 Q370 250 372 235 Q374 220 375 205 Q376 190 370 180 Z" 
+          fill="#8B4513" stroke="#D4A574" stroke-width="2"/>
+    
+    <!-- Detalhes da juba em bege claro (flame-like) -->
+    <path d="M330 200 L310 180 L290 200 L270 220 L250 240 L230 260" 
+          stroke="#D4A574" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M310 220 L290 200 L270 220 L250 240 L230 260 L210 280" 
+          stroke="#D4A574" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M290 240 L270 220 L250 240 L230 260 L210 280 L190 300" 
+          stroke="#D4A574" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    
+    <!-- Coroa com 4 pontas -->
+    <g id="crown">
+      <path d="M280 150 L300 120 L320 150 L340 120 L360 150" 
+            fill="#8B4513" stroke="#D4A574" stroke-width="2" stroke-linejoin="round"/>
+      <rect x="290" y="120" width="20" height="15" fill="#D4A574"/>
+      <rect x="330" y="120" width="20" height="15" fill="#D4A574"/>
+      <rect x="310" y="120" width="20" height="20" fill="#D4A574"/>
+      <rect x="300" y="120" width="10" height="25" fill="#8B4513"/>
+      <rect x="340" y="120" width="10" height="25" fill="#8B4513"/>
+    </g>
+    
+    <!-- Olho afiado (fierce expression) -->
+    <ellipse cx="270" cy="250" rx="10" ry="8" fill="#000000"/>
+    <ellipse cx="268" cy="248" rx="4" ry="3" fill="#FFFFFF"/>
+    
+    <!-- Boca aberta com presa -->
+    <path d="M230 280 Q225 285 220 280" stroke="#8B4513" stroke-width="2" fill="none"/>
+    <path d="M220 280 L215 275" stroke="#8B4513" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M220 280 L215 285" stroke="#8B4513" stroke-width="2" fill="none" stroke-linecap="round"/>
+    
+    <!-- Nariz -->
+    <ellipse cx="230" cy="280" rx="10" ry="6" fill="#8B4513"/>
+  </g>
+  
+  <!-- Texto SOCIEDADE (grande, bold, uppercase) -->
+  <text x="256" y="380" font-family="Arial, sans-serif" font-size="64" font-weight="bold" 
+        fill="#8B4513" text-anchor="middle" letter-spacing="3">SOCIEDADE</text>
+  
+  <!-- Texto NUTRA (menor, thinner, uppercase) -->
+  <text x="256" y="420" font-family="Arial, sans-serif" font-size="40" font-weight="600" 
+        fill="#8B4513" text-anchor="middle" letter-spacing="2">NUTRA</text>
+</svg>
+

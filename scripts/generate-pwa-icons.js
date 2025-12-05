@@ -33,8 +33,9 @@ async function generateIcons() {
       process.exit(1);
     }
 
-    // Tentar encontrar o arquivo de logo (prioridade: logo-nutra-club.svg, logo.png, logo.svg, favicon.svg)
+    // Tentar encontrar o arquivo de logo (prioridade: logo-sociedade-nutra.svg, logo-nutra-club.svg, logo.png, logo.svg, favicon.svg)
     const possibleInputs = [
+      path.join(__dirname, '../public/logo-sociedade-nutra.svg'),
       path.join(__dirname, '../public/logo-nutra-club.svg'),
       path.join(__dirname, '../public/logo.png'),
       path.join(__dirname, '../public/logo.svg'),
@@ -73,10 +74,14 @@ async function generateIcons() {
       const outputFile = path.join(outputDir, `icon-${size}x${size}.png`);
       
       try {
-        // Configurar fundo baseado no tipo de arquivo
+        // Configurar fundo baseado no tipo de arquivo e nome
         const isSVG = inputFile.endsWith('.svg');
+        const isSociedadeNutra = inputFile.includes('sociedade-nutra');
+        // Se for sociedade nutra, manter fundo laranja; caso contrário, usar preto
         const background = isSVG 
-          ? { r: 0, g: 0, b: 0, alpha: 1 } // Fundo preto para SVG
+          ? (isSociedadeNutra 
+              ? null // Manter fundo laranja do SVG
+              : { r: 0, g: 0, b: 0, alpha: 1 }) // Fundo preto para outros SVGs
           : null; // Manter fundo original para PNG/JPG
         
         const resizeOptions = {

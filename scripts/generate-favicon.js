@@ -18,6 +18,7 @@ async function generateFavicon() {
 
     // Tentar encontrar o arquivo de logo
     const possibleInputs = [
+      path.join(__dirname, '../public/logo-sociedade-nutra.svg'),
       path.join(__dirname, '../public/logo-nutra-club.svg'),
       path.join(__dirname, '../public/logo.png'),
       path.join(__dirname, '../public/logo.svg'),
@@ -48,11 +49,22 @@ async function generateFavicon() {
       const outputFile = path.join(outputDir, `favicon-${size}x${size}.png`);
       
       try {
+        // Configurar fundo baseado no tipo de arquivo
+        const isSVG = inputFile.endsWith('.svg');
+        const isSociedadeNutra = inputFile.includes('sociedade-nutra');
+        const background = isSVG 
+          ? (isSociedadeNutra 
+              ? null // Manter fundo laranja do SVG
+              : { r: 0, g: 0, b: 0, alpha: 1 }) // Fundo preto para outros SVGs
+          : null; // Manter fundo original para PNG/JPG
+        
+        const resizeOptions = {
+          fit: 'contain',
+          ...(background && { background })
+        };
+
         await sharp(inputFile)
-          .resize(size, size, {
-            fit: 'contain',
-            background: { r: 0, g: 0, b: 0, alpha: 1 }
-          })
+          .resize(size, size, resizeOptions)
           .png()
           .toFile(outputFile);
         
@@ -65,11 +77,22 @@ async function generateFavicon() {
     // Gerar favicon.ico (usando 32x32 como base)
     const icoFile = path.join(outputDir, 'favicon.ico');
     try {
+      // Configurar fundo
+      const isSVG = inputFile.endsWith('.svg');
+      const isSociedadeNutra = inputFile.includes('sociedade-nutra');
+      const background = isSVG 
+        ? (isSociedadeNutra 
+            ? null // Manter fundo laranja do SVG
+            : { r: 0, g: 0, b: 0, alpha: 1 }) // Fundo preto para outros SVGs
+        : null;
+      
+      const resizeOptions = {
+        fit: 'contain',
+        ...(background && { background })
+      };
+
       await sharp(inputFile)
-        .resize(32, 32, {
-          fit: 'contain',
-          background: { r: 0, g: 0, b: 0, alpha: 1 }
-        })
+        .resize(32, 32, resizeOptions)
         .toFormat('png')
         .toFile(icoFile.replace('.ico', '-temp.png'));
       
