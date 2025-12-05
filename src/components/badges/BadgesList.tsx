@@ -84,33 +84,37 @@ export function BadgesList() {
                   className={cn(
                     'rounded-lg border p-4 transition-all flex flex-col items-center gap-3',
                     isEarned 
-                      ? 'border-secondary/50 bg-secondary/5' 
-                      : 'border-border'
+                      ? 'border-secondary/50 bg-secondary/5 shadow-lg' 
+                      : 'border-border opacity-60'
                   )}
                 >
                   <MedalIcon 
                     type={medalType} 
-                    size={48}
-                    className={!isEarned ? 'opacity-50' : ''}
+                    size={64}
+                    className={cn(
+                      'transition-all',
+                      isEarned ? 'scale-110' : 'scale-100 opacity-50'
+                    )}
                   />
                   <div className="text-center w-full">
-                    <p className="text-sm font-semibold mb-1">{badge.name}</p>
-                    <p className="text-xs text-muted-foreground mb-2">{badge.description}</p>
                     {!isEarned && (
-                      <div className="space-y-1">
+                      <div className="space-y-2">
                         <Progress value={progress.percentage} className="h-2" />
                         <p className="text-[10px] text-muted-foreground">
                           {progress.current}/{progress.target}
                         </p>
                         {progress.details && (
-                          <p className="text-[9px] text-muted-foreground mt-1">
+                          <p className="text-[9px] text-muted-foreground">
                             {progress.details}
                           </p>
                         )}
                       </div>
                     )}
                     {isEarned && (
-                      <p className="text-xs text-green-500 font-semibold">✓ Conquistada!</p>
+                      <div className="space-y-1">
+                        <p className="text-xs text-green-500 font-semibold">✓ Conquistada!</p>
+                        <p className="text-[10px] text-muted-foreground">{badge.description}</p>
+                      </div>
                     )}
                   </div>
                 </div>
