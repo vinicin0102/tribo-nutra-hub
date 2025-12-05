@@ -8,6 +8,7 @@ import { useRanking } from '@/hooks/useRanking';
 import { useProfile } from '@/hooks/useProfile';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
+import { BadgesList } from '@/components/badges/BadgesList';
 
 const getTierInfo = (tier?: string) => {
   switch (tier) {
@@ -142,6 +143,9 @@ export default function Ranking() {
             </div>
           </Card>
         )}
+
+        {/* Badges/Conquistas */}
+        <BadgesList />
 
         {/* Ranking List */}
         <Card className="border border-[#2a2a2a] bg-[#1a1a1a]">
