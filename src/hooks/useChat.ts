@@ -74,6 +74,37 @@ export function useSendMessage() {
     mutationFn: async (content: string) => {
       if (!user) throw new Error('Not authenticated');
       
+      // Verificar se está mutado
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('is_muted, mute_until')
+        .eq('user_id', user.id)
+        .single();
+      
+      if (profile?.is_muted) {
+        const muteUntil = profile.mute_until ? new Date(profile.mute_until) : null;
+        const now = new Date();
+        
+        // Se tem data de expiração e já passou, não está mais mutado
+        if (muteUntil && muteUntil < now) {
+          // Atualizar status no banco
+          await supabase
+            .from('profiles')
+            .update({ is_muted: false, mute_until: null })
+            .eq('user_id', user.id);
+        } else {
+          // Está mutado
+          const daysLeft = muteUntil 
+            ? Math.ceil((muteUntil.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+            : null;
+          throw new Error(
+            muteUntil 
+              ? `Você está mutado por mais ${daysLeft} dia(s). Você não pode enviar mensagens no chat.`
+              : 'Você está mutado permanentemente. Você não pode enviar mensagens no chat.'
+          );
+        }
+      }
+      
       const { data, error } = await supabase
         .from('chat_messages')
         .insert({

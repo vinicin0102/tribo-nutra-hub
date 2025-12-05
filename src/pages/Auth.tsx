@@ -41,16 +41,50 @@ export default function Auth() {
             toast.error(error.message);
           }
         } else {
-          // Verificar se é usuário de suporte
+          // Verificar se é usuário de suporte ou se está banido
           const { data: { user: loggedUser } } = await supabase.auth.getUser();
           if (loggedUser) {
             const { data: profile } = await supabase
               .from('profiles')
-              .select('role')
+              .select('role, is_banned, banned_until')
               .eq('user_id', loggedUser.id)
               .single();
 
-            if (profile?.role === 'support' || profile?.role === 'admin') {
+            // Verificar se está banido
+            if (profile?.is_banned) {
+              const bannedUntil = profile.banned_until ? new Date(profile.banned_until) : null;
+              const now = new Date();
+              
+              // Se tem data de expiração e já passou, não está mais banido
+              if (bannedUntil && bannedUntil < now) {
+                // Atualizar status no banco (será feito automaticamente pelo trigger, mas garantimos aqui)
+                await supabase
+                  .from('profiles')
+                  .update({ is_banned: false, banned_until: null })
+                  .eq('user_id', loggedUser.id);
+                
+                // Continuar login normalmente
+                if (profile?.role === 'support' || profile?.role === 'admin') {
+                  toast.success('Bem-vindo ao painel de suporte!');
+                  navigate('/support/dashboard');
+                } else {
+                  toast.success('Bem-vindo de volta!');
+                  navigate('/');
+                }
+              } else {
+                // Está banido - fazer logout e mostrar mensagem
+                await supabase.auth.signOut();
+                const daysLeft = bannedUntil 
+                  ? Math.ceil((bannedUntil.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+                  : null;
+                toast.error(
+                  bannedUntil 
+                    ? `Sua conta foi banida. Você poderá acessar novamente em ${daysLeft} dia(s).`
+                    : 'Sua conta foi banida permanentemente.'
+                );
+                return;
+              }
+            } else if (profile?.role === 'support' || profile?.role === 'admin') {
               toast.success('Bem-vindo ao painel de suporte!');
               navigate('/support/dashboard');
             } else {

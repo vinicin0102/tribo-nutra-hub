@@ -140,14 +140,57 @@ GRANT EXECUTE ON FUNCTION public.unban_user(UUID) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.mute_user(UUID, INTEGER) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.unmute_user(UUID) TO authenticated;
 
--- 7. VERIFICAR RESULTADO
+-- 7. FUNÇÃO: VERIFICAR E LIMPAR BANS/MUTES EXPIRADOS AUTOMATICAMENTE
+CREATE OR REPLACE FUNCTION public.check_expired_bans_mutes()
+RETURNS void AS $$
+BEGIN
+  -- Remover bans expirados
+  UPDATE public.profiles
+  SET 
+    is_banned = false,
+    banned_until = NULL
+  WHERE is_banned = true 
+    AND banned_until IS NOT NULL 
+    AND banned_until < NOW();
+  
+  -- Remover mutes expirados
+  UPDATE public.profiles
+  SET 
+    is_muted = false,
+    mute_until = NULL
+  WHERE is_muted = true 
+    AND mute_until IS NOT NULL 
+    AND mute_until < NOW();
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 8. TRIGGER PARA VERIFICAR BANS/MUTES EXPIRADOS AO ACESSAR O PERFIL
+CREATE OR REPLACE FUNCTION public.auto_check_expired_bans_mutes()
+RETURNS TRIGGER AS $$
+BEGIN
+  -- Verificar e limpar bans/mutes expirados antes de retornar o perfil
+  PERFORM public.check_expired_bans_mutes();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Criar trigger que executa antes de SELECT (usando uma view ou função)
+-- Nota: PostgreSQL não suporta triggers em SELECT diretamente
+-- Vamos criar uma função que pode ser chamada antes de consultar perfis
+
+-- 9. POLÍTICAS RLS PARA BLOQUEAR AÇÕES DE USUÁRIOS MUTADOS
+-- As políticas já existem, mas vamos garantir que usuários mutados não possam criar posts/comentários/mensagens
+-- Isso será feito no frontend, mas podemos adicionar uma verificação no banco também
+
+-- 10. VERIFICAR RESULTADO
 SELECT 
   'Funções do painel administrativo corrigidas com sucesso!' as status,
   'Banir 3 dias: ban_user_temporary(user_id, 3)' as ban_function,
   'Mutar 7 dias: mute_user(user_id, 7)' as mute_7_days,
   'Mutar permanente: mute_user(user_id, NULL)' as mute_permanent,
   'Desbanir: unban_user(user_id)' as unban_function,
-  'Desmutar: unmute_user(user_id)' as unmute_function;
+  'Desmutar: unmute_user(user_id)' as unmute_function,
+  'Limpar expirados: check_expired_bans_mutes()' as cleanup_function;
 
 -- =====================================================
 -- PRONTO! 🎉

@@ -6,6 +6,8 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { InstallPrompt } from "@/components/pwa/InstallPrompt";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 import Auth from "./pages/Auth";
 import Feed from "./pages/Feed";
@@ -27,8 +29,68 @@ const queryClient = new QueryClient();
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
+  const [checkingBan, setCheckingBan] = useState(true);
+  const [isBanned, setIsBanned] = useState(false);
+  const [banMessage, setBanMessage] = useState<string | null>(null);
   
-  if (loading) {
+  useEffect(() => {
+    const checkBan = async () => {
+      if (!user) {
+        setCheckingBan(false);
+        return;
+      }
+      
+      try {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('is_banned, banned_until')
+          .eq('user_id', user.id)
+          .single();
+        
+        if (profile?.is_banned) {
+          const bannedUntil = profile.banned_until ? new Date(profile.banned_until) : null;
+          const now = new Date();
+          
+          // Se tem data de expiração e já passou, não está mais banido
+          if (bannedUntil && bannedUntil < now) {
+            // Atualizar status no banco
+            await supabase
+              .from('profiles')
+              .update({ is_banned: false, banned_until: null })
+              .eq('user_id', user.id);
+            setIsBanned(false);
+          } else {
+            // Está banido
+            setIsBanned(true);
+            const daysLeft = bannedUntil 
+              ? Math.ceil((bannedUntil.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+              : null;
+            setBanMessage(
+              bannedUntil 
+                ? `Sua conta foi banida. Você poderá acessar novamente em ${daysLeft} dia(s) (${bannedUntil.toLocaleDateString('pt-BR')}).`
+                : 'Sua conta foi banida permanentemente.'
+            );
+            // Fazer logout
+            await supabase.auth.signOut();
+          }
+        } else {
+          setIsBanned(false);
+        }
+      } catch (error) {
+        console.error('Erro ao verificar ban:', error);
+      } finally {
+        setCheckingBan(false);
+      }
+    };
+    
+    if (!loading && user) {
+      checkBan();
+    } else if (!loading && !user) {
+      setCheckingBan(false);
+    }
+  }, [user, loading]);
+  
+  if (loading || checkingBan) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#0a0a0a]">
         <div className="bg-primary rounded-2xl p-4 animate-pulse">
@@ -40,6 +102,24 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   
   if (!user) {
     return <Navigate to="/auth" replace />;
+  }
+  
+  if (isBanned) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#0a0a0a] p-4">
+        <div className="bg-[#1a1a1a] border border-red-500/50 rounded-2xl p-8 max-w-md text-center">
+          <div className="text-6xl mb-4">🚫</div>
+          <h1 className="text-2xl font-bold text-white mb-4">Conta Suspensa</h1>
+          <p className="text-gray-400">{banMessage}</p>
+          <button
+            onClick={() => window.location.href = '/auth'}
+            className="mt-6 px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90"
+          >
+            Voltar para Login
+          </button>
+        </div>
+      </div>
+    );
   }
   
   return <>{children}</>;

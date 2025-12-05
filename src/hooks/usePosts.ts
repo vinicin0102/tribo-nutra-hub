@@ -95,14 +95,40 @@ export function useCreatePost() {
     mutationFn: async ({ content, imageUrl, isSupport }: { content: string; imageUrl?: string; isSupport?: boolean }) => {
       if (!user) throw new Error('Not authenticated');
       
+      // Verificar se está mutado
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('is_muted, mute_until, role')
+        .eq('user_id', user.id)
+        .single();
+      
+      if (profile?.is_muted) {
+        const muteUntil = profile.mute_until ? new Date(profile.mute_until) : null;
+        const now = new Date();
+        
+        // Se tem data de expiração e já passou, não está mais mutado
+        if (muteUntil && muteUntil < now) {
+          // Atualizar status no banco
+          await supabase
+            .from('profiles')
+            .update({ is_muted: false, mute_until: null })
+            .eq('user_id', user.id);
+        } else {
+          // Está mutado
+          const daysLeft = muteUntil 
+            ? Math.ceil((muteUntil.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+            : null;
+          throw new Error(
+            muteUntil 
+              ? `Você está mutado por mais ${daysLeft} dia(s). Você não pode criar publicações.`
+              : 'Você está mutado permanentemente. Você não pode criar publicações.'
+          );
+        }
+      }
+      
       // Verificar se é suporte
       let isSupportPost = isSupport || false;
       if (!isSupportPost) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('user_id', user.id)
-          .single();
         isSupportPost = profile?.role === 'support' || profile?.role === 'admin';
       }
       
@@ -254,6 +280,37 @@ export function useCreateComment() {
   return useMutation({
     mutationFn: async ({ postId, content }: { postId: string; content: string }) => {
       if (!user) throw new Error('Not authenticated');
+      
+      // Verificar se está mutado
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('is_muted, mute_until')
+        .eq('user_id', user.id)
+        .single();
+      
+      if (profile?.is_muted) {
+        const muteUntil = profile.mute_until ? new Date(profile.mute_until) : null;
+        const now = new Date();
+        
+        // Se tem data de expiração e já passou, não está mais mutado
+        if (muteUntil && muteUntil < now) {
+          // Atualizar status no banco
+          await supabase
+            .from('profiles')
+            .update({ is_muted: false, mute_until: null })
+            .eq('user_id', user.id);
+        } else {
+          // Está mutado
+          const daysLeft = muteUntil 
+            ? Math.ceil((muteUntil.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+            : null;
+          throw new Error(
+            muteUntil 
+              ? `Você está mutado por mais ${daysLeft} dia(s). Você não pode comentar.`
+              : 'Você está mutado permanentemente. Você não pode comentar.'
+          );
+        }
+      }
       
       const { data, error } = await supabase
         .from('comments')
