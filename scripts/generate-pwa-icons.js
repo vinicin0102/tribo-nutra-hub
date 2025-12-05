@@ -33,12 +33,30 @@ async function generateIcons() {
       process.exit(1);
     }
 
-    const inputFile = path.join(__dirname, '../public/favicon.svg');
+    // Tentar encontrar o arquivo de logo (prioridade: logo-nutra-club.svg, logo.png, logo.svg, favicon.svg)
+    const possibleInputs = [
+      path.join(__dirname, '../public/logo-nutra-club.svg'),
+      path.join(__dirname, '../public/logo.png'),
+      path.join(__dirname, '../public/logo.svg'),
+      path.join(__dirname, '../public/favicon.svg'),
+    ];
+
+    let inputFile = null;
+    for (const file of possibleInputs) {
+      if (fs.existsSync(file)) {
+        inputFile = file;
+        console.log(`📸 Usando: ${path.basename(file)}\n`);
+        break;
+      }
+    }
+
     const outputDir = path.join(__dirname, '../public/icons');
 
-    // Verificar se o arquivo SVG existe
-    if (!fs.existsSync(inputFile)) {
-      console.error(`❌ Arquivo não encontrado: ${inputFile}`);
+    // Verificar se encontrou algum arquivo
+    if (!inputFile) {
+      console.error('❌ Nenhum arquivo de logo encontrado!');
+      console.error('   Procurando por: logo-nutra-club.svg, logo.png, logo.svg ou favicon.svg');
+      console.error('   Coloque um desses arquivos em: public/');
       process.exit(1);
     }
 
@@ -55,11 +73,19 @@ async function generateIcons() {
       const outputFile = path.join(outputDir, `icon-${size}x${size}.png`);
       
       try {
+        // Configurar fundo baseado no tipo de arquivo
+        const isSVG = inputFile.endsWith('.svg');
+        const background = isSVG 
+          ? { r: 0, g: 0, b: 0, alpha: 1 } // Fundo preto para SVG
+          : null; // Manter fundo original para PNG/JPG
+        
+        const resizeOptions = {
+          fit: 'contain',
+          ...(background && { background })
+        };
+
         await sharp(inputFile)
-          .resize(size, size, {
-            fit: 'contain',
-            background: { r: 26, g: 26, b: 26, alpha: 1 } // Fundo #1a1a1a
-          })
+          .resize(size, size, resizeOptions)
           .png()
           .toFile(outputFile);
         

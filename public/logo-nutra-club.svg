@@ -1,0 +1,48 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- Fundo preto -->
+  <rect width="512" height="512" fill="#000000"/>
+  
+  <!-- Cabeça do leão em perfil (facing right) -->
+  <g id="lion-head">
+    <!-- Contorno e base do leão em bege claro -->
+    <path d="M150 200 Q180 180 220 190 Q260 200 280 220 Q300 240 310 270 Q320 300 315 330 Q310 360 300 380 Q290 400 270 410 Q250 420 230 415 Q210 410 190 400 Q170 390 160 370 Q150 350 145 330 Q140 310 142 290 Q144 270 150 250 Q156 230 150 200 Z" 
+          fill="#D4A574" stroke="#FF8C00" stroke-width="3"/>
+    
+    <!-- Juba com detalhes em laranja -->
+    <path d="M140 180 Q160 160 200 170 Q240 180 270 200 Q300 220 320 250 Q340 280 350 310 Q360 340 355 370 Q350 400 340 420 Q330 440 310 450 Q290 460 270 455 Q250 450 230 440 Q210 430 195 415 Q180 400 170 385 Q160 370 155 355 Q150 340 148 325 Q146 310 145 295 Q144 280 142 265 Q140 250 138 235 Q136 220 135 205 Q134 190 140 180 Z" 
+          fill="#D4A574" stroke="#FF8C00" stroke-width="2"/>
+    
+    <!-- Detalhes da juba em laranja -->
+    <path d="M180 200 L200 180 L220 200 L240 220 L260 240 L280 260" 
+          stroke="#FF8C00" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M200 220 L220 200 L240 220 L260 240 L280 260 L300 280" 
+          stroke="#FF8C00" stroke-width="2" fill="none" stroke-linecap="round"/>
+    
+    <!-- Coroa -->
+    <g id="crown">
+      <path d="M200 150 L220 120 L240 150 L260 120 L280 150" 
+            fill="#D4A574" stroke="#FF8C00" stroke-width="2" stroke-linejoin="round"/>
+      <rect x="210" y="120" width="20" height="15" fill="#FF8C00"/>
+      <rect x="250" y="120" width="20" height="15" fill="#FF8C00"/>
+      <rect x="230" y="120" width="20" height="20" fill="#FF8C00"/>
+    </g>
+    
+    <!-- Olho fechado -->
+    <ellipse cx="240" cy="250" rx="8" ry="12" fill="#000000" stroke="#FF8C00" stroke-width="1"/>
+    
+    <!-- Nariz -->
+    <ellipse cx="280" cy="280" rx="12" ry="8" fill="#FF8C00"/>
+    
+    <!-- Boca -->
+    <path d="M280 290 Q285 295 290 290" stroke="#FF8C00" stroke-width="2" fill="none"/>
+  </g>
+  
+  <!-- Texto NUTRA -->
+  <text x="256" y="420" font-family="Arial, sans-serif" font-size="72" font-weight="bold" 
+        fill="#FF8C00" text-anchor="middle" letter-spacing="4">NUTRA</text>
+  
+  <!-- Texto CLUB -->
+  <text x="256" y="460" font-family="Arial, sans-serif" font-size="36" font-weight="bold" 
+        fill="#FF8C00" text-anchor="middle" letter-spacing="2">CLUB</text>
+</svg>
+
