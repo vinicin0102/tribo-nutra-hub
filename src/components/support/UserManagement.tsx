@@ -77,10 +77,12 @@ export function UserManagement() {
 
   const handleBan3Days = async (userId: string, username: string) => {
     try {
+      console.log('Iniciando banimento de 3 dias:', { userId, username });
       await banUserTemporary.mutateAsync({ userId, days: 3 });
       toast.success(`Usuário ${username} foi banido por 3 dias`);
-    } catch (error) {
-      toast.error('Erro ao banir usuário');
+    } catch (error: any) {
+      console.error('Erro ao banir usuário:', error);
+      toast.error(`Erro ao banir usuário: ${error?.message || 'Erro desconhecido'}`);
     }
   };
 
@@ -95,10 +97,12 @@ export function UserManagement() {
 
   const handleMute = async (userId: string, username: string, days?: number) => {
     try {
+      console.log('Iniciando mute:', { userId, username, days, isPermanent: days === undefined });
       await muteUser.mutateAsync({ userId, days });
       toast.success(`Usuário ${username} foi mutado${days ? ` por ${days} dias` : ' permanentemente'}`);
-    } catch (error) {
-      toast.error('Erro ao mutar usuário');
+    } catch (error: any) {
+      console.error('Erro ao mutar usuário:', error);
+      toast.error(`Erro ao mutar usuário: ${error?.message || 'Erro desconhecido'}`);
     }
   };
 

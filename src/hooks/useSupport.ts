@@ -152,12 +152,19 @@ export function useBanUserTemporary() {
     mutationFn: async ({ userId, days = 3 }: { userId: string; days?: number }) => {
       if (!isAdmin) throw new Error('Sem permissão. Apenas admin@gmail.com pode executar esta ação.');
 
-      const { error } = await supabase.rpc('ban_user_temporary', {
+      console.log('Banindo usuário:', { userId, days, isAdmin });
+
+      const { data, error } = await supabase.rpc('ban_user_temporary', {
         p_user_id: userId,
         p_days: days,
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erro ao banir usuário:', error);
+        throw error;
+      }
+
+      console.log('Usuário banido com sucesso:', data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['support-users'] });
@@ -175,12 +182,19 @@ export function useMuteUser() {
     mutationFn: async ({ userId, days }: { userId: string; days?: number }) => {
       if (!isAdmin) throw new Error('Sem permissão. Apenas admin@gmail.com pode executar esta ação.');
 
-      const { error } = await supabase.rpc('mute_user', {
+      console.log('Mutando usuário:', { userId, days, isAdmin, isPermanent: days === undefined || days === null });
+
+      const { data, error } = await supabase.rpc('mute_user', {
         p_user_id: userId,
-        p_days: days || null,
+        p_days: days === undefined ? null : days,
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erro ao mutar usuário:', error);
+        throw error;
+      }
+
+      console.log('Usuário mutado com sucesso:', data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['support-users'] });
