@@ -161,10 +161,21 @@ export function useBanUserTemporary() {
 
       if (error) {
         console.error('Erro ao banir usuário:', error);
-        throw error;
+        console.error('Detalhes do erro:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
+        throw new Error(error.message || 'Erro ao banir usuário');
       }
 
       console.log('Usuário banido com sucesso:', data);
+      
+      // Verificar se a função retornou sucesso
+      if (data && typeof data === 'object' && 'success' in data && !data.success) {
+        throw new Error(data.error || 'Erro ao banir usuário');
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['support-users'] });
@@ -191,10 +202,21 @@ export function useMuteUser() {
 
       if (error) {
         console.error('Erro ao mutar usuário:', error);
-        throw error;
+        console.error('Detalhes do erro:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
+        throw new Error(error.message || 'Erro ao mutar usuário');
       }
 
       console.log('Usuário mutado com sucesso:', data);
+      
+      // Verificar se a função retornou sucesso
+      if (data && typeof data === 'object' && 'success' in data && !data.success) {
+        throw new Error(data.error || 'Erro ao mutar usuário');
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['support-users'] });
