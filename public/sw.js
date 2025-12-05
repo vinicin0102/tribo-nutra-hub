@@ -1,6 +1,6 @@
 // Service Worker para PWA
-const CACHE_NAME = 'nutra-elite-v1';
-const RUNTIME_CACHE = 'nutra-elite-runtime-v1';
+const CACHE_NAME = 'sociedade-nutra-v2';
+const RUNTIME_CACHE = 'sociedade-nutra-runtime-v2';
 
 // Arquivos estáticos para cache
 const STATIC_ASSETS = [

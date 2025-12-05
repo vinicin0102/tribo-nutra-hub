@@ -1,11 +1,26 @@
 // Registrar Service Worker
 export function registerServiceWorker() {
   if ('serviceWorker' in navigator) {
+    // Limpar caches antigos primeiro
+    if ('caches' in window) {
+      caches.keys().then((cacheNames) => {
+        cacheNames.forEach((cacheName) => {
+          if (cacheName.includes('nutra-elite') || cacheName.includes('v1')) {
+            console.log('[SW] Removendo cache antigo:', cacheName);
+            caches.delete(cacheName);
+          }
+        });
+      });
+    }
+
     // Registrar imediatamente, não esperar pelo load
     navigator.serviceWorker
       .register('/sw.js', { scope: '/' })
       .then((registration) => {
         console.log('[SW] Service Worker registrado com sucesso:', registration.scope);
+        
+        // Forçar atualização imediata
+        registration.update();
 
         // Verificar se há atualizações
         registration.addEventListener('updatefound', () => {
