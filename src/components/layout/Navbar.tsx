@@ -25,7 +25,7 @@ export function Navbar() {
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 border-b border-[#2a2a2a] bg-[#1a1a1a]/95 backdrop-blur-md">
+    <header className="fixed top-0 left-0 right-0 z-50 border-b border-[#2a2a2a] bg-[#1a1a1a]/95 backdrop-blur-md" style={{ paddingTop: 'max(0px, env(safe-area-inset-top))' }}>
       <div className="container flex h-16 items-center justify-between">
         <div 
           className="flex items-center gap-2 cursor-pointer" 

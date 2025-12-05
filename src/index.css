@@ -4,6 +4,17 @@
 @tailwind components;
 @tailwind utilities;
 
+/* PWA Mobile Optimizations */
+@supports (-webkit-touch-callout: none) {
+  /* iOS specific styles */
+  body {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/* Mobile viewport fixes */
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -230,4 +241,79 @@
 
 ::-webkit-scrollbar-thumb:hover {
   background: hsl(var(--muted-foreground) / 0.5);
+}
+
+/* Mobile Optimizations */
+@media (max-width: 768px) {
+  /* Melhorar performance em mobile */
+  * {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
+  /* Otimizar animações em mobile */
+  @media (prefers-reduced-motion: no-preference) {
+    * {
+      will-change: auto;
+    }
+  }
+  
+  /* Melhorar touch targets */
+  button, a, [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Otimizar imagens */
+  img {
+    max-width: 100%;
+    height: auto;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+  }
+}
+
+/* Safe area insets para iPhone com notch */
+@supports (padding: max(0px)) {
+  body {
+    padding-left: max(0px, env(safe-area-inset-left));
+    padding-right: max(0px, env(safe-area-inset-right));
+  }
+  
+  .bottom-nav {
+    padding-bottom: max(16px, env(safe-area-inset-bottom));
+  }
+}
+
+/* PWA Standalone mode optimizations */
+@media (display-mode: standalone) {
+  body {
+    /* Remover espaçamento extra quando em modo standalone */
+    padding-top: env(safe-area-inset-top);
+  }
+  
+  /* Ocultar barra de endereço em alguns navegadores */
+  @media (max-width: 768px) {
+    body {
+      /* Ajustes específicos para PWA standalone */
+    }
+  }
+}
+
+/* iOS Safari specific fixes */
+@supports (-webkit-touch-callout: none) {
+  /* Fix para viewport height em iOS */
+  :root {
+    --vh: 1vh;
+  }
+  
+  /* Fix para 100vh em iOS */
+  .min-h-screen {
+    min-height: -webkit-fill-available;
+  }
+  
+  /* Melhorar scroll em iOS */
+  body {
+    -webkit-overflow-scrolling: touch;
+  }
 }

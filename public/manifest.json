@@ -1,6 +1,7 @@
 {
-  "name": "Sociedade Nutra - Comunidade Fitness",
-  "short_name": "Sociedade Nutra",
+  "name": "Nutra Elite - Comunidade Fitness",
+  "short_name": "Nutra Elite",
+  "id": "/",
   "description": "Comunidade fitness e nutrição para alunos do Rodrigo Nutra. Compartilhe sua evolução, conecte-se e alcance seus objetivos!",
   "start_url": "/",
   "display": "standalone",
@@ -11,6 +12,9 @@
   "lang": "pt-BR",
   "dir": "ltr",
   "categories": ["health", "fitness", "lifestyle"],
+  "iarc_rating_id": "",
+  "prefer_related_applications": false,
+  "related_applications": [],
   "icons": [
     {
       "src": "/icons/icon-72x72.png",
@@ -109,6 +113,18 @@
           "sizes": "192x192"
         }
       ]
+    },
+    {
+      "name": "Premiação",
+      "short_name": "Premiação",
+      "description": "Ver prêmios disponíveis",
+      "url": "/rewards",
+      "icons": [
+        {
+          "src": "/icons/icon-192x192.png",
+          "sizes": "192x192"
+        }
+      ]
     }
   ],
   "share_target": {
@@ -121,6 +137,11 @@
       "url": "url"
     }
   },
-  "prefer_related_applications": false
+  "display_override": ["standalone", "minimal-ui", "window-controls-overlay"],
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  }
 }
-
