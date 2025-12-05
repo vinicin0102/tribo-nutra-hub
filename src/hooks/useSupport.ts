@@ -7,7 +7,9 @@ const ADMIN_EMAIL = 'admin@gmail.com';
 
 export function useIsSupport() {
   const { data: profile } = useProfile();
-  return profile?.role === 'support' || profile?.role === 'admin';
+  const { user } = useAuth();
+  // Aceitar se tiver role support/admin OU se for admin@gmail.com
+  return profile?.role === 'support' || profile?.role === 'admin' || user?.email === 'admin@gmail.com';
 }
 
 export function useSupportUsers() {
