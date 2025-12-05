@@ -39,7 +39,7 @@ Sistema completo de assinatura Diamond (R$ 197/mês) integrado com Mercado Pago.
 
 ### 1. Executar Migration SQL
 
-No Supabase SQL Editor, execute o arquivo `setup-payments.sql`:
+No Supabase SQL Editor, execute o arquivo `saetup-payments.sql`:
 
 ```bash
 # Copiar conteúdo de setup-payments.sql e executar no Supabase SQL Editor

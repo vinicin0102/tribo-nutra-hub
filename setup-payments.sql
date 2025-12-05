@@ -157,3 +157,4 @@ COMMENT ON FUNCTION expire_subscriptions() IS 'Expira assinaturas vencidas (exec
 -- Executar este SQL no Supabase SQL Editor
 -- =====================================================
 
+

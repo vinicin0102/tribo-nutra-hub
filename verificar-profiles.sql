@@ -6,3 +6,4 @@ WHERE table_name = 'profiles';
 -- Ver um exemplo de registro
 SELECT * FROM profiles LIMIT 1;
 
+

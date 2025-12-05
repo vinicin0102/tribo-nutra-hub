@@ -167,3 +167,4 @@ SELECT 'payments' as tabela, COUNT(*) as total FROM payments;
 -- Executar este SQL no Supabase SQL Editor
 -- =====================================================
 
+

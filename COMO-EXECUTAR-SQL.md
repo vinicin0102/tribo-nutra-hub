@@ -231,3 +231,4 @@ Cada passo está no `GUIA-SIMPLES-SUPABASE.md`!
 
 **Conseguiu executar? Me avisa se deu certo ou se teve algum erro!** 😊
 
+

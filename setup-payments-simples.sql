@@ -117,3 +117,4 @@ CREATE TRIGGER trigger_sync_subscription_plan
 -- Verificar se funcionou:
 SELECT 'Tabelas criadas com sucesso!' as resultado;
 
+
