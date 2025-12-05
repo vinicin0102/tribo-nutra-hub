@@ -142,3 +142,157 @@ export function useDeleteChatMessage() {
   });
 }
 
+export function useBanUserTemporary() {
+  const queryClient = useQueryClient();
+  const { data: profile } = useProfile();
+  const isSupport = profile?.role === 'support' || profile?.role === 'admin';
+
+  return useMutation({
+    mutationFn: async ({ userId, days = 3 }: { userId: string; days?: number }) => {
+      if (!isSupport) throw new Error('Sem permissão');
+
+      const { error } = await supabase.rpc('ban_user_temporary', {
+        p_user_id: userId,
+        p_days: days,
+      });
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['support-users'] });
+      queryClient.invalidateQueries({ queryKey: ['profiles'] });
+    },
+  });
+}
+
+export function useMuteUser() {
+  const queryClient = useQueryClient();
+  const { data: profile } = useProfile();
+  const isSupport = profile?.role === 'support' || profile?.role === 'admin';
+
+  return useMutation({
+    mutationFn: async ({ userId, days }: { userId: string; days?: number }) => {
+      if (!isSupport) throw new Error('Sem permissão');
+
+      const { error } = await supabase.rpc('mute_user', {
+        p_user_id: userId,
+        p_days: days || null,
+      });
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['support-users'] });
+      queryClient.invalidateQueries({ queryKey: ['profiles'] });
+    },
+  });
+}
+
+export function useUnmuteUser() {
+  const queryClient = useQueryClient();
+  const { data: profile } = useProfile();
+  const isSupport = profile?.role === 'support' || profile?.role === 'admin';
+
+  return useMutation({
+    mutationFn: async (userId: string) => {
+      if (!isSupport) throw new Error('Sem permissão');
+
+      const { error } = await supabase.rpc('unmute_user', {
+        p_user_id: userId,
+      });
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['support-users'] });
+      queryClient.invalidateQueries({ queryKey: ['profiles'] });
+    },
+  });
+}
+
+export function useDeleteUser() {
+  const queryClient = useQueryClient();
+  const { data: profile } = useProfile();
+  const isSupport = profile?.role === 'support' || profile?.role === 'admin';
+
+  return useMutation({
+    mutationFn: async (userId: string) => {
+      if (!isSupport) throw new Error('Sem permissão');
+
+      const { error } = await supabase.rpc('delete_user_account', {
+        p_user_id: userId,
+      });
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['support-users'] });
+      queryClient.invalidateQueries({ queryKey: ['profiles'] });
+    },
+  });
+}
+
+export function useChangeUserPlan() {
+  const queryClient = useQueryClient();
+  const { data: profile } = useProfile();
+  const isSupport = profile?.role === 'support' || profile?.role === 'admin';
+
+  return useMutation({
+    mutationFn: async ({ 
+      userId, 
+      plan, 
+      expiresAt 
+    }: { 
+      userId: string; 
+      plan: 'free' | 'diamond'; 
+      expiresAt?: string | null;
+    }) => {
+      if (!isSupport) throw new Error('Sem permissão');
+
+      const { error } = await supabase.rpc('change_user_plan', {
+        p_user_id: userId,
+        p_plan: plan,
+        p_expires_at: expiresAt || null,
+      });
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['support-users'] });
+      queryClient.invalidateQueries({ queryKey: ['profiles'] });
+    },
+  });
+}
+
+export function useUpdateUserPoints() {
+  const queryClient = useQueryClient();
+  const { data: profile } = useProfile();
+  const isSupport = profile?.role === 'support' || profile?.role === 'admin';
+
+  return useMutation({
+    mutationFn: async ({ 
+      userId, 
+      points, 
+      reason 
+    }: { 
+      userId: string; 
+      points: number; 
+      reason?: string;
+    }) => {
+      if (!isSupport) throw new Error('Sem permissão');
+
+      const { error } = await supabase.rpc('update_user_points', {
+        p_user_id: userId,
+        p_points: points,
+        p_reason: reason || null,
+      });
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['support-users'] });
+      queryClient.invalidateQueries({ queryKey: ['profiles'] });
+    },
+  });
+}
+
