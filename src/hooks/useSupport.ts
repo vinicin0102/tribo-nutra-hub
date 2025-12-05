@@ -32,7 +32,7 @@ export function useSupportUsers() {
 
       const { data, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select('*, email')
         .order('created_at', { ascending: false });
 
       if (error) {
