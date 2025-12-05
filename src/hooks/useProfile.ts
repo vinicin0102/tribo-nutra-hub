@@ -9,6 +9,7 @@ export interface Profile {
   full_name: string | null;
   avatar_url: string | null;
   bio: string | null;
+  email?: string | null;
   points: number;
   tier?: 'bronze' | 'silver' | 'gold' | 'platinum' | 'diamond';
   subscription_plan?: 'free' | 'diamond';

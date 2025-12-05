@@ -252,6 +252,9 @@ export function UserManagement() {
                         {user.full_name || user.username || 'Usuário'}
                       </p>
                       <p className="text-xs text-gray-400 truncate">@{user.username}</p>
+                      {user.email && (
+                        <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                      )}
                       <div className="flex items-center gap-2 mt-1 flex-wrap">
                         <span className="text-xs text-gray-500">{user.points || 0} pontos</span>
                         {user.subscription_plan && (
