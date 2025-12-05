@@ -21,20 +21,31 @@ export function useDailyLogin() {
           return;
         }
 
-        // Buscar perfil atualizado para verificar dias consecutivos
+        // Buscar perfil atualizado e pontos diários
         const { data: profile } = await supabase
           .from('profiles')
-          .select('consecutive_days')
+          .select('consecutive_days, points')
           .eq('user_id', user.id)
           .single();
 
-        if (profile && profile.consecutive_days) {
-          // Mostrar notificação apenas se for um novo dia
-          if (profile.consecutive_days === 1) {
-            toast.success('🎉 Login diário registrado!', {
-              description: 'Continue voltando todos os dias para ganhar a medalha Ativo!'
-            });
-          } else if (profile.consecutive_days === 7) {
+        // Buscar pontos ganhos hoje
+        const { data: dailyPoints } = await supabase
+          .from('daily_points')
+          .select('points_earned')
+          .eq('user_id', user.id)
+          .eq('points_date', new Date().toISOString().split('T')[0])
+          .single();
+
+        if (profile) {
+          // Mostrar notificação de pontos ganhos
+          toast.success('🎉 +8 pontos por login diário!', {
+            description: dailyPoints 
+              ? `Você já ganhou ${dailyPoints.points_earned}/100 pontos hoje!`
+              : 'Continue ganhando pontos todos os dias!'
+          });
+
+          // Mostrar notificação de dias consecutivos
+          if (profile.consecutive_days === 7) {
             toast.success('🏆 7 dias consecutivos!', {
               description: 'Você ganhou a medalha Ativo!'
             });
