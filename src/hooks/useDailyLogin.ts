@@ -9,32 +9,45 @@ export function useDailyLogin() {
   useEffect(() => {
     if (!user) return;
 
-    const checkDailyLogin = async () => {
+    const recordDailyLogin = async () => {
       try {
-        // Chamar função do Supabase para verificar login diário
-        const { data, error } = await supabase.rpc('check_daily_login', {
-          user_uuid: user.id
+        // Chamar função do Supabase para registrar login diário
+        const { error } = await supabase.rpc('record_daily_login', {
+          p_user_id: user.id
         });
 
         if (error) {
-          console.error('Erro ao verificar login diário:', error);
+          console.error('Erro ao registrar login diário:', error);
           return;
         }
 
-        // Se data for true, significa que ganhou pontos hoje
-        if (data === true) {
-          toast.success('🎉 +100 pontos de login diário!', {
-            description: 'Continue voltando todos os dias para manter sua sequência!'
-          });
+        // Buscar perfil atualizado para verificar dias consecutivos
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('consecutive_days')
+          .eq('user_id', user.id)
+          .single();
+
+        if (profile && profile.consecutive_days) {
+          // Mostrar notificação apenas se for um novo dia
+          if (profile.consecutive_days === 1) {
+            toast.success('🎉 Login diário registrado!', {
+              description: 'Continue voltando todos os dias para ganhar a medalha Ativo!'
+            });
+          } else if (profile.consecutive_days === 7) {
+            toast.success('🏆 7 dias consecutivos!', {
+              description: 'Você ganhou a medalha Ativo!'
+            });
+          }
         }
       } catch (error) {
-        console.error('Erro ao verificar login diário:', error);
+        console.error('Erro ao registrar login diário:', error);
       }
     };
 
-    // Verificar após 2 segundos do login (para não poluir a tela inicial)
+    // Registrar após 2 segundos do login (para não poluir a tela inicial)
     const timer = setTimeout(() => {
-      checkDailyLogin();
+      recordDailyLogin();
     }, 2000);
 
     return () => clearTimeout(timer);
