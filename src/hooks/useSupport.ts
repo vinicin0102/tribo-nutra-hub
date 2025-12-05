@@ -30,26 +30,8 @@ export function useSupportUsers() {
 }
 
 export function useBanUser() {
-  const queryClient = useQueryClient();
-  const { data: profile } = useProfile();
-  const isSupport = profile?.role === 'support' || profile?.role === 'admin';
-
-  return useMutation({
-    mutationFn: async (userId: string) => {
-      if (!isSupport) throw new Error('Sem permissão');
-
-      const { error } = await supabase
-        .from('profiles')
-        .update({ is_banned: true })
-        .eq('user_id', userId);
-
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['support-users'] });
-      queryClient.invalidateQueries({ queryKey: ['profiles'] });
-    },
-  });
+  // Mantido para compatibilidade, mas agora usa ban temporário de 3 dias
+  return useBanUserTemporary();
 }
 
 export function useUnbanUser() {
