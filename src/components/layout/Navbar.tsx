@@ -32,8 +32,8 @@ export function Navbar() {
           onClick={() => navigate('/')}
         >
           <span className="font-display text-xl font-bold">
-            <span className="text-white">Sociedade</span>
-            <span className="text-primary"> Nutra</span>
+            <span className="text-white">Nutra</span>
+            <span className="text-primary"> Elite</span>
           </span>
         </div>
 

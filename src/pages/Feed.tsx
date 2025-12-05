@@ -15,10 +15,10 @@ export default function Feed() {
   return (
     <MainLayout>
       <div className="max-w-4xl mx-auto px-4 pb-20">
-        {/* Header Sociedade Nutra */}
+        {/* Header NutraHub */}
         <div className="flex items-start justify-between mb-6 pt-6">
           <div className="flex-1">
-            <h1 className="text-3xl font-bold text-white mb-1">Sociedade Nutra</h1>
+            <h1 className="text-3xl font-bold text-white mb-1">NutraHub</h1>
             <p className="text-gray-400 text-sm">
               Comunidade • {posts?.length || 0} {posts?.length === 1 ? 'publicação' : 'publicações'}
             </p>
