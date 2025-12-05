@@ -152,12 +152,19 @@ export function useBanUserTemporary() {
     mutationFn: async ({ userId, days = 3 }: { userId: string; days?: number }) => {
       if (!isAdmin) throw new Error('Sem permissão. Apenas admin@gmail.com pode executar esta ação.');
 
-      console.log('Banindo usuário:', { userId, days, isAdmin });
+      console.log('Banindo usuário:', { userId, days, isAdmin, userEmail: user?.email });
+
+      // Verificar se userId é válido
+      if (!userId || userId === '') {
+        throw new Error('ID do usuário inválido');
+      }
 
       const { data, error } = await supabase.rpc('ban_user_temporary', {
         p_user_id: userId,
         p_days: days,
       });
+
+      console.log('Resposta do RPC ban_user_temporary:', { data, error });
 
       if (error) {
         console.error('Erro ao banir usuário:', error);
@@ -167,14 +174,16 @@ export function useBanUserTemporary() {
           hint: error.hint,
           code: error.code
         });
-        throw new Error(error.message || 'Erro ao banir usuário');
+        throw new Error(error.message || 'Erro ao banir usuário. Verifique o console para mais detalhes.');
       }
 
       console.log('Usuário banido com sucesso:', data);
       
       // Verificar se a função retornou sucesso
-      if (data && typeof data === 'object' && 'success' in data && !data.success) {
-        throw new Error(data.error || 'Erro ao banir usuário');
+      if (data && typeof data === 'object') {
+        if ('success' in data && !data.success) {
+          throw new Error(data.error || 'Erro ao banir usuário');
+        }
       }
     },
     onSuccess: () => {
@@ -193,12 +202,19 @@ export function useMuteUser() {
     mutationFn: async ({ userId, days }: { userId: string; days?: number }) => {
       if (!isAdmin) throw new Error('Sem permissão. Apenas admin@gmail.com pode executar esta ação.');
 
-      console.log('Mutando usuário:', { userId, days, isAdmin, isPermanent: days === undefined || days === null });
+      console.log('Mutando usuário:', { userId, days, isAdmin, isPermanent: days === undefined || days === null, userEmail: user?.email });
+
+      // Verificar se userId é válido
+      if (!userId || userId === '') {
+        throw new Error('ID do usuário inválido');
+      }
 
       const { data, error } = await supabase.rpc('mute_user', {
         p_user_id: userId,
         p_days: days === undefined ? null : days,
       });
+
+      console.log('Resposta do RPC mute_user:', { data, error });
 
       if (error) {
         console.error('Erro ao mutar usuário:', error);
@@ -208,14 +224,16 @@ export function useMuteUser() {
           hint: error.hint,
           code: error.code
         });
-        throw new Error(error.message || 'Erro ao mutar usuário');
+        throw new Error(error.message || 'Erro ao mutar usuário. Verifique o console para mais detalhes.');
       }
 
       console.log('Usuário mutado com sucesso:', data);
       
       // Verificar se a função retornou sucesso
-      if (data && typeof data === 'object' && 'success' in data && !data.success) {
-        throw new Error(data.error || 'Erro ao mutar usuário');
+      if (data && typeof data === 'object') {
+        if ('success' in data && !data.success) {
+          throw new Error(data.error || 'Erro ao mutar usuário');
+        }
       }
     },
     onSuccess: () => {
