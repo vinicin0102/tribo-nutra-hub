@@ -22,6 +22,7 @@ async function generateMaskableIcons() {
 
     // Tentar encontrar o arquivo de logo
     const possibleInputs = [
+      path.join(__dirname, '../public/logo-sociedade-nutra-simple.svg'),
       path.join(__dirname, '../public/logo-sociedade-nutra.svg'),
       path.join(__dirname, '../public/logo-nutra-club.svg'),
       path.join(__dirname, '../public/logo.png'),
@@ -55,18 +56,27 @@ async function generateMaskableIcons() {
         const contentSize = Math.floor(size * 0.8);
         
         await sharp(inputFile)
-          .resize(contentSize, contentSize, {
-            fit: 'contain',
-            kernel: sharp.kernel.lanczos3,
-            background: { r: 255, g: 107, b: 0, alpha: 1 } // Fundo laranja
-          })
-          .extend({
-            top: padding,
-            bottom: padding,
-            left: padding,
-            right: padding,
-            background: { r: 255, g: 107, b: 0, alpha: 1 }
-          })
+          // Configurar fundo baseado no tipo de arquivo
+          const isSVG = inputFile.endsWith('.svg');
+          const isSociedadeNutraSimple = inputFile.includes('sociedade-nutra-simple');
+          const isSociedadeNutra = inputFile.includes('sociedade-nutra') && !isSociedadeNutraSimple;
+          const bgColor = isSociedadeNutraSimple
+            ? { r: 0, g: 0, b: 0, alpha: 1 } // Fundo preto
+            : { r: 255, g: 107, b: 0, alpha: 1 }; // Fundo laranja
+          
+          await sharp(inputFile)
+            .resize(contentSize, contentSize, {
+              fit: 'contain',
+              kernel: sharp.kernel.lanczos3,
+              background: bgColor
+            })
+            .extend({
+              top: padding,
+              bottom: padding,
+              left: padding,
+              right: padding,
+              background: bgColor
+            })
           .png({
             quality: 100,
             compressionLevel: 9,
