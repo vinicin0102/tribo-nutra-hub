@@ -42,7 +42,10 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- 2. FUNÇÃO: REGISTRAR LOGIN DIÁRIO (CORRIGIDA)
+-- 2. REMOVER FUNÇÃO ANTIGA (se existir)
+DROP FUNCTION IF EXISTS public.record_daily_login(UUID);
+
+-- 3. FUNÇÃO: REGISTRAR LOGIN DIÁRIO (CORRIGIDA)
 CREATE OR REPLACE FUNCTION public.record_daily_login(p_user_id UUID)
 RETURNS JSONB AS $$
 DECLARE
@@ -173,11 +176,11 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- 3. REMOVER FUNÇÕES ANTIGAS QUE DÃO 100 PONTOS (se existirem)
+-- 4. REMOVER FUNÇÕES ANTIGAS QUE DÃO 100 PONTOS (se existirem)
 DROP FUNCTION IF EXISTS public.check_daily_login(UUID);
 DROP FUNCTION IF EXISTS public.check_daily_login(UUID, TEXT);
 
--- 4. VERIFICAR RESULTADO
+-- 5. VERIFICAR RESULTADO
 SELECT 
   'Função de login diário corrigida!' as status,
   'Agora dá apenas 8 pontos, uma vez por dia' as info;
