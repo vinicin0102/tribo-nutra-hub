@@ -47,7 +47,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 
 export function UserManagement() {
   const isAdmin = useIsAdmin();
-  const { data: users = [], isLoading } = useSupportUsers();
+  const { data: users = [], isLoading, error } = useSupportUsers();
+  
+  // Debug: verificar dados
+  console.log('UserManagement - isAdmin:', isAdmin);
+  console.log('UserManagement - users:', users);
+  console.log('UserManagement - isLoading:', isLoading);
+  console.log('UserManagement - error:', error);
   const banUserTemporary = useBanUserTemporary();
   const unbanUser = useUnbanUser();
   const muteUser = useMuteUser();
@@ -166,6 +172,22 @@ export function UserManagement() {
       <Card className="border border-[#2a2a2a] bg-[#1a1a1a]">
         <CardContent className="pt-6">
           <p className="text-gray-400 text-center">Carregando usuários...</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card className="border border-[#2a2a2a] bg-[#1a1a1a]">
+        <CardContent className="pt-6">
+          <p className="text-red-400 text-center">Erro ao carregar usuários: {String(error)}</p>
+          <Button 
+            onClick={() => window.location.reload()} 
+            className="w-full mt-4"
+          >
+            Recarregar
+          </Button>
         </CardContent>
       </Card>
     );

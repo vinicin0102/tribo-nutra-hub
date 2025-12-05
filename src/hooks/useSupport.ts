@@ -16,22 +16,27 @@ export function useSupportUsers() {
   const { data: profile } = useProfile();
   const { user } = useAuth();
   const isSupport = profile?.role === 'support' || profile?.role === 'admin';
-  const isAdmin = user?.email === 'admin@gmail.com';
+  const isAdmin = user?.email === ADMIN_EMAIL;
+  const canAccess = isSupport || isAdmin;
 
   return useQuery({
     queryKey: ['support-users'],
     queryFn: async () => {
-      if (!isSupport) return [];
+      if (!canAccess) return [];
 
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      return data;
+      if (error) {
+        console.error('Erro ao buscar usuários:', error);
+        throw error;
+      }
+      
+      return data || [];
     },
-    enabled: isSupport,
+    enabled: canAccess,
   });
 }
 
