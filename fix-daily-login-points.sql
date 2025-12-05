@@ -89,18 +89,19 @@ BEGIN
       END IF;
     END LOOP;
     
-    -- Atualizar consecutive_days
-    DO $$
+    -- Atualizar consecutive_days (se a coluna existir)
     BEGIN
-      IF EXISTS (
+      UPDATE public.profiles
+      SET consecutive_days = v_consecutive_days
+      WHERE user_id = p_user_id
+      AND EXISTS (
         SELECT 1 FROM information_schema.columns 
         WHERE table_name = 'profiles' AND column_name = 'consecutive_days'
-      ) THEN
-        UPDATE public.profiles
-        SET consecutive_days = v_consecutive_days
-        WHERE user_id = p_user_id;
-      END IF;
-    END $$;
+      );
+    EXCEPTION
+      WHEN undefined_column THEN
+        NULL; -- Coluna não existe, ignorar
+    END;
     
     RETURN jsonb_build_object(
       'success', false,
@@ -133,28 +134,36 @@ BEGIN
   END LOOP;
   
   -- Atualizar o perfil
-  DO $$
   BEGIN
-    IF EXISTS (
+    -- Tentar atualizar consecutive_days e last_login_date
+    UPDATE public.profiles
+    SET 
+      consecutive_days = v_consecutive_days,
+      last_login_date = v_current_date
+    WHERE user_id = p_user_id
+    AND EXISTS (
       SELECT 1 FROM information_schema.columns 
       WHERE table_name = 'profiles' AND column_name = 'consecutive_days'
-    ) THEN
+    )
+    AND EXISTS (
+      SELECT 1 FROM information_schema.columns 
+      WHERE table_name = 'profiles' AND column_name = 'last_login_date'
+    );
+    
+    -- Se consecutive_days não existe, tentar apenas last_login_date
+    IF NOT FOUND THEN
       UPDATE public.profiles
-      SET 
-        consecutive_days = v_consecutive_days,
-        last_login_date = v_current_date
-      WHERE user_id = p_user_id;
-    ELSE
-      IF EXISTS (
+      SET last_login_date = v_current_date
+      WHERE user_id = p_user_id
+      AND EXISTS (
         SELECT 1 FROM information_schema.columns 
         WHERE table_name = 'profiles' AND column_name = 'last_login_date'
-      ) THEN
-        UPDATE public.profiles
-        SET last_login_date = v_current_date
-        WHERE user_id = p_user_id;
-      END IF;
+      );
     END IF;
-  END $$;
+  EXCEPTION
+    WHEN undefined_column THEN
+      NULL; -- Coluna não existe, ignorar
+  END;
   
   RETURN jsonb_build_object(
     'success', true,
