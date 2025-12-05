@@ -93,11 +93,7 @@ BEGIN
     BEGIN
       UPDATE public.profiles
       SET consecutive_days = v_consecutive_days
-      WHERE user_id = p_user_id
-      AND EXISTS (
-        SELECT 1 FROM information_schema.columns 
-        WHERE table_name = 'profiles' AND column_name = 'consecutive_days'
-      );
+      WHERE user_id = p_user_id;
     EXCEPTION
       WHEN undefined_column THEN
         NULL; -- Coluna não existe, ignorar
@@ -140,29 +136,25 @@ BEGIN
     SET 
       consecutive_days = v_consecutive_days,
       last_login_date = v_current_date
-    WHERE user_id = p_user_id
-    AND EXISTS (
-      SELECT 1 FROM information_schema.columns 
-      WHERE table_name = 'profiles' AND column_name = 'consecutive_days'
-    )
-    AND EXISTS (
-      SELECT 1 FROM information_schema.columns 
-      WHERE table_name = 'profiles' AND column_name = 'last_login_date'
-    );
-    
-    -- Se consecutive_days não existe, tentar apenas last_login_date
-    IF NOT FOUND THEN
-      UPDATE public.profiles
-      SET last_login_date = v_current_date
-      WHERE user_id = p_user_id
-      AND EXISTS (
-        SELECT 1 FROM information_schema.columns 
-        WHERE table_name = 'profiles' AND column_name = 'last_login_date'
-      );
-    END IF;
+    WHERE user_id = p_user_id;
   EXCEPTION
     WHEN undefined_column THEN
-      NULL; -- Coluna não existe, ignorar
+      -- Se alguma coluna não existe, tentar apenas as que existem
+      BEGIN
+        UPDATE public.profiles
+        SET consecutive_days = v_consecutive_days
+        WHERE user_id = p_user_id;
+      EXCEPTION
+        WHEN undefined_column THEN
+          BEGIN
+            UPDATE public.profiles
+            SET last_login_date = v_current_date
+            WHERE user_id = p_user_id;
+          EXCEPTION
+            WHEN undefined_column THEN
+              NULL; -- Nenhuma coluna existe, ignorar
+          END;
+      END;
   END;
   
   RETURN jsonb_build_object(
