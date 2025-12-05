@@ -71,7 +71,7 @@ export default function PaymentSuccess() {
                 Sua assinatura está ativa!
               </h2>
               <p className="text-gray-400">
-                Você agora tem acesso total a todos os recursos premium da Nutra Elite.
+                Você agora tem acesso total a todos os recursos premium da Sociedade Nutra.
               </p>
             </div>
 

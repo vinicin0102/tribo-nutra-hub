@@ -54,7 +54,7 @@ export default function SupportDashboard() {
             <Shield className="h-6 w-6 text-primary" />
             <div>
               <h1 className="text-xl font-bold text-white">Painel de Suporte</h1>
-              <p className="text-xs text-gray-400">Nutra Elite</p>
+              <p className="text-xs text-gray-400">Sociedade Nutra</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
