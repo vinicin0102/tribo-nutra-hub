@@ -55,11 +55,9 @@ async function generateFavicon() {
         const isSociedadeNutraSimple = inputFile.includes('sociedade-nutra-simple');
         const isSociedadeNutra = inputFile.includes('sociedade-nutra') && !isSociedadeNutraSimple;
         const background = isSVG 
-          ? (isSociedadeNutraSimple
-              ? null // Manter fundo preto do SVG
-              : isSociedadeNutra 
-                ? null // Manter fundo laranja do SVG
-                : { r: 0, g: 0, b: 0, alpha: 1 }) // Fundo preto para outros SVGs
+          ? (isSociedadeNutraSimple || isSociedadeNutra
+              ? null // Manter fundo laranja do SVG
+              : { r: 0, g: 0, b: 0, alpha: 1 }) // Fundo preto para outros SVGs
           : null; // Manter fundo original para PNG/JPG
         
         const resizeOptions = {

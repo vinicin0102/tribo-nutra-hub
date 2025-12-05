@@ -79,13 +79,11 @@ async function generateIcons() {
         const isSVG = inputFile.endsWith('.svg');
         const isSociedadeNutraSimple = inputFile.includes('sociedade-nutra-simple');
         const isSociedadeNutra = inputFile.includes('sociedade-nutra') && !isSociedadeNutraSimple;
-        // Se for sociedade nutra simple, manter fundo preto; se for sociedade nutra normal, manter laranja; caso contrário, usar preto
+        // Se for sociedade nutra simple, manter fundo laranja; se for sociedade nutra normal, manter laranja; caso contrário, usar preto
         const background = isSVG 
-          ? (isSociedadeNutraSimple
-              ? null // Manter fundo preto do SVG
-              : isSociedadeNutra 
-                ? null // Manter fundo laranja do SVG
-                : { r: 0, g: 0, b: 0, alpha: 1 }) // Fundo preto para outros SVGs
+          ? (isSociedadeNutraSimple || isSociedadeNutra
+              ? null // Manter fundo laranja do SVG
+              : { r: 0, g: 0, b: 0, alpha: 1 }) // Fundo preto para outros SVGs
           : null; // Manter fundo original para PNG/JPG
         
         const resizeOptions = {

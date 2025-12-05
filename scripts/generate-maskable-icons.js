@@ -60,9 +60,9 @@ async function generateMaskableIcons() {
           const isSVG = inputFile.endsWith('.svg');
           const isSociedadeNutraSimple = inputFile.includes('sociedade-nutra-simple');
           const isSociedadeNutra = inputFile.includes('sociedade-nutra') && !isSociedadeNutraSimple;
-          const bgColor = isSociedadeNutraSimple
-            ? { r: 0, g: 0, b: 0, alpha: 1 } // Fundo preto
-            : { r: 255, g: 107, b: 0, alpha: 1 }; // Fundo laranja
+          const bgColor = (isSociedadeNutraSimple || isSociedadeNutra)
+            ? { r: 255, g: 107, b: 0, alpha: 1 } // Fundo laranja
+            : { r: 0, g: 0, b: 0, alpha: 1 }; // Fundo preto
           
           await sharp(inputFile)
             .resize(contentSize, contentSize, {
