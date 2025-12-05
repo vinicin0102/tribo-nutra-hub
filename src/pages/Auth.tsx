@@ -44,6 +44,13 @@ export default function Auth() {
           // Verificar se é usuário de suporte ou se está banido
           const { data: { user: loggedUser } } = await supabase.auth.getUser();
           if (loggedUser) {
+            // Sincronizar email no perfil se necessário
+            await supabase
+              .from('profiles')
+              .update({ email: loggedUser.email })
+              .eq('user_id', loggedUser.id)
+              .is('email', null);
+            
             const { data: profile } = await supabase
               .from('profiles')
               .select('role, is_banned, banned_until')
