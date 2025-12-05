@@ -211,12 +211,26 @@ export function UserManagement() {
           </div>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="divide-y divide-[#2a2a2a] max-h-[calc(100vh-300px)] overflow-y-auto">
-            {filteredUsers.length === 0 ? (
-              <div className="p-4 text-center text-gray-400">
-                <p>Nenhum usuário encontrado</p>
-              </div>
-            ) : (
+        <div className="divide-y divide-[#2a2a2a] max-h-[calc(100vh-300px)] overflow-y-auto">
+          {filteredUsers.length === 0 ? (
+            <div className="p-4 text-center text-gray-400 space-y-2">
+              <p>Nenhum usuário encontrado</p>
+              {users.length === 0 && !isLoading && (
+                <div className="text-xs text-gray-500 mt-2">
+                  <p>Total de usuários no banco: {users.length}</p>
+                  <p>Termo de busca: "{searchTerm}"</p>
+                  <Button 
+                    onClick={() => window.location.reload()} 
+                    variant="outline"
+                    size="sm"
+                    className="mt-2"
+                  >
+                    Recarregar
+                  </Button>
+                </div>
+              )}
+            </div>
+          ) : (
               filteredUsers.map((user) => (
                 <div
                   key={user.user_id}
