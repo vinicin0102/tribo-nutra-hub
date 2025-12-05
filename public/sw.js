@@ -137,7 +137,7 @@ self.addEventListener('push', (event) => {
   };
 
   event.waitUntil(
-    self.registration.showNotification('Nutra Elite', options)
+    self.registration.showNotification('Sociedade Nutra', options)
   );
 });
 

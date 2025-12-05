@@ -79,7 +79,7 @@ export function InstallPrompt() {
           </CardHeader>
           <CardContent className="space-y-3">
             <p className="text-gray-300 text-sm">
-              Instale o Nutra Elite no seu iPhone para acesso rápido e melhor experiência!
+              Instale o Sociedade Nutra no seu iPhone para acesso rápido e melhor experiência!
             </p>
             <div className="bg-[#2a2a2a] rounded-lg p-3 space-y-2 text-sm">
               <p className="text-white font-semibold">Como instalar:</p>
@@ -124,7 +124,7 @@ export function InstallPrompt() {
           </CardHeader>
           <CardContent className="space-y-3">
             <p className="text-gray-300 text-sm">
-              Instale o Nutra Elite no seu dispositivo para acesso rápido, notificações e melhor experiência!
+              Instale o Sociedade Nutra no seu dispositivo para acesso rápido, notificações e melhor experiência!
             </p>
             <div className="flex gap-2">
               <Button
@@ -171,7 +171,7 @@ export function InstallPrompt() {
           </CardHeader>
           <CardContent className="space-y-3">
             <p className="text-gray-300 text-sm">
-              Instale o Nutra Elite para acesso rápido e melhor experiência!
+              Instale o Sociedade Nutra para acesso rápido e melhor experiência!
             </p>
             <div className="bg-[#2a2a2a] rounded-lg p-3 space-y-2 text-sm">
               <p className="text-white font-semibold">Como instalar:</p>
