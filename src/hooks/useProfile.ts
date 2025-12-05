@@ -15,6 +15,9 @@ export interface Profile {
   subscription_expires_at?: string | null;
   role?: 'user' | 'support' | 'admin';
   is_banned?: boolean;
+  banned_until?: string | null;
+  is_muted?: boolean;
+  mute_until?: string | null;
   posts_count?: number;
   likes_given_count?: number;
   comments_given_count?: number;
