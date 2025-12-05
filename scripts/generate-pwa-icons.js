@@ -90,8 +90,15 @@ async function generateIcons() {
         };
 
         await sharp(inputFile)
-          .resize(size, size, resizeOptions)
-          .png()
+          .resize(size, size, {
+            ...resizeOptions,
+            kernel: sharp.kernel.lanczos3, // Melhor qualidade de redimensionamento
+          })
+          .png({
+            quality: 100,
+            compressionLevel: 9,
+            palette: false, // Sem paleta para melhor qualidade
+          })
           .toFile(outputFile);
         
         console.log(`✅ Gerado: icon-${size}x${size}.png`);
