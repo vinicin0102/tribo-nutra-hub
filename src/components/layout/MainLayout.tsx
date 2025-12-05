@@ -29,7 +29,7 @@ export function MainLayout({ children }: MainLayoutProps) {
   return (
     <div className="min-h-screen bg-[#0a0a0a]">
       <Navbar />
-      <main className="container pb-20 pt-20 bg-[#0a0a0a]">
+      <main className="container pb-20 pt-16 bg-[#0a0a0a]">
         {children}
       </main>
       <BottomNav />
