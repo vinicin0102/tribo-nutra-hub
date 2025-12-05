@@ -19,9 +19,23 @@ self.addEventListener('install', (event) => {
     caches.open(CACHE_NAME)
       .then((cache) => {
         console.log('[SW] Caching static assets');
-        return cache.addAll(STATIC_ASSETS);
+        // Adicionar arquivos um por um para evitar falhas
+        return Promise.allSettled(
+          STATIC_ASSETS.map((asset) => 
+            cache.add(asset).catch((err) => {
+              console.warn(`[SW] Failed to cache ${asset}:`, err);
+              return null;
+            })
+          )
+        );
       })
-      .then(() => self.skipWaiting())
+      .then(() => {
+        console.log('[SW] Service worker installed');
+        return self.skipWaiting();
+      })
+      .catch((error) => {
+        console.error('[SW] Installation failed:', error);
+      })
   );
 });
 
@@ -51,8 +65,15 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  const url = new URL(event.request.url);
+
   // Ignorar requisições para APIs externas (Supabase)
-  if (event.request.url.includes('supabase.co')) {
+  if (url.hostname.includes('supabase.co')) {
+    return;
+  }
+
+  // Ignorar requisições para outros domínios
+  if (url.origin !== location.origin) {
     return;
   }
 
@@ -62,16 +83,19 @@ self.addEventListener('fetch', (event) => {
         // Clonar a resposta para cache
         const responseToCache = response.clone();
         
-        // Cachear apenas respostas válidas
-        if (response.status === 200) {
+        // Cachear apenas respostas válidas e do mesmo origin
+        if (response.status === 200 && response.type === 'basic') {
           caches.open(RUNTIME_CACHE).then((cache) => {
-            cache.put(event.request, responseToCache);
+            cache.put(event.request, responseToCache).catch((err) => {
+              console.warn('[SW] Failed to cache response:', err);
+            });
           });
         }
         
         return response;
       })
-      .catch(() => {
+      .catch((error) => {
+        console.log('[SW] Network request failed, trying cache:', event.request.url);
         // Fallback para cache se a rede falhar
         return caches.match(event.request).then((cachedResponse) => {
           if (cachedResponse) {
@@ -80,8 +104,20 @@ self.addEventListener('fetch', (event) => {
           
           // Se for uma navegação, retornar index.html
           if (event.request.mode === 'navigate') {
-            return caches.match('/index.html');
+            return caches.match('/index.html').then((indexResponse) => {
+              if (indexResponse) {
+                return indexResponse;
+              }
+              // Se não encontrar index.html no cache, retornar resposta básica
+              return new Response('Offline', { status: 503, statusText: 'Service Unavailable' });
+            });
           }
+          
+          // Para outros recursos, retornar erro
+          return new Response('Resource not available offline', { 
+            status: 503,
+            statusText: 'Service Unavailable'
+          });
         });
       })
   );
