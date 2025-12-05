@@ -11,8 +11,15 @@ export interface Profile {
   bio: string | null;
   points: number;
   tier?: 'bronze' | 'silver' | 'gold' | 'platinum' | 'diamond';
+  subscription_plan?: 'free' | 'diamond';
+  subscription_expires_at?: string | null;
   role?: 'user' | 'support' | 'admin';
   is_banned?: boolean;
+  posts_count?: number;
+  likes_given_count?: number;
+  comments_given_count?: number;
+  consecutive_days?: number;
+  last_login_date?: string | null;
   created_at: string;
   updated_at: string;
 }
