@@ -9,7 +9,8 @@
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
-    "generate-icons": "node scripts/generate-pwa-icons.js"
+    "generate-icons": "node scripts/generate-pwa-icons.js",
+    "generate-favicon": "node scripts/generate-favicon.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
