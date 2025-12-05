@@ -1,10 +1,10 @@
-import { Trophy, Medal, Crown, Star, Award, Gem, Sparkles } from 'lucide-react';
+import { Trophy, Medal, Crown } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 // Ícones de medalhas profissionais para níveis
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { useRanking, useBadges } from '@/hooks/useRanking';
+import { useRanking } from '@/hooks/useRanking';
 import { useProfile } from '@/hooks/useProfile';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
@@ -90,7 +90,6 @@ const getRankBg = (rank: number) => {
 
 export default function Ranking() {
   const { data: ranking, isLoading: rankingLoading } = useRanking();
-  const { data: badges, isLoading: badgesLoading } = useBadges();
   const { data: currentProfile } = useProfile();
 
   const currentUserRank = ranking?.find(r => r.user_id === currentProfile?.user_id);
@@ -143,49 +142,6 @@ export default function Ranking() {
             </div>
           </Card>
         )}
-
-        {/* Badges */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Star className="h-5 w-5 text-secondary" />
-              Conquistas
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {badgesLoading ? (
-              <div className="grid grid-cols-3 gap-3">
-                {[1, 2, 3].map((i) => (
-                  <Skeleton key={i} className="h-24 rounded-lg" />
-                ))}
-              </div>
-            ) : (
-              <div className="grid grid-cols-3 gap-3">
-                {badges?.map((badge) => {
-                  const isEarned = currentProfile && currentProfile.points >= badge.points_required;
-                  
-                  return (
-                    <div
-                      key={badge.id}
-                      className={cn(
-                        'rounded-lg border p-3 text-center transition-all',
-                        isEarned 
-                          ? 'border-secondary/50 bg-secondary/5' 
-                          : 'border-border opacity-50'
-                      )}
-                    >
-                      <span className="text-2xl">{badge.icon}</span>
-                      <p className="text-xs font-semibold mt-1">{badge.name}</p>
-                      <p className="text-[10px] text-muted-foreground">
-                        {badge.points_required} pts
-                      </p>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </CardContent>
-        </Card>
 
         {/* Ranking List */}
         <Card className="border border-[#2a2a2a] bg-[#1a1a1a]">
