@@ -311,9 +311,10 @@
     background-color: hsl(0 0% 5%) !important;
   }
   
-  /* Garantir que não haja barras brancas */
-  * {
-    background-color: transparent;
+  /* Garantir que inputs e textareas não fiquem brancos */
+  input, textarea {
+    background-color: hsl(0 0% 16%) !important;
+    color: hsl(0 0% 98%) !important;
   }
   
   /* Ocultar barra de endereço em alguns navegadores */
