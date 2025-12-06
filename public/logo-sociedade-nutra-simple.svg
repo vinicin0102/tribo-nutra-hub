@@ -1,6 +1,9 @@
 <svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
-  <!-- Fundo laranja vibrante -->
-  <rect width="512" height="512" fill="#FF6B00"/>
+  <!-- Borda azul ao redor -->
+  <rect width="512" height="512" fill="#0066CC"/>
+  
+  <!-- Painel laranja central -->
+  <rect x="32" y="32" width="448" height="448" fill="#FF6B00"/>
   
   <!-- Texto SOCIEDADE (grande, bold, uppercase, branco) -->
   <text 
