@@ -783,12 +783,12 @@ export default function Support() {
       >
         <div className="max-w-2xl mx-auto h-full flex flex-col px-2 sm:px-0" style={{ touchAction: 'manipulation' }}>
           <Card className="flex-1 flex flex-col border border-[#2a2a2a] bg-[#1a1a1a] overflow-hidden" style={{ touchAction: 'manipulation' }}>
-            <CardHeader className="border-b border-[#2a2a2a] py-2 flex-shrink-0">
-              <CardTitle className="flex items-center gap-2 text-white text-sm">
-                <MessageSquare className="h-4 w-4 text-primary" />
-                Chat com Suporte
+            <CardHeader className="border-b border-[#2a2a2a] py-2 px-4 flex-shrink-0">
+              <CardTitle className="flex items-center gap-2 text-white text-sm leading-tight">
+                <MessageSquare className="h-4 w-4 text-primary flex-shrink-0" />
+                <span className="truncate">Chat com Suporte</span>
               </CardTitle>
-              <CardDescription className="text-gray-400 text-xs mt-1">
+              <CardDescription className="text-gray-400 text-xs mt-0.5 line-clamp-1">
                 Envie sua dúvida e nossa equipe responderá em breve
               </CardDescription>
             </CardHeader>
