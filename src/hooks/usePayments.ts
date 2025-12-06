@@ -81,7 +81,7 @@ export function usePaymentHistory() {
   });
 }
 
-// Hook para criar checkout na Doppus
+// Hook para criar checkout no Stripe
 export function useCreatePaymentPreference() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -90,21 +90,30 @@ export function useCreatePaymentPreference() {
     mutationFn: async (planType: 'diamond') => {
       if (!user) throw new Error('User not authenticated');
 
+      console.log('Criando checkout Stripe para:', { planType, userId: user.id });
+
       // Chamar edge function do Supabase
-      const { data, error } = await supabase.functions.invoke('create-doppus-checkout', {
+      const { data, error } = await supabase.functions.invoke('create-stripe-checkout', {
         body: { 
           planType,
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erro ao chamar função Stripe:', error);
+        throw error;
+      }
       
+      console.log('Checkout criado com sucesso:', data);
       return data;
     },
     onSuccess: (data) => {
-      // Redirecionar para checkout da Doppus
+      // Redirecionar para checkout do Stripe
       if (data.checkout_url) {
+        console.log('Redirecionando para:', data.checkout_url);
         window.location.href = data.checkout_url;
+      } else {
+        toast.error('URL de checkout não recebida');
       }
     },
     onError: (error: any) => {

@@ -212,8 +212,8 @@ export default function Upgrade() {
         {/* Payment Info */}
         <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-4 mt-6 text-center text-sm text-gray-400">
           <Shield className="h-5 w-5 text-green-500 mx-auto mb-2" />
-          <p>Pagamento processado pela <strong className="text-white">Doppus</strong></p>
-          <p className="text-xs mt-1">Ambiente seguro e criptografado • Pix, Cartão ou Boleto</p>
+          <p>Pagamento processado pela <strong className="text-white">Stripe</strong></p>
+          <p className="text-xs mt-1">Ambiente seguro e criptografado • Cartão, Pix ou Boleto</p>
         </div>
 
         {/* Free Plan Info */}
