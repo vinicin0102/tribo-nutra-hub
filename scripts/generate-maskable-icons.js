@@ -20,12 +20,17 @@ async function generateMaskableIcons() {
   try {
     const sharp = (await import('sharp')).default;
 
-    // Tentar encontrar o arquivo de logo
+    // Tentar encontrar o arquivo de logo (prioridade: PNG/JPG, depois SVG)
     const possibleInputs = [
+      path.join(__dirname, '../public/logo-sociedade-nutra.png'),
+      path.join(__dirname, '../public/logo-sociedade-nutra.jpg'),
+      path.join(__dirname, '../public/logo-sociedade-nutra.jpeg'),
+      path.join(__dirname, '../public/logo.png'),
+      path.join(__dirname, '../public/logo.jpg'),
+      path.join(__dirname, '../public/logo.jpeg'),
       path.join(__dirname, '../public/logo-sociedade-nutra-simple.svg'),
       path.join(__dirname, '../public/logo-sociedade-nutra.svg'),
       path.join(__dirname, '../public/logo-nutra-club.svg'),
-      path.join(__dirname, '../public/logo.png'),
       path.join(__dirname, '../public/logo.svg'),
     ];
 
@@ -55,28 +60,34 @@ async function generateMaskableIcons() {
         const padding = Math.floor(size * 0.1); // 10% de padding em cada lado = 80% área segura
         const contentSize = Math.floor(size * 0.8);
         
-        await sharp(inputFile)
-          // Configurar fundo baseado no tipo de arquivo
-          const isSVG = inputFile.endsWith('.svg');
-          const isSociedadeNutraSimple = inputFile.includes('sociedade-nutra-simple');
-          const isSociedadeNutra = inputFile.includes('sociedade-nutra') && !isSociedadeNutraSimple;
-          const bgColor = (isSociedadeNutraSimple || isSociedadeNutra)
+        // Configurar fundo baseado no tipo de arquivo
+        const isSVG = inputFile.endsWith('.svg');
+        const isSociedadeNutraSimple = inputFile.includes('sociedade-nutra-simple');
+        const isSociedadeNutra = inputFile.includes('sociedade-nutra') && !isSociedadeNutraSimple;
+        const isPNG = inputFile.endsWith('.png') || inputFile.endsWith('.jpg') || inputFile.endsWith('.jpeg');
+        
+        // Se for PNG/JPG, manter fundo original; se for SVG sociedade nutra, usar laranja; caso contrário, preto
+        const bgColor = isPNG
+          ? null // Manter fundo original para PNG/JPG
+          : (isSociedadeNutraSimple || isSociedadeNutra)
             ? { r: 255, g: 107, b: 0, alpha: 1 } // Fundo laranja
             : { r: 0, g: 0, b: 0, alpha: 1 }; // Fundo preto
-          
-          await sharp(inputFile)
-            .resize(contentSize, contentSize, {
-              fit: 'contain',
-              kernel: sharp.kernel.lanczos3,
-              background: bgColor
-            })
-            .extend({
-              top: padding,
-              bottom: padding,
-              left: padding,
-              right: padding,
-              background: bgColor
-            })
+        
+        const resizeOptions = {
+          fit: 'contain',
+          kernel: sharp.kernel.lanczos3,
+          ...(bgColor && { background: bgColor })
+        };
+        
+        await sharp(inputFile)
+          .resize(contentSize, contentSize, resizeOptions)
+          .extend({
+            top: padding,
+            bottom: padding,
+            left: padding,
+            right: padding,
+            background: bgColor || { r: 255, g: 255, b: 255, alpha: 1 }
+          })
           .png({
             quality: 100,
             compressionLevel: 9,
