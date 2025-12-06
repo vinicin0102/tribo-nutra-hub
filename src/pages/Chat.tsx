@@ -360,10 +360,6 @@ export default function Chat() {
             <form 
               onSubmit={handleSubmit} 
               className="border-t border-[#2a2a2a] p-3 flex gap-2 items-center flex-shrink-0 bg-[#1a1a1a]"
-              style={{ 
-                paddingBottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))',
-                marginBottom: 'calc(64px + env(safe-area-inset-bottom, 0px))'
-              }}
             >
               <Button
                 type="button"
