@@ -372,7 +372,7 @@ export default function Chat() {
                 placeholder="Digite sua mensagem..."
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
-                className="flex-1 bg-[#2a2a2a] border-[#3a3a3a] text-white placeholder:text-gray-500"
+                className="flex-1 !bg-[#2a2a2a] !border-[#3a3a3a] !text-white placeholder:!text-gray-500"
                 onFocus={(e) => {
                   // Atualizar altura imediatamente quando o input receber foco
                   if (window.visualViewport) {
