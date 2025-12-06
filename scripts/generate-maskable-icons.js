@@ -28,6 +28,7 @@ async function generateMaskableIcons() {
       path.join(__dirname, '../public/logo.png'),
       path.join(__dirname, '../public/logo.jpg'),
       path.join(__dirname, '../public/logo.jpeg'),
+      path.join(__dirname, '../public/logo-sociedade-nutra-completo.svg'),
       path.join(__dirname, '../public/logo-sociedade-nutra-simple.svg'),
       path.join(__dirname, '../public/logo-sociedade-nutra.svg'),
       path.join(__dirname, '../public/logo-nutra-club.svg'),
