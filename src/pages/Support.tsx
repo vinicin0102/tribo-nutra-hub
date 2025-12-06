@@ -785,7 +785,7 @@ export default function Support() {
                 Envie sua dúvida e nossa equipe responderá em breve
               </CardDescription>
             </CardHeader>
-            <CardContent className="flex flex-col flex-1 p-0 overflow-hidden" style={{ touchAction: 'manipulation' }}>
+            <CardContent className="flex flex-col flex-1 p-0 overflow-hidden pb-0" style={{ touchAction: 'manipulation' }}>
               {/* Mensagens */}
               <div className="flex-1 overflow-y-auto p-4 space-y-3" style={{ touchAction: 'manipulation' }}>
               {loadingMessages ? (
