@@ -657,7 +657,13 @@ export default function Support() {
                     <div ref={messagesEndRef} />
                   </div>
 
-                  <div className="border-t border-[#2a2a2a] p-4 flex-shrink-0 bg-[#1a1a1a]">
+                  <div 
+                    className="border-t border-[#2a2a2a] p-4 flex-shrink-0 bg-[#1a1a1a]"
+                    style={{ 
+                      paddingBottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))',
+                      marginBottom: 'calc(64px + env(safe-area-inset-bottom, 0px))'
+                    }}
+                  >
                     <div className="flex gap-2 items-end">
                       <div className="flex gap-1 flex-shrink-0">
                         <Button
