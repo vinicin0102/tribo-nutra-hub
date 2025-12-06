@@ -231,7 +231,7 @@ export default function Chat() {
               Chat da Tribo
             </CardTitle>
           </CardHeader>
-          <CardContent className="flex flex-col flex-1 p-0 overflow-hidden" style={{ touchAction: 'manipulation' }}>
+          <CardContent className="flex flex-col flex-1 p-0 overflow-hidden pb-0" style={{ touchAction: 'manipulation' }}>
             <div className="flex-1 overflow-y-auto p-4 space-y-3" style={{ touchAction: 'manipulation' }}>
               {isLoading ? (
                 <div className="space-y-3">
