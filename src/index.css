@@ -125,6 +125,16 @@
     touch-action: pan-x pan-y;
     -webkit-user-select: none;
     user-select: none;
+    background-color: hsl(0 0% 5%) !important;
+  }
+  
+  html {
+    background-color: hsl(0 0% 5%) !important;
+  }
+  
+  #root {
+    background-color: hsl(0 0% 5%) !important;
+    min-height: 100vh;
   }
   
   /* Desabilitar zoom por pinch em todos os elementos */
@@ -290,12 +300,27 @@
   body {
     /* Remover espaçamento extra quando em modo standalone */
     padding-top: env(safe-area-inset-top);
+    background-color: hsl(0 0% 5%) !important;
+  }
+  
+  html {
+    background-color: hsl(0 0% 5%) !important;
+  }
+  
+  #root {
+    background-color: hsl(0 0% 5%) !important;
+  }
+  
+  /* Garantir que não haja barras brancas */
+  * {
+    background-color: transparent;
   }
   
   /* Ocultar barra de endereço em alguns navegadores */
   @media (max-width: 768px) {
     body {
       /* Ajustes específicos para PWA standalone */
+      background-color: hsl(0 0% 5%) !important;
     }
   }
 }

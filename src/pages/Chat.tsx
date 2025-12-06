@@ -220,7 +220,7 @@ export default function Chat() {
 
   return (
     <MainLayout>
-      <div className="fixed inset-0 top-16 bottom-0 bg-[#0a0a0a] overflow-hidden" style={{ touchAction: 'manipulation' }}>
+      <div className="fixed inset-0 top-16 bottom-0 bg-[#0a0a0a] overflow-hidden" style={{ touchAction: 'manipulation', backgroundColor: '#0a0a0a' }}>
         <div className="max-w-2xl mx-auto h-full flex flex-col px-2 sm:px-0" style={{ touchAction: 'manipulation' }}>
           <Card className="flex-1 flex flex-col border border-[#2a2a2a] bg-[#1a1a1a] overflow-hidden mb-16" style={{ touchAction: 'manipulation' }}>
           <CardHeader className="border-b border-[#2a2a2a] py-3 flex-shrink-0">
