@@ -774,15 +774,16 @@ export default function Support() {
   return (
     <MainLayout>
       <div 
-        className="fixed inset-x-0 top-16 bg-[#0a0a0a] overflow-hidden" 
+        className="fixed inset-x-0 top-16 bg-[#0a0a0a]" 
         style={{ 
           touchAction: 'manipulation', 
           backgroundColor: '#0a0a0a',
-          bottom: 'calc(64px + env(safe-area-inset-bottom, 0px))'
+          bottom: 'calc(64px + env(safe-area-inset-bottom, 0px))',
+          overflow: 'hidden'
         }}
       >
-        <div className="max-w-2xl mx-auto h-full flex flex-col px-2 sm:px-0" style={{ touchAction: 'manipulation' }}>
-          <Card className="flex-1 flex flex-col border border-[#2a2a2a] bg-[#1a1a1a] overflow-hidden" style={{ touchAction: 'manipulation' }}>
+        <div className="max-w-2xl mx-auto h-full flex flex-col px-2 sm:px-0" style={{ touchAction: 'manipulation', overflow: 'hidden' }}>
+          <Card className="flex-1 flex flex-col border border-[#2a2a2a] bg-[#1a1a1a] min-h-0" style={{ touchAction: 'manipulation', overflow: 'hidden' }}>
             <CardHeader className="border-b border-[#2a2a2a] py-2 px-4 flex-shrink-0">
               <CardTitle className="flex items-center gap-2 text-white text-sm leading-tight">
                 <MessageSquare className="h-4 w-4 text-primary flex-shrink-0" />
@@ -792,9 +793,9 @@ export default function Support() {
                 Envie sua dúvida e nossa equipe responderá em breve
               </CardDescription>
             </CardHeader>
-            <CardContent className="flex flex-col flex-1 p-0 overflow-hidden pb-0" style={{ touchAction: 'manipulation' }}>
+            <CardContent className="flex flex-col flex-1 p-0 min-h-0" style={{ touchAction: 'manipulation', overflow: 'hidden' }}>
               {/* Mensagens */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-3" style={{ touchAction: 'manipulation' }}>
+              <div className="flex-1 overflow-y-auto p-4 space-y-3 min-h-0" style={{ touchAction: 'manipulation', WebkitOverflowScrolling: 'touch' }}>
               {loadingMessages ? (
                 <div className="text-center text-gray-400 py-8">Carregando mensagens...</div>
               ) : messages.length > 0 ? (

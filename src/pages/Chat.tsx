@@ -221,15 +221,16 @@ export default function Chat() {
   return (
     <MainLayout>
       <div 
-        className="fixed inset-0 top-16 bg-[#0a0a0a] overflow-hidden" 
+        className="fixed inset-0 top-16 bg-[#0a0a0a]" 
         style={{ 
           touchAction: 'manipulation', 
           backgroundColor: '#0a0a0a',
-          bottom: 'calc(64px + env(safe-area-inset-bottom, 0px))'
+          bottom: 'calc(64px + env(safe-area-inset-bottom, 0px))',
+          overflow: 'hidden'
         }}
       >
-        <div className="max-w-2xl mx-auto h-full flex flex-col px-2 sm:px-0" style={{ touchAction: 'manipulation' }}>
-          <Card className="flex-1 flex flex-col border border-[#2a2a2a] bg-[#1a1a1a] overflow-hidden" style={{ touchAction: 'manipulation' }}>
+        <div className="max-w-2xl mx-auto h-full flex flex-col px-2 sm:px-0" style={{ touchAction: 'manipulation', overflow: 'hidden' }}>
+          <Card className="flex-1 flex flex-col border border-[#2a2a2a] bg-[#1a1a1a] min-h-0" style={{ touchAction: 'manipulation', overflow: 'hidden' }}>
           <CardHeader className="border-b border-[#2a2a2a] py-3 flex-shrink-0">
             <CardTitle className="flex items-center gap-2 text-white text-base">
               <div className="bg-primary rounded-lg p-2">
@@ -238,8 +239,8 @@ export default function Chat() {
               Chat da Tribo
             </CardTitle>
           </CardHeader>
-          <CardContent className="flex flex-col flex-1 p-0 overflow-hidden pb-0" style={{ touchAction: 'manipulation' }}>
-            <div className="flex-1 overflow-y-auto p-4 space-y-3" style={{ touchAction: 'manipulation' }}>
+          <CardContent className="flex flex-col flex-1 p-0 min-h-0" style={{ touchAction: 'manipulation', overflow: 'hidden' }}>
+            <div className="flex-1 overflow-y-auto p-4 space-y-3 min-h-0" style={{ touchAction: 'manipulation', WebkitOverflowScrolling: 'touch' }}>
               {isLoading ? (
                 <div className="space-y-3">
                   {[1, 2, 3, 4, 5].map((i) => (
