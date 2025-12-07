@@ -1,37 +1,55 @@
 <svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
-  <!-- Borda azul ao redor -->
-  <rect width="512" height="512" fill="#0066CC"/>
+  <!-- Fundo laranja vibrante -->
+  <rect width="512" height="512" fill="#FF6B00"/>
   
-  <!-- Painel laranja central -->
-  <rect x="32" y="32" width="448" height="448" fill="#FF6B00"/>
+  <!-- Logo circular branco (à esquerda) -->
+  <g transform="translate(150, 256)">
+    <!-- Anel externo -->
+    <circle cx="0" cy="0" r="80" fill="none" stroke="#FFFFFF" stroke-width="8"/>
+    
+    <!-- Anel interno -->
+    <circle cx="0" cy="0" r="50" fill="none" stroke="#FFFFFF" stroke-width="6"/>
+    
+    <!-- Círculo central sólido -->
+    <circle cx="0" cy="0" r="20" fill="#FFFFFF"/>
+    
+    <!-- Barras horizontais conectando os anéis (esquerda e direita) -->
+    <!-- Barra esquerda -->
+    <rect x="-80" y="-6" width="30" height="12" fill="#FFFFFF"/>
+    <!-- Barra direita -->
+    <rect x="50" y="-6" width="30" height="12" fill="#FFFFFF"/>
+  </g>
   
-  <!-- Texto SOCIEDADE (grande, bold, uppercase, branco) -->
-  <text 
-    x="256" 
-    y="280" 
-    font-family="Arial, sans-serif" 
-    font-size="120" 
-    font-weight="bold" 
-    fill="#FFFFFF" 
-    text-anchor="middle" 
-    letter-spacing="8"
-    dominant-baseline="middle"
-  >
-    SOCIEDADE
-  </text>
-  
-  <!-- Texto NUTRA (menor, branco, uppercase) -->
-  <text 
-    x="256" 
-    y="360" 
-    font-family="Arial, sans-serif" 
-    font-size="60" 
-    font-weight="600" 
-    fill="#FFFFFF" 
-    text-anchor="middle" 
-    letter-spacing="4"
-    dominant-baseline="middle"
-  >
-    NUTRA
-  </text>
+  <!-- Texto NUTRA ELITE (à direita do logo) -->
+  <g transform="translate(280, 256)">
+    <!-- NUTRA (linha superior) -->
+    <text 
+      x="0" 
+      y="-20" 
+      font-family="Arial, sans-serif" 
+      font-size="56" 
+      font-weight="bold" 
+      fill="#FFFFFF" 
+      text-anchor="start" 
+      letter-spacing="2"
+      dominant-baseline="middle"
+    >
+      NUTRA
+    </text>
+    
+    <!-- ELITE (linha inferior, centralizado sob NUTRA) -->
+    <text 
+      x="0" 
+      y="30" 
+      font-family="Arial, sans-serif" 
+      font-size="56" 
+      font-weight="bold" 
+      fill="#FFFFFF" 
+      text-anchor="start" 
+      letter-spacing="2"
+      dominant-baseline="middle"
+    >
+      ELITE
+    </text>
+  </g>
 </svg>
