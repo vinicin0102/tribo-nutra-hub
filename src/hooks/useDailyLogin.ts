@@ -22,7 +22,7 @@ export function useDailyLogin() {
     const recordDailyLogin = async () => {
       try {
         // Chamar função do Supabase para registrar login diário
-        const { data, error } = await supabase.rpc('record_daily_login', {
+        const { data, error } = await (supabase.rpc as any)('record_daily_login', {
           p_user_id: user.id
         });
 
@@ -39,34 +39,15 @@ export function useDailyLogin() {
         if (data) {
           const result = data as any;
           
-          if (result.success && result.points_result?.success) {
+          if (result.points_earned && result.points_earned > 0) {
             // Mostrar notificação apenas se ganhou pontos
-            toast.success('🎉 +8 pontos por login diário!', {
-              description: `Você ganhou ${result.points_result.points_added || 8} pontos! Continue voltando todos os dias!`
+            toast.success(`🎉 +${result.points_earned} pontos por login diário!`, {
+              description: 'Continue voltando todos os dias!'
             });
           } else if (result.already_logged) {
             // Já ganhou pontos hoje, não mostrar notificação
             console.log('Login já registrado hoje');
           }
-
-          // Mostrar notificação de dias consecutivos
-          if (result.consecutive_days === 7) {
-            toast.success('🏆 7 dias consecutivos!', {
-              description: 'Você ganhou a medalha Ativo!'
-            });
-          }
-        }
-
-        // Buscar pontos ganhos hoje para exibir
-        const { data: dailyPoints } = await supabase
-          .from('daily_points')
-          .select('points_earned')
-          .eq('user_id', user.id)
-          .eq('points_date', today)
-          .single();
-
-        if (dailyPoints) {
-          console.log(`Pontos ganhos hoje: ${dailyPoints.points_earned}/100`);
         }
       } catch (error) {
         console.error('Erro ao registrar login diário:', error);
@@ -81,4 +62,3 @@ export function useDailyLogin() {
     return () => clearTimeout(timer);
   }, [user, hasCheckedToday]);
 }
-

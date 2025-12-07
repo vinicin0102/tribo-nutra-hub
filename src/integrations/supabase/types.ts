@@ -91,6 +91,30 @@ export type Database = {
           },
         ]
       }
+      daily_points: {
+        Row: {
+          created_at: string
+          id: string
+          login_date: string
+          points_earned: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          login_date?: string
+          points_earned?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          login_date?: string
+          points_earned?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       likes: {
         Row: {
           created_at: string | null
@@ -210,6 +234,7 @@ export type Database = {
           created_at: string | null
           id: string
           image_url: string | null
+          is_support_post: boolean | null
           likes_count: number | null
           updated_at: string | null
           user_id: string
@@ -221,6 +246,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           image_url?: string | null
+          is_support_post?: boolean | null
           likes_count?: number | null
           updated_at?: string | null
           user_id: string
@@ -232,6 +258,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           image_url?: string | null
+          is_support_post?: boolean | null
           likes_count?: number | null
           updated_at?: string | null
           user_id?: string
@@ -249,7 +276,10 @@ export type Database = {
           full_name: string | null
           id: string
           is_banned: boolean | null
+          is_muted: boolean | null
+          mute_until: string | null
           points: number | null
+          role: string | null
           subscription_expires_at: string | null
           subscription_plan: string | null
           tier: string | null
@@ -266,7 +296,10 @@ export type Database = {
           full_name?: string | null
           id?: string
           is_banned?: boolean | null
+          is_muted?: boolean | null
+          mute_until?: string | null
           points?: number | null
+          role?: string | null
           subscription_expires_at?: string | null
           subscription_plan?: string | null
           tier?: string | null
@@ -283,7 +316,10 @@ export type Database = {
           full_name?: string | null
           id?: string
           is_banned?: boolean | null
+          is_muted?: boolean | null
+          mute_until?: string | null
           points?: number | null
+          role?: string | null
           subscription_expires_at?: string | null
           subscription_plan?: string | null
           tier?: string | null
@@ -497,7 +533,34 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      ban_user_temporary: {
+        Args: { p_days: number; p_user_id: string }
+        Returns: {
+          error: string
+          success: boolean
+        }[]
+      }
+      mute_user: {
+        Args: { p_hours: number; p_user_id: string }
+        Returns: {
+          error: string
+          success: boolean
+        }[]
+      }
+      record_daily_login: {
+        Args: { p_user_id: string }
+        Returns: {
+          already_logged: boolean
+          points_earned: number
+        }[]
+      }
+      redeem_reward: {
+        Args: { p_reward_id: string; p_user_id: string }
+        Returns: {
+          message: string
+          success: boolean
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never

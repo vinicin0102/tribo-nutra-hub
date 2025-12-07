@@ -61,25 +61,25 @@ export function usePosts() {
     queryFn: async () => {
       const { data: posts, error: postsError } = await supabase
         .from('posts')
-        .select('id, user_id, content, image_url, video_url, likes_count, comments_count, is_support_post, created_at, updated_at')
+        .select('*')
         .order('created_at', { ascending: false });
       
       if (postsError) throw postsError;
       
       // Get unique user IDs
-      const userIds = [...new Set(posts.map(p => p.user_id))];
+      const userIds = [...new Set((posts as any[]).map(p => p.user_id))];
       
       // Fetch profiles separately
       const { data: profiles } = await supabase
         .from('profiles')
-        .select('user_id, username, avatar_url, full_name, role, subscription_plan, tier')
+        .select('*')
         .in('user_id', userIds);
       
       // Create a map for quick lookup
-      const profileMap = new Map(profiles?.map(p => [p.user_id, p]) || []);
+      const profileMap = new Map((profiles as any[] || []).map(p => [p.user_id, p]));
       
       // Combine posts with profiles
-      return posts.map(post => ({
+      return (posts as any[]).map(post => ({
         ...post,
         profiles: profileMap.get(post.user_id) || null
       })) as Post[];
@@ -96,11 +96,13 @@ export function useCreatePost() {
       if (!user) throw new Error('Not authenticated');
       
       // Verificar se está mutado
-      const { data: profile } = await supabase
+      const { data: profileData } = await supabase
         .from('profiles')
-        .select('is_muted, mute_until, role')
+        .select('*')
         .eq('user_id', user.id)
         .single();
+      
+      const profile = profileData as { is_muted?: boolean; mute_until?: string | null; role?: string } | null;
       
       if (profile?.is_muted) {
         const muteUntil = profile.mute_until ? new Date(profile.mute_until) : null;
@@ -109,8 +111,7 @@ export function useCreatePost() {
         // Se tem data de expiração e já passou, não está mais mutado
         if (muteUntil && muteUntil < now) {
           // Atualizar status no banco
-          await supabase
-            .from('profiles')
+          await (supabase.from('profiles') as any)
             .update({ is_muted: false, mute_until: null })
             .eq('user_id', user.id);
         } else {
@@ -135,8 +136,7 @@ export function useCreatePost() {
       // Garantir que content não seja null (usar espaço se vazio, pois o banco exige NOT NULL)
       const postContent = content?.trim() || ' ';
       
-      const { data, error } = await supabase
-        .from('posts')
+      const { data, error } = await (supabase.from('posts') as any)
         .insert({
           user_id: user.id,
           content: postContent,
@@ -192,7 +192,7 @@ export function useLikePost() {
         return { liked: true };
       }
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['posts'] });
       queryClient.invalidateQueries({ queryKey: ['likes'] });
       queryClient.invalidateQueries({ queryKey: ['user_likes'] });
@@ -282,11 +282,13 @@ export function useCreateComment() {
       if (!user) throw new Error('Not authenticated');
       
       // Verificar se está mutado
-      const { data: profile } = await supabase
+      const { data: profileData } = await supabase
         .from('profiles')
-        .select('is_muted, mute_until')
+        .select('*')
         .eq('user_id', user.id)
         .single();
+      
+      const profile = profileData as { is_muted?: boolean; mute_until?: string | null } | null;
       
       if (profile?.is_muted) {
         const muteUntil = profile.mute_until ? new Date(profile.mute_until) : null;
@@ -295,8 +297,7 @@ export function useCreateComment() {
         // Se tem data de expiração e já passou, não está mais mutado
         if (muteUntil && muteUntil < now) {
           // Atualizar status no banco
-          await supabase
-            .from('profiles')
+          await (supabase.from('profiles') as any)
             .update({ is_muted: false, mute_until: null })
             .eq('user_id', user.id);
         } else {

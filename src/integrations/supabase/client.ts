@@ -27,18 +27,19 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
 
 // Test connection on initialization (optional - can be removed in production)
 if (import.meta.env.DEV) {
-  supabase
-    .from('profiles')
-    .select('count')
-    .limit(1)
-    .then(({ error }) => {
+  (async () => {
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .select('count')
+        .limit(1);
       if (error) {
         console.warn('Supabase connection warning:', error.message);
       } else {
         console.log('✅ Conexão com o banco de dados Supabase estabelecida com sucesso!');
       }
-    })
-    .catch((err) => {
+    } catch (err) {
       console.error('❌ Erro ao conectar com o banco de dados:', err);
-    });
+    }
+  })();
 }

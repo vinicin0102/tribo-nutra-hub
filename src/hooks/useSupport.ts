@@ -8,21 +8,21 @@ const ADMIN_EMAIL = 'admin@gmail.com';
 export function useIsSupport() {
   const { data: profile } = useProfile();
   const { user } = useAuth();
-  // Aceitar se tiver role support/admin OU se for admin@gmail.com
-  return profile?.role === 'support' || profile?.role === 'admin' || user?.email === 'admin@gmail.com';
+  const profileData = profile as { role?: string } | undefined;
+  return profileData?.role === 'support' || profileData?.role === 'admin' || user?.email === 'admin@gmail.com';
 }
 
 export function useSupportUsers() {
   const { data: profile } = useProfile();
   const { user } = useAuth();
-  const isSupport = profile?.role === 'support' || profile?.role === 'admin';
+  const profileData = profile as { role?: string } | undefined;
+  const isSupport = profileData?.role === 'support' || profileData?.role === 'admin';
   const isAdmin = user?.email === ADMIN_EMAIL;
   const canAccess = isSupport || isAdmin;
 
   return useQuery({
     queryKey: ['support-users', user?.email],
     queryFn: async () => {
-      // Se for admin, sempre permitir acesso
       if (!canAccess && user?.email !== ADMIN_EMAIL) {
         console.log('Acesso negado - não é suporte nem admin');
         return [];
@@ -32,7 +32,7 @@ export function useSupportUsers() {
 
       const { data, error } = await supabase
         .from('profiles')
-        .select('*, email')
+        .select('*')
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -49,7 +49,6 @@ export function useSupportUsers() {
 }
 
 export function useBanUser() {
-  // Mantido para compatibilidade, mas agora usa ban temporário de 3 dias
   return useBanUserTemporary();
 }
 
@@ -62,8 +61,7 @@ export function useUnbanUser() {
     mutationFn: async (userId: string) => {
       if (!isAdmin) throw new Error('Sem permissão. Apenas admin@gmail.com pode executar esta ação.');
 
-      const { error } = await supabase
-        .from('profiles')
+      const { error } = await (supabase.from('profiles') as any)
         .update({ is_banned: false })
         .eq('user_id', userId);
 
@@ -79,7 +77,8 @@ export function useUnbanUser() {
 export function useDeletePost() {
   const queryClient = useQueryClient();
   const { data: profile } = useProfile();
-  const isSupport = profile?.role === 'support' || profile?.role === 'admin';
+  const profileData = profile as { role?: string } | undefined;
+  const isSupport = profileData?.role === 'support' || profileData?.role === 'admin';
 
   return useMutation({
     mutationFn: async (postId: string) => {
@@ -101,7 +100,8 @@ export function useDeletePost() {
 export function useDeleteComment() {
   const queryClient = useQueryClient();
   const { data: profile } = useProfile();
-  const isSupport = profile?.role === 'support' || profile?.role === 'admin';
+  const profileData = profile as { role?: string } | undefined;
+  const isSupport = profileData?.role === 'support' || profileData?.role === 'admin';
 
   return useMutation({
     mutationFn: async (commentId: string) => {
@@ -114,7 +114,7 @@ export function useDeleteComment() {
 
       if (error) throw error;
     },
-    onSuccess: (_, commentId) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['comments'] });
       queryClient.invalidateQueries({ queryKey: ['posts'] });
     },
@@ -124,7 +124,8 @@ export function useDeleteComment() {
 export function useDeleteChatMessage() {
   const queryClient = useQueryClient();
   const { data: profile } = useProfile();
-  const isSupport = profile?.role === 'support' || profile?.role === 'admin';
+  const profileData = profile as { role?: string } | undefined;
+  const isSupport = profileData?.role === 'support' || profileData?.role === 'admin';
 
   return useMutation({
     mutationFn: async (messageId: string) => {
@@ -154,12 +155,11 @@ export function useBanUserTemporary() {
 
       console.log('Banindo usuário:', { userId, days, isAdmin, userEmail: user?.email });
 
-      // Verificar se userId é válido
       if (!userId || userId === '') {
         throw new Error('ID do usuário inválido');
       }
 
-      const { data, error } = await supabase.rpc('ban_user_temporary', {
+      const { data, error } = await (supabase.rpc as any)('ban_user_temporary', {
         p_user_id: userId,
         p_days: days,
       });
@@ -168,21 +168,15 @@ export function useBanUserTemporary() {
 
       if (error) {
         console.error('Erro ao banir usuário:', error);
-        console.error('Detalhes do erro:', {
-          message: error.message,
-          details: error.details,
-          hint: error.hint,
-          code: error.code
-        });
-        throw new Error(error.message || 'Erro ao banir usuário. Verifique o console para mais detalhes.');
+        throw new Error(error.message || 'Erro ao banir usuário.');
       }
 
       console.log('Usuário banido com sucesso:', data);
       
-      // Verificar se a função retornou sucesso
-      if (data && typeof data === 'object') {
-        if ('success' in data && !data.success) {
-          throw new Error(data.error || 'Erro ao banir usuário');
+      if (data && Array.isArray(data) && data.length > 0) {
+        const result = data[0] as { success?: boolean; error?: string };
+        if (result.success === false) {
+          throw new Error(result.error || 'Erro ao banir usuário');
         }
       }
     },
@@ -202,37 +196,30 @@ export function useMuteUser() {
     mutationFn: async ({ userId, days }: { userId: string; days?: number }) => {
       if (!isAdmin) throw new Error('Sem permissão. Apenas admin@gmail.com pode executar esta ação.');
 
-      console.log('Mutando usuário:', { userId, days, isAdmin, isPermanent: days === undefined || days === null, userEmail: user?.email });
+      console.log('Mutando usuário:', { userId, days, isAdmin, userEmail: user?.email });
 
-      // Verificar se userId é válido
       if (!userId || userId === '') {
         throw new Error('ID do usuário inválido');
       }
 
-      const { data, error } = await supabase.rpc('mute_user', {
+      const { data, error } = await (supabase.rpc as any)('mute_user', {
         p_user_id: userId,
-        p_days: days === undefined ? null : days,
+        p_hours: days ? days * 24 : null,
       });
 
       console.log('Resposta do RPC mute_user:', { data, error });
 
       if (error) {
         console.error('Erro ao mutar usuário:', error);
-        console.error('Detalhes do erro:', {
-          message: error.message,
-          details: error.details,
-          hint: error.hint,
-          code: error.code
-        });
-        throw new Error(error.message || 'Erro ao mutar usuário. Verifique o console para mais detalhes.');
+        throw new Error(error.message || 'Erro ao mutar usuário.');
       }
 
       console.log('Usuário mutado com sucesso:', data);
       
-      // Verificar se a função retornou sucesso
-      if (data && typeof data === 'object') {
-        if ('success' in data && !data.success) {
-          throw new Error(data.error || 'Erro ao mutar usuário');
+      if (data && Array.isArray(data) && data.length > 0) {
+        const result = data[0] as { success?: boolean; error?: string };
+        if (result.success === false) {
+          throw new Error(result.error || 'Erro ao mutar usuário');
         }
       }
     },
@@ -252,9 +239,9 @@ export function useUnmuteUser() {
     mutationFn: async (userId: string) => {
       if (!isAdmin) throw new Error('Sem permissão. Apenas admin@gmail.com pode executar esta ação.');
 
-      const { error } = await supabase.rpc('unmute_user', {
-        p_user_id: userId,
-      });
+      const { error } = await (supabase.from('profiles') as any)
+        .update({ is_muted: false, mute_until: null })
+        .eq('user_id', userId);
 
       if (error) throw error;
     },
@@ -274,9 +261,11 @@ export function useDeleteUser() {
     mutationFn: async (userId: string) => {
       if (!isAdmin) throw new Error('Sem permissão. Apenas admin@gmail.com pode executar esta ação.');
 
-      const { error } = await supabase.rpc('delete_user_account', {
-        p_user_id: userId,
-      });
+      // Delete user profile (cascade will handle related records)
+      const { error } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('user_id', userId);
 
       if (error) throw error;
     },
@@ -304,11 +293,12 @@ export function useChangeUserPlan() {
     }) => {
       if (!isAdmin) throw new Error('Sem permissão. Apenas admin@gmail.com pode executar esta ação.');
 
-      const { error } = await supabase.rpc('change_user_plan', {
-        p_user_id: userId,
-        p_plan: plan,
-        p_expires_at: expiresAt || null,
-      });
+      const { error } = await (supabase.from('profiles') as any)
+        .update({
+          subscription_plan: plan,
+          subscription_expires_at: expiresAt || null,
+        })
+        .eq('user_id', userId);
 
       if (error) throw error;
     },
@@ -328,7 +318,6 @@ export function useUpdateUserPoints() {
     mutationFn: async ({ 
       userId, 
       points, 
-      reason 
     }: { 
       userId: string; 
       points: number; 
@@ -336,11 +325,10 @@ export function useUpdateUserPoints() {
     }) => {
       if (!isAdmin) throw new Error('Sem permissão. Apenas admin@gmail.com pode executar esta ação.');
 
-      const { error } = await supabase.rpc('update_user_points', {
-        p_user_id: userId,
-        p_points: points,
-        p_reason: reason || null,
-      });
+      const { error } = await supabase
+        .from('profiles')
+        .update({ points })
+        .eq('user_id', userId);
 
       if (error) throw error;
     },
@@ -350,4 +338,3 @@ export function useUpdateUserPoints() {
     },
   });
 }
-
