@@ -43,19 +43,22 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
       try {
         const { data: profile } = await supabase
           .from('profiles')
-          .select('is_banned, banned_until')
+          .select('*')
           .eq('user_id', user.id)
           .single();
         
-        if (profile?.is_banned) {
-          const bannedUntil = profile.banned_until ? new Date(profile.banned_until) : null;
+        const isBannedProfile = (profile as { is_banned?: boolean; banned_until?: string | null })?.is_banned;
+        const bannedUntilStr = (profile as { is_banned?: boolean; banned_until?: string | null })?.banned_until;
+        
+        if (isBannedProfile) {
+          const bannedUntil = bannedUntilStr ? new Date(bannedUntilStr) : null;
           const now = new Date();
           
           // Se tem data de expiração e já passou, não está mais banido
           if (bannedUntil && bannedUntil < now) {
             // Atualizar status no banco
-            await supabase
-              .from('profiles')
+            await (supabase
+              .from('profiles') as any)
               .update({ is_banned: false, banned_until: null })
               .eq('user_id', user.id);
             setIsBanned(false);

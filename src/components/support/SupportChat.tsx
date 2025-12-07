@@ -41,7 +41,10 @@ export function SupportChat() {
   useEffect(() => {
     if (selectedUserId) {
       loadMessages(selectedUserId);
-      subscribeToMessages(selectedUserId);
+      const unsubscribe = subscribeToMessages(selectedUserId);
+      return () => {
+        if (unsubscribe) unsubscribe();
+      };
     }
   }, [selectedUserId]);
 
@@ -51,16 +54,15 @@ export function SupportChat() {
 
   const loadConversations = async () => {
     try {
-      // Buscar usuários únicos que têm mensagens no support_chat
-      const { data: messages, error: messagesError } = await supabase
-        .from('support_chat')
+      // Buscar mensagens do support_chat
+      const { data: messagesData, error: messagesError } = await (supabase.from('support_chat') as any)
         .select('user_id, message, created_at')
         .order('created_at', { ascending: false });
 
       if (messagesError) throw messagesError;
 
       // Pegar IDs únicos de usuários
-      const userIds = [...new Set(messages?.map(m => m.user_id) || [])];
+      const userIds = [...new Set(messagesData?.map((m: any) => m.user_id) || [])];
       
       if (userIds.length === 0) {
         setConversations([]);
@@ -71,7 +73,7 @@ export function SupportChat() {
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('user_id, username, avatar_url')
-        .in('user_id', userIds);
+        .in('user_id', userIds as string[]);
 
       if (profilesError) throw profilesError;
 
@@ -81,7 +83,7 @@ export function SupportChat() {
       // Agrupar por usuário
       const grouped = new Map<string, { userId: string; username: string; avatar: string | null; lastMessage: string; unread: number }>();
       
-      messages?.forEach((msg: any) => {
+      messagesData?.forEach((msg: any) => {
         const userId = msg.user_id;
         if (!grouped.has(userId)) {
           const profile = profileMap.get(userId);
@@ -103,8 +105,7 @@ export function SupportChat() {
 
   const loadMessages = async (userId: string) => {
     try {
-      const { data: messages, error: messagesError } = await supabase
-        .from('support_chat')
+      const { data: messagesData, error: messagesError } = await (supabase.from('support_chat') as any)
         .select('*')
         .eq('user_id', userId)
         .order('created_at', { ascending: true });
@@ -112,7 +113,7 @@ export function SupportChat() {
       if (messagesError) throw messagesError;
 
       // Buscar perfis dos usuários
-      const userIds = [...new Set(messages?.map(m => m.is_from_support ? m.support_user_id : m.user_id).filter(Boolean) || [])];
+      const userIds = [...new Set(messagesData?.map((m: any) => m.is_from_support ? m.support_user_id : m.user_id).filter(Boolean) || [])] as string[];
       
       if (userIds.length > 0) {
         const { data: profiles } = await supabase
@@ -122,14 +123,14 @@ export function SupportChat() {
 
         const profileMap = new Map(profiles?.map(p => [p.user_id, p]) || []);
 
-        const messagesWithProfiles = messages?.map(msg => ({
+        const messagesWithProfiles = messagesData?.map((msg: any) => ({
           ...msg,
           profiles: profileMap.get(msg.is_from_support ? msg.support_user_id : msg.user_id) || null
         })) || [];
 
         setMessages(messagesWithProfiles);
       } else {
-        setMessages(messages || []);
+        setMessages(messagesData || []);
       }
     } catch (error) {
       console.error('Erro ao carregar mensagens:', error);
@@ -164,8 +165,7 @@ export function SupportChat() {
 
     setLoading(true);
     try {
-      const { error } = await supabase
-        .from('support_chat')
+      const { error } = await (supabase.from('support_chat') as any)
         .insert({
           user_id: selectedUserId,
           support_user_id: user.id,
@@ -307,4 +307,3 @@ export function SupportChat() {
     </div>
   );
 }
-

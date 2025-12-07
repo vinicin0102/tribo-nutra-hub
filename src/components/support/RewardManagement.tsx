@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Gift, Check, X, MessageCircle, RefreshCw, CheckCircle, Gem, Medal, Award, Sparkles, Star } from 'lucide-react';
+import { Gift, Check, X, MessageCircle, RefreshCw, Gem, Medal, Award, Sparkles, Star } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -10,7 +10,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { cn } from '@/lib/utils';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -131,19 +130,17 @@ export function RewardManagement() {
       console.log('Buscando resgates...');
       
       try {
-        // Query simples primeiro
-        let simpleQuery = supabase
-          .from('redemptions')
+        // Query simples primeiro usando any para evitar erros de tipo
+        let query = (supabase.from('redemptions') as any)
           .select('*')
           .order('created_at', { ascending: false });
 
         if (selectedStatus !== 'all') {
-          simpleQuery = simpleQuery.eq('status', selectedStatus);
+          query = query.eq('status', selectedStatus);
         }
 
-        const { data: simpleData, error: simpleError, count } = await simpleQuery;
+        const { data: simpleData, error: simpleError } = await query;
         
-        console.log('Total de resgates:', count);
         console.log('Resgates simples:', simpleData);
         
         if (simpleError) {
@@ -157,16 +154,15 @@ export function RewardManagement() {
         }
 
         // Buscar dados dos usuários e recompensas separadamente
-        const userIds = [...new Set(simpleData.map(r => r.user_id))];
-        const rewardIds = [...new Set(simpleData.map(r => r.reward_id))];
+        const userIds = [...new Set(simpleData.map((r: any) => r.user_id))];
+        const rewardIds = [...new Set(simpleData.map((r: any) => r.reward_id))];
 
         const { data: profiles } = await supabase
           .from('profiles')
-          .select('user_id, username, avatar_url, full_name, subscription_plan, tier, points')
-          .in('user_id', userIds);
+          .select('user_id, username, avatar_url, full_name, points')
+          .in('user_id', userIds as string[]);
 
-        const { data: rewards } = await supabase
-          .from('rewards')
+        const { data: rewards } = await (supabase.from('rewards') as any)
           .select('id, name, description')
           .in('id', rewardIds);
 
@@ -174,10 +170,10 @@ export function RewardManagement() {
         console.log('Rewards:', rewards);
 
         // Combinar dados
-        const enrichedData = simpleData.map(redemption => ({
+        const enrichedData = simpleData.map((redemption: any) => ({
           ...redemption,
-          profiles: profiles?.find(p => p.user_id === redemption.user_id) || null,
-          rewards: rewards?.find(r => r.id === redemption.reward_id) || null,
+          profiles: profiles?.find((p: any) => p.user_id === redemption.user_id) || null,
+          rewards: rewards?.find((r: any) => r.id === redemption.reward_id) || null,
         }));
 
         console.log('Resgates enriquecidos:', enrichedData);
@@ -187,7 +183,7 @@ export function RewardManagement() {
         throw error;
       }
     },
-    refetchInterval: 5000, // Atualizar a cada 5 segundos
+    refetchInterval: 5000,
   });
 
   // Atualização em tempo real
@@ -196,8 +192,7 @@ export function RewardManagement() {
       .channel('redemptions_changes')
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'redemptions' },
-        (payload) => {
-          console.log('Mudança em redemptions:', payload);
+        () => {
           queryClient.invalidateQueries({ queryKey: ['support_redemptions'] });
         }
       )
@@ -213,14 +208,10 @@ export function RewardManagement() {
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
       console.log('Atualizando resgate:', id, 'para status:', status);
       
-      const { data, error } = await supabase
-        .from('redemptions')
+      const { data, error } = await (supabase.from('redemptions') as any)
         .update({ status, updated_at: new Date().toISOString() })
         .eq('id', id)
         .select();
-
-      console.log('Resultado update:', data);
-      console.log('Erro update:', error);
 
       if (error) {
         console.error('Erro completo:', error);
@@ -229,20 +220,18 @@ export function RewardManagement() {
       
       return data;
     },
-    onSuccess: (data) => {
-      console.log('Update bem sucedido:', data);
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['support_redemptions'] });
       toast.success('Status atualizado!');
     },
     onError: (error: any) => {
       console.error('Erro na mutation:', error);
-      toast.error(error?.message || 'Erro ao atualizar status. Verifique as permissões RLS.');
+      toast.error(error?.message || 'Erro ao atualizar status.');
     },
   });
 
   // Função para abrir chat com o usuário
-  const contactUser = (userId: string, username: string) => {
-    // Redirecionar para a aba de suporte com o usuário selecionado
+  const contactUser = (_userId: string, username: string) => {
     toast.info(`Entre em contato com ${username} na aba de Chat de Suporte`);
   };
 
@@ -392,27 +381,20 @@ export function RewardManagement() {
                           <>
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
-                                <Button
-                                  size="sm"
-                                  className="bg-green-500 hover:bg-green-600"
-                                >
+                                <Button size="sm" className="bg-green-500 hover:bg-green-600">
                                   <Check className="h-4 w-4 mr-2" />
                                   Aprovar
                                 </Button>
                               </AlertDialogTrigger>
                               <AlertDialogContent className="bg-[#1a1a1a] border-[#2a2a2a]">
                                 <AlertDialogHeader>
-                                  <AlertDialogTitle className="text-white">
-                                    Aprovar Resgate
-                                  </AlertDialogTitle>
+                                  <AlertDialogTitle className="text-white">Aprovar Resgate</AlertDialogTitle>
                                   <AlertDialogDescription className="text-gray-400">
                                     Tem certeza que deseja aprovar este resgate?
                                   </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
-                                  <AlertDialogCancel className="bg-[#2a2a2a] text-white border-[#3a3a3a]">
-                                    Cancelar
-                                  </AlertDialogCancel>
+                                  <AlertDialogCancel className="bg-[#2a2a2a] text-white border-[#3a3a3a]">Cancelar</AlertDialogCancel>
                                   <AlertDialogAction
                                     onClick={() => updateStatus.mutate({ id: redemption.id, status: 'approved' })}
                                     className="bg-green-500 hover:bg-green-600"
@@ -436,17 +418,13 @@ export function RewardManagement() {
                               </AlertDialogTrigger>
                               <AlertDialogContent className="bg-[#1a1a1a] border-[#2a2a2a]">
                                 <AlertDialogHeader>
-                                  <AlertDialogTitle className="text-white">
-                                    Rejeitar Resgate
-                                  </AlertDialogTitle>
+                                  <AlertDialogTitle className="text-white">Rejeitar Resgate</AlertDialogTitle>
                                   <AlertDialogDescription className="text-gray-400">
                                     O resgate será cancelado e os pontos serão devolvidos ao usuário.
                                   </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
-                                  <AlertDialogCancel className="bg-[#2a2a2a] text-white border-[#3a3a3a]">
-                                    Cancelar
-                                  </AlertDialogCancel>
+                                  <AlertDialogCancel className="bg-[#2a2a2a] text-white border-[#3a3a3a]">Cancelar</AlertDialogCancel>
                                   <AlertDialogAction
                                     onClick={() => updateStatus.mutate({ id: redemption.id, status: 'cancelled' })}
                                     className="bg-red-500 hover:bg-red-600"
@@ -460,14 +438,31 @@ export function RewardManagement() {
                         )}
 
                         {redemption.status === 'approved' && (
-                          <Button
-                            size="sm"
-                            onClick={() => updateStatus.mutate({ id: redemption.id, status: 'delivered' })}
-                            className="bg-blue-500 hover:bg-blue-600"
-                          >
-                            <CheckCircle className="h-4 w-4 mr-2" />
-                            Marcar como Entregue
-                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button size="sm" className="bg-blue-500 hover:bg-blue-600">
+                                <Check className="h-4 w-4 mr-2" />
+                                Marcar Entregue
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent className="bg-[#1a1a1a] border-[#2a2a2a]">
+                              <AlertDialogHeader>
+                                <AlertDialogTitle className="text-white">Confirmar Entrega</AlertDialogTitle>
+                                <AlertDialogDescription className="text-gray-400">
+                                  Tem certeza que deseja marcar este resgate como entregue?
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel className="bg-[#2a2a2a] text-white border-[#3a3a3a]">Cancelar</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => updateStatus.mutate({ id: redemption.id, status: 'delivered' })}
+                                  className="bg-blue-500 hover:bg-blue-600"
+                                >
+                                  Confirmar
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
                         )}
                       </div>
                     </div>
@@ -479,25 +474,13 @@ export function RewardManagement() {
         </div>
       ) : (
         <Card className="border border-[#2a2a2a] bg-[#1a1a1a]">
-          <CardContent className="py-16 text-center">
-            <div className="bg-primary/10 rounded-full p-6 w-fit mx-auto mb-4">
-              <Gift className="h-12 w-12 text-primary" />
-            </div>
-            <h3 className="text-lg font-semibold text-white mb-2">
-              {selectedStatus === 'pending' ? 'Nenhum resgate pendente' : 'Nenhum resgate'}
-            </h3>
-            <p className="text-gray-400 text-sm">
-              {selectedStatus === 'all' 
-                ? 'Quando alunos resgatarem prêmios, eles aparecerão aqui' 
-                : selectedStatus === 'pending'
-                ? 'Nenhum resgate aguardando aprovação no momento'
-                : `Nenhum resgate ${getStatusLabel(selectedStatus).toLowerCase()} no momento`
-              }
-            </p>
+          <CardContent className="p-12 text-center">
+            <Gift className="h-12 w-12 text-gray-500 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-white mb-2">Nenhum resgate encontrado</h3>
+            <p className="text-gray-400">Não há resgates {selectedStatus !== 'all' ? `com status "${getStatusLabel(selectedStatus)}"` : ''} no momento.</p>
           </CardContent>
         </Card>
       )}
     </div>
   );
 }
-

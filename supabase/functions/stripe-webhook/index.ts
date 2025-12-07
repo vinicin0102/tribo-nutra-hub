@@ -246,9 +246,10 @@ serve(async (req) => {
     }
 
     return new Response('OK', { status: 200 });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Erro no webhook:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    const errorMessage = error instanceof Error ? error.message : 'Erro interno';
+    return new Response(JSON.stringify({ error: errorMessage }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
     });
