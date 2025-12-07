@@ -8,11 +8,11 @@ export interface Reward {
   name: string;
   description: string | null;
   image_url: string | null;
-  points_cost: number;
-  stock: number;
+  points_required: number;
+  points_cost?: number; // Alias for compatibility
+  stock?: number;
   is_active: boolean;
   created_at: string;
-  updated_at: string;
 }
 
 export interface Redemption {
@@ -30,11 +30,10 @@ export function useRewards() {
   return useQuery({
     queryKey: ['rewards'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('rewards')
+      const { data, error } = await (supabase.from('rewards') as any)
         .select('*')
         .eq('is_active', true)
-        .order('points_cost', { ascending: true });
+        .order('points_required', { ascending: true });
 
       if (error) throw error;
       return data as Reward[];
@@ -50,8 +49,7 @@ export function useRedemptions() {
     queryFn: async () => {
       if (!user) return [];
 
-      const { data, error } = await supabase
-        .from('redemptions')
+      const { data, error } = await (supabase.from('redemptions') as any)
         .select(`
           *,
           rewards (*)
@@ -74,12 +72,19 @@ export function useRedeemReward() {
     mutationFn: async (rewardId: string) => {
       if (!user) throw new Error('Not authenticated');
 
-      const { data, error } = await supabase.rpc('redeem_reward', {
-        reward_uuid: rewardId,
+      const { data, error } = await (supabase.rpc as any)('redeem_reward', {
+        p_user_id: user.id,
+        p_reward_id: rewardId,
       });
 
       if (error) throw error;
-      return data;
+      
+      const result = data as { success: boolean; message: string }[] | null;
+      if (result && result.length > 0 && !result[0].success) {
+        throw new Error(result[0].message);
+      }
+      
+      return result;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['rewards'] });
@@ -92,4 +97,3 @@ export function useRedeemReward() {
     },
   });
 }
-

@@ -75,11 +75,13 @@ export function useSendMessage() {
       if (!user) throw new Error('Not authenticated');
       
       // Verificar se está mutado
-      const { data: profile } = await supabase
+      const { data: profileData } = await supabase
         .from('profiles')
-        .select('is_muted, mute_until')
+        .select('*')
         .eq('user_id', user.id)
         .single();
+      
+      const profile = profileData as { is_muted?: boolean; mute_until?: string | null } | null;
       
       if (profile?.is_muted) {
         const muteUntil = profile.mute_until ? new Date(profile.mute_until) : null;
@@ -88,8 +90,7 @@ export function useSendMessage() {
         // Se tem data de expiração e já passou, não está mais mutado
         if (muteUntil && muteUntil < now) {
           // Atualizar status no banco
-          await supabase
-            .from('profiles')
+          await (supabase.from('profiles') as any)
             .update({ is_muted: false, mute_until: null })
             .eq('user_id', user.id);
         } else {

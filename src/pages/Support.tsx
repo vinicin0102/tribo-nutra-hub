@@ -70,7 +70,7 @@ export default function Support() {
   // Estados para visualização de suporte
   const [conversations, setConversations] = useState<{ userId: string; username: string; avatar: string | null; lastMessage: string; lastMessageTime: string; unread: number }[]>([]);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
-  const [selectedUserProfile, setSelectedUserProfile] = useState<{ username: string; avatar: string | null; full_name: string | null } | null>(null);
+  const [selectedUserProfile, setSelectedUserProfile] = useState<{ username: string; avatar_url: string | null; full_name: string | null } | null>(null);
   const [messages, setMessages] = useState<SupportMessage[]>([]);
   const [replyMessage, setReplyMessage] = useState('');
   const [loadingMessages, setLoadingMessages] = useState(false);

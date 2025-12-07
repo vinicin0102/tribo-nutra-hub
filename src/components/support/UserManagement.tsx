@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Ban, CheckCircle, Trash2, Search, VolumeX, Volume2, Crown, Coins, MoreVertical, X } from 'lucide-react';
+import { Ban, CheckCircle, Trash2, Search, VolumeX, Volume2, Crown, Coins, MoreVertical } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -34,7 +34,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import {
   DropdownMenu,
@@ -45,15 +44,26 @@ import {
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
+interface UserProfile {
+  user_id: string;
+  username: string;
+  full_name?: string;
+  avatar_url?: string;
+  email?: string;
+  points?: number;
+  subscription_plan?: string;
+  role?: string;
+  is_banned?: boolean;
+  banned_until?: string;
+  is_muted?: boolean;
+  mute_until?: string;
+}
+
 export function UserManagement() {
   const isAdmin = useIsAdmin();
-  const { data: users = [], isLoading, error } = useSupportUsers();
+  const { data: usersData = [], isLoading, error } = useSupportUsers();
+  const users = usersData as UserProfile[];
   
-  // Debug: verificar dados
-  console.log('UserManagement - isAdmin:', isAdmin);
-  console.log('UserManagement - users:', users);
-  console.log('UserManagement - isLoading:', isLoading);
-  console.log('UserManagement - error:', error);
   const banUserTemporary = useBanUserTemporary();
   const unbanUser = useUnbanUser();
   const muteUser = useMuteUser();
@@ -63,7 +73,7 @@ export function UserManagement() {
   const updatePoints = useUpdateUserPoints();
   
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const [showPlanDialog, setShowPlanDialog] = useState(false);
   const [showPointsDialog, setShowPointsDialog] = useState(false);
   const [newPlan, setNewPlan] = useState<'free' | 'diamond'>('free');
@@ -77,11 +87,9 @@ export function UserManagement() {
 
   const handleBan3Days = async (userId: string, username: string) => {
     try {
-      console.log('Iniciando banimento de 3 dias:', { userId, username });
       await banUserTemporary.mutateAsync({ userId, days: 3 });
       toast.success(`Usuário ${username} foi banido por 3 dias`);
     } catch (error: any) {
-      console.error('Erro ao banir usuário:', error);
       toast.error(`Erro ao banir usuário: ${error?.message || 'Erro desconhecido'}`);
     }
   };
@@ -97,11 +105,9 @@ export function UserManagement() {
 
   const handleMute = async (userId: string, username: string, days?: number) => {
     try {
-      console.log('Iniciando mute:', { userId, username, days, isPermanent: days === undefined });
       await muteUser.mutateAsync({ userId, days });
       toast.success(`Usuário ${username} foi mutado${days ? ` por ${days} dias` : ' permanentemente'}`);
     } catch (error: any) {
-      console.error('Erro ao mutar usuário:', error);
       toast.error(`Erro ao mutar usuário: ${error?.message || 'Erro desconhecido'}`);
     }
   };
@@ -130,7 +136,7 @@ export function UserManagement() {
       await changePlan.mutateAsync({
         userId: selectedUser.user_id,
         plan: newPlan,
-        expiresAt: newPlan === 'diamond' ? null : null, // null = vitalício
+        expiresAt: null,
       });
       toast.success(`Plano de ${selectedUser.username} alterado para ${newPlan}`);
       setShowPlanDialog(false);
@@ -186,12 +192,7 @@ export function UserManagement() {
       <Card className="border border-[#2a2a2a] bg-[#1a1a1a]">
         <CardContent className="pt-6">
           <p className="text-red-400 text-center">Erro ao carregar usuários: {String(error)}</p>
-          <Button 
-            onClick={() => window.location.reload()} 
-            className="w-full mt-4"
-          >
-            Recarregar
-          </Button>
+          <Button onClick={() => window.location.reload()} className="w-full mt-4">Recarregar</Button>
         </CardContent>
       </Card>
     );
@@ -215,26 +216,12 @@ export function UserManagement() {
           </div>
         </CardHeader>
         <CardContent className="p-0">
-        <div className="divide-y divide-[#2a2a2a] max-h-[calc(100vh-300px)] overflow-y-auto">
-          {filteredUsers.length === 0 ? (
-            <div className="p-4 text-center text-gray-400 space-y-2">
-              <p>Nenhum usuário encontrado</p>
-              {users.length === 0 && !isLoading && (
-                <div className="text-xs text-gray-500 mt-2">
-                  <p>Total de usuários no banco: {users.length}</p>
-                  <p>Termo de busca: "{searchTerm}"</p>
-                  <Button 
-                    onClick={() => window.location.reload()} 
-                    variant="outline"
-                    size="sm"
-                    className="mt-2"
-                  >
-                    Recarregar
-                  </Button>
-                </div>
-              )}
-            </div>
-          ) : (
+          <div className="divide-y divide-[#2a2a2a] max-h-[calc(100vh-300px)] overflow-y-auto">
+            {filteredUsers.length === 0 ? (
+              <div className="p-4 text-center text-gray-400">
+                <p>Nenhum usuário encontrado</p>
+              </div>
+            ) : (
               filteredUsers.map((user) => (
                 <div
                   key={user.user_id}
@@ -353,31 +340,6 @@ export function UserManagement() {
                               </AlertDialogFooter>
                             </AlertDialogContent>
                           </AlertDialog>
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-orange-400">
-                                <VolumeX className="h-4 w-4 mr-2" />
-                                Mutar (permanente)
-                              </DropdownMenuItem>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent className="bg-[#1a1a1a] border-[#2a2a2a]">
-                              <AlertDialogHeader>
-                                <AlertDialogTitle className="text-white">Mutar permanentemente</AlertDialogTitle>
-                                <AlertDialogDescription className="text-gray-400">
-                                  Mutar {user.username} permanentemente na comunidade?
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel className="bg-[#2a2a2a] text-white">Cancelar</AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() => handleMute(user.user_id, user.username)}
-                                  className="bg-orange-500 hover:bg-orange-600"
-                                >
-                                  Mutar
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
                         </>
                       ) : (
                         <DropdownMenuItem onClick={() => handleUnmute(user.user_id, user.username)} className="text-green-400">
@@ -389,7 +351,7 @@ export function UserManagement() {
                       <DropdownMenuItem
                         onClick={() => {
                           setSelectedUser(user);
-                          setNewPlan(user.subscription_plan || 'free');
+                          setNewPlan((user.subscription_plan as 'free' | 'diamond') || 'free');
                           setShowPlanDialog(true);
                         }}
                         className="text-blue-400"
@@ -414,14 +376,14 @@ export function UserManagement() {
                         <AlertDialogTrigger asChild>
                           <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-400">
                             <Trash2 className="h-4 w-4 mr-2" />
-                            Excluir
+                            Excluir usuário
                           </DropdownMenuItem>
                         </AlertDialogTrigger>
                         <AlertDialogContent className="bg-[#1a1a1a] border-[#2a2a2a]">
                           <AlertDialogHeader>
                             <AlertDialogTitle className="text-white">Excluir usuário</AlertDialogTitle>
                             <AlertDialogDescription className="text-gray-400">
-                              ATENÇÃO: Esta ação é irreversível! Tem certeza que deseja excluir permanentemente o usuário {user.username}?
+                              Tem certeza que deseja excluir {user.username}? Esta ação não pode ser desfeita.
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
@@ -444,31 +406,31 @@ export function UserManagement() {
         </CardContent>
       </Card>
 
-      {/* Dialog para mudar plano */}
+      {/* Dialog de mudança de plano */}
       <Dialog open={showPlanDialog} onOpenChange={setShowPlanDialog}>
         <DialogContent className="bg-[#1a1a1a] border-[#2a2a2a]">
           <DialogHeader>
-            <DialogTitle className="text-white">Mudar Plano</DialogTitle>
+            <DialogTitle className="text-white">Alterar Plano</DialogTitle>
             <DialogDescription className="text-gray-400">
               Alterar plano de {selectedUser?.username}
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
-            <div>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
               <Label className="text-white">Plano</Label>
               <Select value={newPlan} onValueChange={(value: 'free' | 'diamond') => setNewPlan(value)}>
                 <SelectTrigger className="bg-[#2a2a2a] border-[#3a3a3a] text-white">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-[#1a1a1a] border-[#2a2a2a]">
-                  <SelectItem value="free">Free</SelectItem>
-                  <SelectItem value="diamond">💎 Diamond</SelectItem>
+                <SelectContent className="bg-[#2a2a2a] border-[#3a3a3a]">
+                  <SelectItem value="free" className="text-white">Free</SelectItem>
+                  <SelectItem value="diamond" className="text-white">💎 Diamond</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowPlanDialog(false)} className="bg-[#2a2a2a] text-white">
+            <Button variant="outline" onClick={() => setShowPlanDialog(false)} className="border-[#3a3a3a] text-white">
               Cancelar
             </Button>
             <Button onClick={handleChangePlan} className="bg-primary">
@@ -478,7 +440,7 @@ export function UserManagement() {
         </DialogContent>
       </Dialog>
 
-      {/* Dialog para alterar pontuação */}
+      {/* Dialog de alteração de pontos */}
       <Dialog open={showPointsDialog} onOpenChange={setShowPointsDialog}>
         <DialogContent className="bg-[#1a1a1a] border-[#2a2a2a]">
           <DialogHeader>
@@ -487,20 +449,20 @@ export function UserManagement() {
               Alterar pontuação de {selectedUser?.username}
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
-            <div>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
               <Label className="text-white">Pontos</Label>
               <Input
                 type="number"
                 value={newPoints}
                 onChange={(e) => setNewPoints(e.target.value)}
                 className="bg-[#2a2a2a] border-[#3a3a3a] text-white"
-                placeholder="0"
+                min="0"
               />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowPointsDialog(false)} className="bg-[#2a2a2a] text-white">
+            <Button variant="outline" onClick={() => setShowPointsDialog(false)} className="border-[#3a3a3a] text-white">
               Cancelar
             </Button>
             <Button onClick={handleUpdatePoints} className="bg-primary">

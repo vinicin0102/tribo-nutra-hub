@@ -142,8 +142,8 @@ export default function Rewards() {
             ) : rewards && rewards.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {rewards.map((reward) => {
-                  const canAfford = (profile?.points || 0) >= reward.points_cost;
-                  const isOutOfStock = reward.stock === 0;
+                  const canAfford = (profile?.points || 0) >= (reward.points_cost || reward.points_required);
+                  const isOutOfStock = reward.stock !== undefined && reward.stock === 0;
 
                   return (
                     <Card
@@ -184,7 +184,7 @@ export default function Rewards() {
                           <div className="flex items-center gap-2">
                             <Coins className="h-4 w-4 text-primary" />
                             <span className="font-bold text-primary">
-                              {reward.points_cost} pontos
+                              {reward.points_cost || reward.points_required} pontos
                             </span>
                           </div>
                           <AlertDialog>
@@ -203,7 +203,7 @@ export default function Rewards() {
                                   Confirmar Resgate
                                 </AlertDialogTitle>
                                 <AlertDialogDescription className="text-gray-400">
-                                  Você tem certeza que deseja resgatar "{reward.name}" por {reward.points_cost} pontos?
+                                  Você tem certeza que deseja resgatar "{reward.name}" por {reward.points_cost || reward.points_required} pontos?
                                 </AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter>
