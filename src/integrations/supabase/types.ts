@@ -164,6 +164,45 @@ export type Database = {
           },
         ]
       }
+      payments: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string
+          id: string
+          metadata: Json | null
+          payment_method: string | null
+          payment_provider: string | null
+          payment_provider_payment_id: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency?: string
+          id?: string
+          metadata?: Json | null
+          payment_method?: string | null
+          payment_provider?: string | null
+          payment_provider_payment_id?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          metadata?: Json | null
+          payment_method?: string | null
+          payment_provider?: string | null
+          payment_provider_payment_id?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       posts: {
         Row: {
           comments_count: number | null
@@ -203,36 +242,197 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          banned_until: string | null
           bio: string | null
           created_at: string | null
+          email: string | null
           full_name: string | null
           id: string
+          is_banned: boolean | null
           points: number | null
+          subscription_expires_at: string | null
+          subscription_plan: string | null
+          tier: string | null
           updated_at: string | null
           user_id: string
           username: string
         }
         Insert: {
           avatar_url?: string | null
+          banned_until?: string | null
           bio?: string | null
           created_at?: string | null
+          email?: string | null
           full_name?: string | null
           id?: string
+          is_banned?: boolean | null
           points?: number | null
+          subscription_expires_at?: string | null
+          subscription_plan?: string | null
+          tier?: string | null
           updated_at?: string | null
           user_id: string
           username: string
         }
         Update: {
           avatar_url?: string | null
+          banned_until?: string | null
           bio?: string | null
           created_at?: string | null
+          email?: string | null
           full_name?: string | null
           id?: string
+          is_banned?: boolean | null
           points?: number | null
+          subscription_expires_at?: string | null
+          subscription_plan?: string | null
+          tier?: string | null
           updated_at?: string | null
           user_id?: string
           username?: string
+        }
+        Relationships: []
+      }
+      redemptions: {
+        Row: {
+          created_at: string
+          id: string
+          points_spent: number
+          reward_id: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          points_spent: number
+          reward_id: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          points_spent?: number
+          reward_id?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "redemptions_reward_id_fkey"
+            columns: ["reward_id"]
+            isOneToOne: false
+            referencedRelation: "rewards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rewards: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean | null
+          name: string
+          points_required: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          name: string
+          points_required?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          name?: string
+          points_required?: number
+        }
+        Relationships: []
+      }
+      subscriptions: {
+        Row: {
+          cancel_at_period_end: boolean | null
+          created_at: string
+          current_period_end: string | null
+          current_period_start: string | null
+          id: string
+          payment_provider: string | null
+          payment_provider_customer_id: string | null
+          payment_provider_payment_id: string | null
+          payment_provider_subscription_id: string | null
+          plan_type: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cancel_at_period_end?: boolean | null
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          payment_provider?: string | null
+          payment_provider_customer_id?: string | null
+          payment_provider_payment_id?: string | null
+          payment_provider_subscription_id?: string | null
+          plan_type?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cancel_at_period_end?: boolean | null
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          payment_provider?: string | null
+          payment_provider_customer_id?: string | null
+          payment_provider_payment_id?: string | null
+          payment_provider_subscription_id?: string | null
+          plan_type?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      support_chat: {
+        Row: {
+          created_at: string
+          id: string
+          is_from_support: boolean
+          message: string
+          support_user_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_from_support?: boolean
+          message: string
+          support_user_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_from_support?: boolean
+          message?: string
+          support_user_id?: string | null
+          user_id?: string
         }
         Relationships: []
       }
