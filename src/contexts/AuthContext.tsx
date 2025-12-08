@@ -19,21 +19,61 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
+    let mounted = true;
+    let timeoutId: NodeJS.Timeout;
+
+    // Timeout de segurança: libera após 5 segundos
+    timeoutId = setTimeout(() => {
+      if (mounted && loading) {
+        console.warn('Auth loading timeout - liberando interface');
         setLoading(false);
       }
-    );
+    }, 5000);
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
+    try {
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(
+        (event, session) => {
+          if (mounted) {
+            setSession(session);
+            setUser(session?.user ?? null);
+            setLoading(false);
+            clearTimeout(timeoutId);
+          }
+        }
+      );
 
-    return () => subscription.unsubscribe();
+      supabase.auth.getSession()
+        .then(({ data: { session }, error }) => {
+          if (mounted) {
+            if (error) {
+              console.error('Erro ao obter sessão:', error);
+            }
+            setSession(session);
+            setUser(session?.user ?? null);
+            setLoading(false);
+            clearTimeout(timeoutId);
+          }
+        })
+        .catch((error) => {
+          console.error('Erro ao obter sessão:', error);
+          if (mounted) {
+            setLoading(false);
+            clearTimeout(timeoutId);
+          }
+        });
+
+      return () => {
+        mounted = false;
+        clearTimeout(timeoutId);
+        subscription.unsubscribe();
+      };
+    } catch (error) {
+      console.error('Erro ao inicializar auth:', error);
+      if (mounted) {
+        setLoading(false);
+        clearTimeout(timeoutId);
+      }
+    }
   }, []);
 
   const signUp = async (email: string, password: string, username: string) => {
