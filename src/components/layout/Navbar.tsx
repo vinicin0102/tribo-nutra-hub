@@ -22,17 +22,31 @@ export function Navbar() {
   const handleSignOut = async () => {
     try {
       console.log('🔄 Iniciando logout...');
+      
+      // Limpar estado local primeiro
+      setUser(null);
+      setSession(null);
+      
+      // Fazer logout do Supabase
       await signOut();
+      
       console.log('✅ Logout concluído, redirecionando...');
       
-      // Aguardar um pouco para garantir que o estado foi limpo
-      await new Promise(resolve => setTimeout(resolve, 100));
+      // Limpar localStorage e sessionStorage
+      localStorage.clear();
+      sessionStorage.clear();
       
-      // Forçar navegação completa
+      // Aguardar um pouco para garantir que tudo foi limpo
+      await new Promise(resolve => setTimeout(resolve, 200));
+      
+      // Forçar navegação completa usando replace (não adiciona ao histórico)
       window.location.replace('/auth');
     } catch (error) {
       console.error('❌ Erro ao fazer logout:', error);
-      // Mesmo com erro, forçar navegação
+      
+      // Mesmo com erro, limpar tudo e forçar navegação
+      localStorage.clear();
+      sessionStorage.clear();
       window.location.replace('/auth');
     }
   };
