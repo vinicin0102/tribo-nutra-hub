@@ -153,14 +153,14 @@ LIMIT 20;
 -- Verificar se posts_count está correto
 SELECT 
   p.user_id,
-  pr.username,
-  pr.posts_count as posts_na_tabela,
+  p.username,
+  p.posts_count as posts_na_tabela,
   COUNT(posts.id) as posts_reais,
-  (pr.posts_count - COUNT(posts.id)) as diferenca
+  (p.posts_count - COUNT(posts.id)) as diferenca
 FROM profiles p
 LEFT JOIN posts ON posts.user_id = p.user_id
-GROUP BY p.user_id, pr.posts_count, pr.username
-HAVING pr.posts_count != COUNT(posts.id)
+GROUP BY p.user_id, p.posts_count, p.username
+HAVING p.posts_count != COUNT(posts.id)
 LIMIT 20;
 
 -- 7️⃣ LIMPAR POSTS PROBLEMÁTICOS (CUIDADO - Execute apenas se necessário!)
