@@ -319,9 +319,31 @@ export function useChangeUserPlan() {
         throw new Error('Plano inválido. Use "free" ou "diamond".');
       }
 
-      // Usar UPDATE direto (mais simples e confiável)
+      // Verificar se o usuário existe primeiro
+      console.log('🔍 Verificando se o usuário existe...', { userId });
+      
+      const { data: existingUser, error: checkError } = await supabase
+        .from('profiles')
+        .select('user_id, username, subscription_plan')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      console.log('Usuário encontrado:', { existingUser, checkError });
+
+      if (checkError) {
+        console.error('❌ Erro ao verificar usuário:', checkError);
+        throw new Error(`Erro ao verificar usuário: ${checkError.message}`);
+      }
+
+      if (!existingUser) {
+        console.error('❌ Usuário não encontrado:', userId);
+        throw new Error('Usuário não encontrado no banco de dados');
+      }
+
+      console.log('✅ Usuário encontrado:', existingUser);
       console.log('🔄 Atualizando plano diretamente na tabela profiles...');
       
+      // Usar UPDATE direto (mais simples e confiável)
       const { data, error: updateError } = await supabase
         .from('profiles')
         .update({
@@ -335,6 +357,7 @@ export function useChangeUserPlan() {
       console.log('=== RESPOSTA DA ALTERAÇÃO DE PLANO ===');
       console.log('Data retornada:', data);
       console.log('Erro retornado:', updateError);
+      console.log('Data length:', data?.length);
 
       if (updateError) {
         console.error('❌ ERRO AO ATUALIZAR PLANO:', updateError);
@@ -346,15 +369,19 @@ export function useChangeUserPlan() {
         });
         
         // Mensagem mais específica baseada no erro
-        if (updateError.code === '42501' || updateError.message?.includes('permission') || updateError.message?.includes('policy')) {
-          throw new Error('Erro de permissão. Execute o SQL SOLUCAO-SIMPLES-ALTERAR-PLANO.sql no Supabase SQL Editor.');
+        if (updateError.code === '42501' || updateError.message?.includes('permission') || updateError.message?.includes('policy') || updateError.message?.includes('RLS')) {
+          throw new Error('Erro de permissão (RLS). Execute o SQL SOLUCAO-SIMPLES-ALTERAR-PLANO-V2.sql no Supabase SQL Editor.');
         }
         
         throw new Error(`Erro ao atualizar plano: ${updateError.message}`);
       }
 
       if (!data || data.length === 0) {
-        throw new Error('Usuário não encontrado ou plano não foi atualizado');
+        console.error('❌ UPDATE não retornou dados. Possíveis causas:');
+        console.error('1. RLS policy bloqueando o UPDATE');
+        console.error('2. Usuário não existe (mas verificamos acima)');
+        console.error('3. SELECT não tem permissão');
+        throw new Error('Plano não foi atualizado. Verifique as RLS policies. Execute SOLUCAO-SIMPLES-ALTERAR-PLANO-V2.sql');
       }
 
       console.log('✅ Plano alterado com sucesso:', data[0]);
