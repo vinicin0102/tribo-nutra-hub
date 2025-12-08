@@ -657,17 +657,17 @@ export default function Support() {
                     <div ref={messagesEndRef} />
                   </div>
 
-                  <div className="border-t border-[#2a2a2a] p-4 flex-shrink-0 bg-[#1a1a1a]">
-                    <div className="flex gap-2 items-end">
+                  <div className="border-t border-[#2a2a2a] p-2.5 sm:p-4 flex-shrink-0 bg-[#1a1a1a]">
+                    <div className="flex gap-1.5 sm:gap-2 items-end">
                       <div className="flex gap-1 flex-shrink-0">
                         <Button
                           type="button"
                           variant="ghost"
                           size="icon"
                           onClick={() => imageInputRef.current?.click()}
-                          className="text-gray-400 hover:text-white h-9 w-9"
+                          className="text-gray-400 hover:text-white h-8 w-8 sm:h-9 sm:w-9"
                         >
-                          <ImageIcon className="h-4 w-4" />
+                          <ImageIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                         </Button>
                         <Button
                           type="button"
@@ -675,20 +675,20 @@ export default function Support() {
                           size="icon"
                           onClick={handleAudioClick}
                           className={cn(
-                            "h-9 w-9",
+                            "h-8 w-8 sm:h-9 sm:w-9",
                             isRecording 
                               ? "text-red-500 hover:text-red-600 animate-pulse" 
                               : "text-gray-400 hover:text-white"
                           )}
                         >
-                          <Mic className="h-4 w-4" />
+                          <Mic className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                         </Button>
                       </div>
                       <Textarea
                         placeholder="Digite sua resposta..."
                         value={replyMessage}
                         onChange={(e) => setReplyMessage(e.target.value)}
-                        className="flex-1 !bg-[#2a2a2a] !border-[#3a3a3a] !text-white placeholder:!text-gray-500 min-h-[60px] max-h-[120px] resize-none"
+                        className="flex-1 !bg-[#2a2a2a] !border-[#3a3a3a] !text-white placeholder:!text-gray-500 min-h-[50px] sm:min-h-[60px] max-h-[100px] sm:max-h-[120px] resize-none text-sm sm:text-base"
                         onKeyDown={(e) => {
                           if (e.key === 'Enter' && !e.shiftKey) {
                             e.preventDefault();
