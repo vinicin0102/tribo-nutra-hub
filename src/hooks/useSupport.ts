@@ -376,7 +376,58 @@ export function useUpdateUserPoints() {
       console.log('✅ Perfil encontrado:', existingProfile);
       console.log('Atualizando pontos de', existingProfile.points, 'para', points);
 
-      // Agora atualizar
+      // Usar função RPC com SECURITY DEFINER para ignorar RLS
+      const { data: rpcData, error: rpcError } = await (supabase.rpc as any)(
+        'update_user_points_admin',
+        {
+          p_user_id: userId,
+          p_points: points
+        }
+      );
+
+      console.log('=== RESPOSTA DA ATUALIZAÇÃO (RPC) ===');
+      console.log('RPC Data retornada:', rpcData);
+      console.log('RPC Erro retornado:', rpcError);
+
+      if (rpcError) {
+        console.error('❌ ERRO AO ATUALIZAR PONTOS (RPC):', rpcError);
+        console.error('Detalhes completos do erro:', {
+          code: rpcError.code,
+          message: rpcError.message,
+          details: rpcError.details,
+          hint: rpcError.hint
+        });
+        throw new Error(rpcError.message || 'Erro ao atualizar pontos via RPC');
+      }
+
+      // Verificar se a função retornou sucesso
+      if (rpcData && typeof rpcData === 'object') {
+        if (rpcData.success === false) {
+          console.error('❌ Função RPC retornou erro:', rpcData.error);
+          throw new Error(rpcData.error || 'Erro ao atualizar pontos');
+        }
+        
+        if (rpcData.success === true) {
+          console.log('✅ Pontos atualizados com sucesso via RPC:', rpcData);
+          // Buscar o perfil atualizado para retornar
+          const { data: updatedProfile, error: fetchError } = await supabase
+            .from('profiles')
+            .select('user_id, username, points, email, role')
+            .eq('user_id', userId)
+            .single();
+          
+          if (fetchError) {
+            console.error('Erro ao buscar perfil atualizado:', fetchError);
+            // Mesmo assim retornar sucesso, pois os pontos foram atualizados
+            return { user_id: userId, points: points };
+          }
+          
+          return updatedProfile;
+        }
+      }
+
+      // Fallback: tentar UPDATE direto se RPC não estiver disponível
+      console.warn('⚠️ RPC não retornou resultado esperado, tentando UPDATE direto...');
       const { data, error } = await supabase
         .from('profiles')
         .update({ 
@@ -386,13 +437,12 @@ export function useUpdateUserPoints() {
         .eq('user_id', userId)
         .select('user_id, username, points, email, role');
 
-      console.log('=== RESPOSTA DA ATUALIZAÇÃO ===');
+      console.log('=== RESPOSTA DA ATUALIZAÇÃO (FALLBACK) ===');
       console.log('Data retornada:', data);
       console.log('Erro retornado:', error);
-      console.log('Status da resposta:', { hasData: !!data, dataLength: data?.length, hasError: !!error });
 
       if (error) {
-        console.error('❌ ERRO AO ATUALIZAR PONTOS:', error);
+        console.error('❌ ERRO AO ATUALIZAR PONTOS (FALLBACK):', error);
         console.error('Detalhes completos do erro:', {
           code: error.code,
           message: error.message,
