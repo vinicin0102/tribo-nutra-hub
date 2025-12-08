@@ -19,14 +19,17 @@ export default function PaymentSuccess() {
   const queryClient = useQueryClient();
   const [isUpdating, setIsUpdating] = useState(false);
 
-  // Verificar e atualizar plano após pagamento
+  // Atualizar plano IMEDIATAMENTE após pagamento
   useEffect(() => {
-    const checkAndUpdatePlan = async () => {
-      if (!user) return;
+    const updatePlanImmediately = async () => {
+      if (!user) {
+        console.log('Usuário não autenticado, aguardando...');
+        return;
+      }
 
       try {
-        // Aguardar 2 segundos para o webhook processar
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        console.log('🔄 Verificando e atualizando plano imediatamente...');
+        setIsUpdating(true);
 
         // Verificar plano atual
         const { data: profile, error: profileError } = await supabase
@@ -37,76 +40,82 @@ export default function PaymentSuccess() {
 
         if (profileError) {
           console.error('Erro ao verificar perfil:', profileError);
+          setIsUpdating(false);
           return;
         }
 
-        // Se não está Diamond, tentar atualizar
-        if (profile?.subscription_plan !== 'diamond') {
-          console.log('Plano não é Diamond, verificando pagamento...');
-          
-          // Verificar se há pagamento aprovado recente
-          const { data: payment, error: paymentError } = await supabase
-            .from('payments')
-            .select('*')
-            .eq('user_id', user.id)
-            .eq('status', 'approved')
-            .order('created_at', { ascending: false })
-            .limit(1)
-            .single();
-
-          if (paymentError) {
-            console.error('Erro ao verificar pagamento:', paymentError);
-            return;
-          }
-
-          // Se há pagamento aprovado nos últimos 5 minutos, atualizar plano
-          if (payment) {
-            const paymentTime = new Date(payment.created_at).getTime();
-            const now = Date.now();
-            const fiveMinutes = 5 * 60 * 1000;
-
-            if (now - paymentTime < fiveMinutes) {
-              console.log('Pagamento recente encontrado, atualizando plano...');
-              setIsUpdating(true);
-
-              // Calcular data de expiração (30 dias a partir de agora)
-              const expiresAt = new Date();
-              expiresAt.setDate(expiresAt.getDate() + 30);
-
-              const { error: updateError } = await supabase
-                .from('profiles')
-                .update({
-                  subscription_plan: 'diamond',
-                  subscription_expires_at: expiresAt.toISOString(),
-                  updated_at: new Date().toISOString()
-                })
-                .eq('user_id', user.id);
-
-              if (updateError) {
-                console.error('Erro ao atualizar plano:', updateError);
-                toast.error('Erro ao atualizar plano. Entre em contato com o suporte.');
-              } else {
-                console.log('Plano atualizado para Diamond!');
-                toast.success('Plano Diamond ativado com sucesso!');
-                // Invalidar queries para atualizar UI
-                queryClient.invalidateQueries({ queryKey: ['profile', user.id] });
-                queryClient.invalidateQueries({ queryKey: ['subscription', user.id] });
-              }
-
-              setIsUpdating(false);
-            }
-          }
-        } else {
-          // Já é Diamond, apenas invalidar queries
+        // Se já é Diamond, apenas invalidar queries
+        if (profile?.subscription_plan === 'diamond') {
+          console.log('✅ Já é Diamond, apenas atualizando cache...');
           queryClient.invalidateQueries({ queryKey: ['profile', user.id] });
           queryClient.invalidateQueries({ queryKey: ['subscription', user.id] });
+          setIsUpdating(false);
+          return;
         }
+
+        // Se não é Diamond, atualizar IMEDIATAMENTE
+        console.log('💎 Atualizando plano para Diamond imediatamente...');
+        
+        // Calcular data de expiração baseada na duração (padrão: 30 dias)
+        const expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + 30); // 30 dias padrão
+
+        // Tentar atualizar o plano
+        const { data: updatedProfile, error: updateError } = await supabase
+          .from('profiles')
+          .update({
+            subscription_plan: 'diamond',
+            subscription_expires_at: expiresAt.toISOString(),
+            updated_at: new Date().toISOString()
+          })
+          .eq('user_id', user.id)
+          .select('user_id, username, subscription_plan, subscription_expires_at')
+          .single();
+
+        if (updateError) {
+          console.error('❌ Erro ao atualizar plano:', updateError);
+          
+          // Se erro de permissão, tentar novamente após 1 segundo (webhook pode ter processado)
+          if (updateError.code === '42501' || updateError.message?.includes('permission')) {
+            console.log('⚠️ Erro de permissão, aguardando webhook processar...');
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            // Verificar novamente
+            const { data: retryProfile } = await supabase
+              .from('profiles')
+              .select('subscription_plan')
+              .eq('user_id', user.id)
+              .single();
+            
+            if (retryProfile?.subscription_plan === 'diamond') {
+              console.log('✅ Webhook atualizou o plano!');
+              toast.success('Plano Diamond ativado!');
+            } else {
+              toast.error('Aguarde alguns segundos. O plano será ativado automaticamente.');
+            }
+          } else {
+            toast.error('Erro ao atualizar plano. O webhook processará em breve.');
+          }
+        } else {
+          console.log('✅ Plano atualizado para Diamond com sucesso!', updatedProfile);
+          toast.success('Plano Diamond ativado com sucesso!');
+          
+          // Invalidar queries para atualizar UI
+          queryClient.invalidateQueries({ queryKey: ['profile', user.id] });
+          queryClient.invalidateQueries({ queryKey: ['subscription', user.id] });
+          queryClient.invalidateQueries({ queryKey: ['support-users'] });
+        }
+
+        setIsUpdating(false);
       } catch (error) {
-        console.error('Erro ao verificar/atualizar plano:', error);
+        console.error('❌ Erro ao verificar/atualizar plano:', error);
+        setIsUpdating(false);
+        toast.error('Erro ao processar. O webhook ativará o plano em breve.');
       }
     };
 
-    checkAndUpdatePlan();
+    // Executar imediatamente quando a página carregar
+    updatePlanImmediately();
   }, [user, queryClient]);
 
   useEffect(() => {
