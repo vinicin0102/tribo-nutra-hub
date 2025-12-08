@@ -351,23 +351,50 @@ export function useUpdateUserPoints() {
         throw new Error('Pontos inválidos');
       }
 
+      // Primeiro, verificar se o usuário existe
+      const { data: existingProfile, error: checkError } = await supabase
+        .from('profiles')
+        .select('user_id, points, username')
+        .eq('user_id', userId)
+        .single();
+
+      console.log('Perfil existente:', { existingProfile, checkError });
+
+      if (checkError) {
+        console.error('Erro ao verificar perfil:', checkError);
+        throw new Error(`Erro ao verificar perfil: ${checkError.message}`);
+      }
+
+      if (!existingProfile) {
+        throw new Error('Usuário não encontrado');
+      }
+
+      // Agora atualizar
       const { data, error } = await supabase
         .from('profiles')
-        .update({ points })
+        .update({ points, updated_at: new Date().toISOString() })
         .eq('user_id', userId)
         .select();
 
-      console.log('Resposta da atualização de pontos:', { data, error });
+      console.log('Resposta da atualização de pontos:', { data, error, userId, points });
 
       if (error) {
         console.error('Erro ao atualizar pontos:', error);
-        throw new Error(error.message || 'Erro ao atualizar pontos');
+        console.error('Detalhes do erro:', {
+          code: error.code,
+          message: error.message,
+          details: error.details,
+          hint: error.hint
+        });
+        throw new Error(`Erro ao atualizar pontos: ${error.message} (Código: ${error.code})`);
       }
 
       if (!data || data.length === 0) {
-        throw new Error('Usuário não encontrado ou não foi possível atualizar');
+        console.error('Nenhum dado retornado após atualização');
+        throw new Error('Usuário não encontrado ou não foi possível atualizar. Verifique as permissões RLS.');
       }
 
+      console.log('Pontos atualizados com sucesso:', data[0]);
       return data[0];
     },
     onSuccess: () => {
