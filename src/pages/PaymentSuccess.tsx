@@ -204,6 +204,13 @@ export default function PaymentSuccess() {
               </div>
             )}
 
+            {isUpdating && (
+              <div className="flex items-center justify-center gap-2 text-yellow-400 bg-yellow-400/10 rounded p-3">
+                <RefreshCw className="h-4 w-4 animate-spin" />
+                <span className="text-sm">Atualizando seu plano...</span>
+              </div>
+            )}
+
             <div className="space-y-3 pt-4">
               <Button
                 onClick={() => navigate('/chat')}
