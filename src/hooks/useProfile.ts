@@ -36,19 +36,24 @@ export function useProfile() {
     queryFn: async () => {
       if (!user) return null;
       
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('user_id', user.id)
-        .maybeSingle();
-      
-      if (error) {
-        console.error('Erro ao carregar perfil:', error);
-        // Não lançar erro, retornar null para não quebrar a UI
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('user_id', user.id)
+          .maybeSingle();
+        
+        if (error) {
+          console.error('Erro ao carregar perfil:', error);
+          // Não lançar erro, retornar null para não quebrar a UI
+          return null;
+        }
+        
+        return data as Profile | null;
+      } catch (err) {
+        console.error('Erro inesperado ao carregar perfil:', err);
         return null;
       }
-      
-      return data as Profile | null;
     },
     enabled: !!user,
     retry: 1,

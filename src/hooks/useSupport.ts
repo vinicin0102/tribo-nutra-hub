@@ -10,10 +10,14 @@ export function useIsSupport() {
   const { user } = useAuth();
   
   // Se for admin@gmail.com, sempre retorna true
-  if (user?.email === ADMIN_EMAIL) return true;
+  if (user?.email === ADMIN_EMAIL) {
+    return true;
+  }
   
   // Se o perfil não carregou ainda, retorna false temporariamente
-  if (!profile) return false;
+  if (!profile) {
+    return false;
+  }
   
   const profileData = profile as { role?: string } | undefined;
   return profileData?.role === 'support' || profileData?.role === 'admin';
