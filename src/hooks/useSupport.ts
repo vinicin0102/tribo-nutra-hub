@@ -8,8 +8,15 @@ const ADMIN_EMAIL = 'admin@gmail.com';
 export function useIsSupport() {
   const { data: profile } = useProfile();
   const { user } = useAuth();
+  
+  // Se for admin@gmail.com, sempre retorna true
+  if (user?.email === ADMIN_EMAIL) return true;
+  
+  // Se o perfil não carregou ainda, retorna false temporariamente
+  if (!profile) return false;
+  
   const profileData = profile as { role?: string } | undefined;
-  return profileData?.role === 'support' || profileData?.role === 'admin' || user?.email === 'admin@gmail.com';
+  return profileData?.role === 'support' || profileData?.role === 'admin';
 }
 
 export function useSupportUsers() {

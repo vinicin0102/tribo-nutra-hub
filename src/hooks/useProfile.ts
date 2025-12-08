@@ -42,10 +42,18 @@ export function useProfile() {
         .eq('user_id', user.id)
         .maybeSingle();
       
-      if (error) throw error;
+      if (error) {
+        console.error('Erro ao carregar perfil:', error);
+        // Não lançar erro, retornar null para não quebrar a UI
+        return null;
+      }
+      
       return data as Profile | null;
     },
     enabled: !!user,
+    retry: 1,
+    refetchOnWindowFocus: false,
+    staleTime: 60000, // 1 minuto
   });
 }
 
