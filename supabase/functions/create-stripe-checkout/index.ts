@@ -12,18 +12,46 @@ serve(async (req) => {
   }
 
   try {
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    );
+    // Verificar variáveis de ambiente primeiro
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.error('Variáveis de ambiente do Supabase faltando');
+      return new Response(JSON.stringify({ 
+        error: 'Configuração do servidor incompleta',
+        details: 'SUPABASE_URL ou SUPABASE_SERVICE_ROLE_KEY não configurados'
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Obter dados do usuário
-    const authHeader = req.headers.get('Authorization')!;
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(JSON.stringify({ 
+        error: 'Token de autenticação não fornecido'
+      }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     const token = authHeader.replace('Bearer ', '');
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
     
     if (authError || !user) {
-      throw new Error('Usuário não autenticado');
+      console.error('Erro de autenticação:', authError);
+      return new Response(JSON.stringify({ 
+        error: 'Usuário não autenticado',
+        details: authError?.message
+      }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     // Buscar perfil do usuário
@@ -37,13 +65,34 @@ serve(async (req) => {
 
     // Validar plano
     if (planType !== 'diamond') {
-      throw new Error('Plano inválido');
+      return new Response(JSON.stringify({ 
+        error: 'Plano inválido'
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     // Criar checkout session no Stripe
-    const stripeSecretKey = Deno.env.get('STRIPE_SECRET_KEY')!;
-    const stripePriceId = Deno.env.get('STRIPE_PRICE_ID')!;
-    const appUrl = Deno.env.get('APP_URL')!;
+    const stripeSecretKey = Deno.env.get('STRIPE_SECRET_KEY');
+    const stripePriceId = Deno.env.get('STRIPE_PRICE_ID');
+    const appUrl = Deno.env.get('APP_URL');
+    
+    // Verificar variáveis de ambiente do Stripe
+    if (!stripeSecretKey || !stripePriceId || !appUrl) {
+      const missingVars = [];
+      if (!stripeSecretKey) missingVars.push('STRIPE_SECRET_KEY');
+      if (!stripePriceId) missingVars.push('STRIPE_PRICE_ID');
+      if (!appUrl) missingVars.push('APP_URL');
+      
+      return new Response(JSON.stringify({ 
+        error: `Variáveis de ambiente faltando: ${missingVars.join(', ')}`,
+        missing_vars: missingVars
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
     
     const checkoutData = {
       customer_email: profile?.email || user.email,
@@ -93,7 +142,12 @@ serve(async (req) => {
     if (!response.ok) {
       const errorData = await response.text();
       console.error('Erro Stripe:', errorData);
-      throw new Error(`Erro Stripe: ${errorData}`);
+      return new Response(JSON.stringify({ 
+        error: `Erro Stripe: ${errorData}`
+      }), {
+        status: response.status,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     const data = await response.json();
@@ -104,15 +158,17 @@ serve(async (req) => {
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
-  } catch (error: unknown) {
+  } catch (error: any) {
     console.error('Erro ao criar checkout:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Erro ao processar pagamento';
+    
+    const errorMessage = error instanceof Error ? error.message : (error?.message || 'Erro ao processar pagamento');
+    
     return new Response(JSON.stringify({ 
-      error: errorMessage
+      error: errorMessage,
+      details: error?.stack || error
     }), {
-      status: 400,
+      status: error?.status || 400,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
 });
-
