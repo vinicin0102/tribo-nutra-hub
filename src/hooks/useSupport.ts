@@ -290,7 +290,9 @@ export function useDeleteUser() {
 export function useChangeUserPlan() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
-  const isAdmin = user?.email === ADMIN_EMAIL;
+  const { data: profile } = useProfile();
+  const profileData = profile as { role?: string } | undefined;
+  const isAdmin = user?.email === ADMIN_EMAIL || profileData?.role === 'admin';
 
   return useMutation({
     mutationFn: async ({ 
@@ -302,16 +304,56 @@ export function useChangeUserPlan() {
       plan: 'free' | 'diamond'; 
       expiresAt?: string | null;
     }) => {
-      if (!isAdmin) throw new Error('Sem permissão. Apenas admin@gmail.com pode executar esta ação.');
+      if (!isAdmin) {
+        console.error('Acesso negado - não é admin:', { userEmail: user?.email, role: profileData?.role });
+        throw new Error('Sem permissão. Apenas admins podem executar esta ação.');
+      }
 
-      const { error } = await (supabase.from('profiles') as any)
-        .update({
-          subscription_plan: plan,
-          subscription_expires_at: expiresAt || null,
-        })
-        .eq('user_id', userId);
+      console.log('Alterando plano:', { userId, plan, expiresAt, isAdmin, userEmail: user?.email });
 
-      if (error) throw error;
+      if (!userId || userId === '') {
+        throw new Error('ID do usuário inválido');
+      }
+
+      if (plan !== 'free' && plan !== 'diamond') {
+        throw new Error('Plano inválido. Use "free" ou "diamond".');
+      }
+
+      // Usar função RPC com SECURITY DEFINER para ignorar RLS
+      const { data: rpcData, error: rpcError } = await (supabase.rpc as any)(
+        'change_user_plan_admin',
+        {
+          p_user_id: userId,
+          p_plan: plan,
+          p_expires_at: expiresAt || null
+        }
+      );
+
+      console.log('=== RESPOSTA DA ALTERAÇÃO DE PLANO (RPC) ===');
+      console.log('RPC Data retornada:', rpcData);
+      console.log('RPC Erro retornado:', rpcError);
+
+      if (rpcError) {
+        console.error('❌ ERRO AO ALTERAR PLANO (RPC):', rpcError);
+        throw new Error(rpcError.message || 'Erro ao alterar plano via RPC');
+      }
+
+      // Verificar se a função retornou sucesso
+      if (rpcData && typeof rpcData === 'object') {
+        if (rpcData.success === false) {
+          console.error('❌ Função RPC retornou erro:', rpcData.error);
+          throw new Error(rpcData.error || 'Erro ao alterar plano');
+        }
+        
+        if (rpcData.success === true) {
+          console.log('✅ Plano alterado com sucesso via RPC:', rpcData);
+          return rpcData;
+        }
+      }
+
+      // Se chegou aqui, a função RPC não retornou o formato esperado
+      console.error('❌ Resposta inesperada da função RPC:', rpcData);
+      throw new Error('Resposta inesperada da função de alteração de plano');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['support-users'] });
