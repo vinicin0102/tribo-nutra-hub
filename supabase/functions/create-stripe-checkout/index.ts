@@ -71,7 +71,9 @@ serve(async (req) => {
     
     // Selecionar o Price ID baseado na duração
     let stripePriceId: string | undefined;
-    if (duration === '6m') {
+    if (duration === '12m') {
+      stripePriceId = Deno.env.get('STRIPE_PRICE_ID_ANNUAL');
+    } else if (duration === '6m') {
       stripePriceId = Deno.env.get('STRIPE_PRICE_ID_6M');
     } else if (duration === '3m') {
       stripePriceId = Deno.env.get('STRIPE_PRICE_ID_3M');

@@ -86,7 +86,7 @@ export function useCreatePaymentPreference() {
   const { user } = useAuth();
 
   return useMutation({
-    mutationFn: async ({ planType, duration }: { planType: 'diamond'; duration?: '1m' | '3m' | '6m' }) => {
+    mutationFn: async ({ planType, duration }: { planType: 'diamond'; duration?: '1m' | '3m' | '6m' | '12m' }) => {
       if (!user) throw new Error('Usuário não autenticado');
 
       console.log('Criando checkout Stripe para:', { planType, duration, userId: user.id });

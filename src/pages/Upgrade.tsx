@@ -29,13 +29,23 @@ const paymentFeatures = [
 
 const plans = [
   { 
+    id: '12m' as const, 
+    label: 'Anual', 
+    price: 19.90, 
+    originalPrice: 67, 
+    savings: '70% OFF',
+    period: '/mês',
+    popular: true,
+    description: 'Cobrado R$ 238,80 a cada 12 meses'
+  },
+  { 
     id: '6m' as const, 
     label: 'Semestral', 
     price: 29.90, 
     originalPrice: 67, 
     savings: '55% OFF',
     period: '/mês',
-    popular: true,
+    popular: false,
     description: 'Cobrado R$ 179,40 a cada 6 meses'
   },
   { 
@@ -66,7 +76,7 @@ export default function Upgrade() {
   const { data: subscription, isLoading: loadingSub } = useUserSubscription();
   const cancelSubscription = useCancelSubscription();
   const reactivateSubscription = useReactivateSubscription();
-  const [selectedPlan, setSelectedPlan] = useState<'1m' | '3m' | '6m'>('6m');
+  const [selectedPlan, setSelectedPlan] = useState<'1m' | '3m' | '6m' | '12m'>('12m');
 
   const handleUpgrade = () => {
     createPayment.mutate({ planType: 'diamond', duration: selectedPlan });
