@@ -780,13 +780,13 @@ export default function Support() {
           backgroundColor: '#0a0a0a',
           bottom: 'calc(64px + env(safe-area-inset-bottom, 0px))',
           overflow: 'hidden',
-          paddingLeft: 'max(8px, env(safe-area-inset-left, 0px))',
-          paddingRight: 'max(8px, env(safe-area-inset-right, 0px))'
+          paddingLeft: 'max(12px, env(safe-area-inset-left, 0px))',
+          paddingRight: 'max(12px, env(safe-area-inset-right, 0px))'
         }}
       >
-        <div className="max-w-2xl mx-auto h-full flex flex-col px-2 sm:px-4" style={{ touchAction: 'manipulation', overflow: 'hidden' }}>
-          <Card className="flex-1 flex flex-col border border-[#2a2a2a] bg-[#1a1a1a] min-h-0 rounded-lg sm:rounded-xl" style={{ touchAction: 'manipulation', overflow: 'hidden' }}>
-            <CardHeader className="border-b border-[#2a2a2a] py-2.5 px-3 sm:px-4 flex-shrink-0">
+        <div className="max-w-2xl mx-auto h-full flex flex-col px-0 sm:px-4" style={{ touchAction: 'manipulation', overflow: 'hidden' }}>
+          <Card className="flex-1 flex flex-col border border-[#2a2a2a] bg-[#1a1a1a] min-h-0 rounded-lg sm:rounded-xl my-1 sm:my-0" style={{ touchAction: 'manipulation', overflow: 'hidden' }}>
+            <CardHeader className="border-b border-[#2a2a2a] py-2.5 px-4 sm:px-4 flex-shrink-0">
               <CardTitle className="flex items-center gap-1.5 sm:gap-2 text-white text-xs sm:text-sm leading-tight">
                 <MessageSquare className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary flex-shrink-0" />
                 <span className="truncate">Chat com Suporte</span>
@@ -797,7 +797,7 @@ export default function Support() {
             </CardHeader>
             <CardContent className="flex flex-col flex-1 p-0 min-h-0" style={{ touchAction: 'manipulation', overflow: 'hidden' }}>
               {/* Mensagens */}
-              <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-2 sm:space-y-3 min-h-0" style={{ touchAction: 'manipulation', WebkitOverflowScrolling: 'touch' }}>
+              <div className="flex-1 overflow-y-auto p-4 sm:p-4 space-y-2 sm:space-y-3 min-h-0" style={{ touchAction: 'manipulation', WebkitOverflowScrolling: 'touch' }}>
               {loadingMessages ? (
                 <div className="text-center text-gray-400 py-8">Carregando mensagens...</div>
               ) : messages.length > 0 ? (
@@ -880,7 +880,7 @@ export default function Support() {
               </div>
 
               {/* Formulário de envio */}
-              <div className="border-t border-[#2a2a2a] p-2.5 sm:p-3 flex-shrink-0 bg-[#1a1a1a]">
+              <div className="border-t border-[#2a2a2a] p-3 sm:p-3 flex-shrink-0 bg-[#1a1a1a]">
               <form onSubmit={handleSubmit} className="space-y-2 sm:space-y-3">
                 <div className="flex gap-1.5 sm:gap-2 items-end">
                   <div className="flex gap-1 flex-shrink-0">
