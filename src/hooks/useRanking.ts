@@ -10,6 +10,7 @@ export interface RankingUser {
   avatar_url: string | null;
   points: number;
   tier?: 'bronze' | 'silver' | 'gold' | 'platinum' | 'diamond';
+  subscription_plan?: 'free' | 'diamond';
   rank: number;
 }
 
