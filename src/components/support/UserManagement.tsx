@@ -130,19 +130,76 @@ export function UserManagement() {
     }
   };
 
-  const handleChangePlan = async () => {
-    if (!selectedUser) return;
+  const handleChangePlan = async (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
+    console.log('🔄 [UserManagement] handleChangePlan chamado', { 
+      selectedUser: selectedUser?.user_id, 
+      newPlan,
+      isPending: changePlan.isPending
+    });
+
+    if (!selectedUser) {
+      console.error('❌ selectedUser é null');
+      toast.error('Usuário não selecionado');
+      return;
+    }
+
     try {
-      await changePlan.mutateAsync({
+      console.log('🔄 [UserManagement] Tentando alterar plano:', { 
+        userId: selectedUser.user_id, 
+        username: selectedUser.username,
+        currentPlan: selectedUser.subscription_plan,
+        newPlan 
+      });
+
+      const result = await changePlan.mutateAsync({
         userId: selectedUser.user_id,
         plan: newPlan,
         expiresAt: null,
       });
-      toast.success(`Plano de ${selectedUser.username} alterado para ${newPlan}`);
+
+      console.log('✅ [UserManagement] Plano alterado com sucesso:', result);
+
+      toast.success(`Plano de ${selectedUser.username} alterado para ${newPlan === 'diamond' ? '💎 Diamond' : 'Free'}`);
+      
+      // Fechar dialog e limpar
       setShowPlanDialog(false);
       setSelectedUser(null);
-    } catch (error) {
-      toast.error('Erro ao alterar plano');
+      setNewPlan('free');
+      
+      // Forçar refresh da lista de usuários após 500ms
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
+    } catch (error: any) {
+      console.error('❌ [UserManagement] Erro ao alterar plano:', error);
+      console.error('Detalhes completos do erro:', {
+        message: error?.message,
+        code: error?.code,
+        stack: error?.stack,
+        name: error?.name
+      });
+      
+      const errorMessage = error?.message || 'Erro desconhecido ao alterar plano';
+      
+      // Mensagem mais específica baseada no erro
+      if (errorMessage.includes('RLS') || errorMessage.includes('policy') || errorMessage.includes('permission') || errorMessage.includes('42501')) {
+        toast.error('Erro de permissão. Execute o script criar-funcao-change-plan-admin.sql no Supabase SQL Editor.', {
+          duration: 12000
+        });
+      } else if (errorMessage.includes('function') || errorMessage.includes('does not exist')) {
+        toast.error('Função RPC não encontrada. Execute o script criar-funcao-change-plan-admin.sql no Supabase SQL Editor.', {
+          duration: 12000
+        });
+      } else {
+        toast.error(`Erro: ${errorMessage}`, {
+          duration: 8000
+        });
+      }
     }
   };
 
@@ -501,8 +558,17 @@ export function UserManagement() {
             <Button variant="outline" onClick={() => setShowPlanDialog(false)} className="border-[#3a3a3a] text-white">
               Cancelar
             </Button>
-            <Button onClick={handleChangePlan} className="bg-primary">
-              Salvar
+            <Button 
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('🖱️ Botão Salvar (Plano) clicado');
+                handleChangePlan(e);
+              }} 
+              className="bg-primary"
+              disabled={changePlan.isPending || !selectedUser}
+            >
+              {changePlan.isPending ? 'Salvando...' : 'Salvar'}
             </Button>
           </DialogFooter>
         </DialogContent>
