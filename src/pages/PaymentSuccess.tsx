@@ -60,27 +60,36 @@ export default function PaymentSuccess() {
         const expiresAt = new Date();
         expiresAt.setDate(expiresAt.getDate() + 30); // 30 dias padrão
 
-        // Tentar atualizar o plano
+        // Tentar atualizar o plano (apenas subscription_plan e subscription_expires_at)
         const { data: updatedProfile, error: updateError } = await supabase
           .from('profiles')
           .update({
             subscription_plan: 'diamond',
-            subscription_expires_at: expiresAt.toISOString(),
-            updated_at: new Date().toISOString()
+            subscription_expires_at: expiresAt.toISOString()
           })
           .eq('user_id', user.id)
           .select('user_id, username, subscription_plan, subscription_expires_at')
           .single();
 
+        console.log('Resultado do UPDATE:', { updatedProfile, updateError });
+
         if (updateError) {
           console.error('❌ Erro ao atualizar plano:', updateError);
+          console.error('Detalhes:', {
+            code: updateError.code,
+            message: updateError.message,
+            details: updateError.details,
+            hint: updateError.hint
+          });
           
-          // Se erro de permissão, tentar novamente após 1 segundo (webhook pode ter processado)
-          if (updateError.code === '42501' || updateError.message?.includes('permission')) {
-            console.log('⚠️ Erro de permissão, aguardando webhook processar...');
-            await new Promise(resolve => setTimeout(resolve, 2000));
+          // Se erro de permissão, aguardar webhook
+          if (updateError.code === '42501' || updateError.message?.includes('permission') || updateError.message?.includes('policy') || updateError.message?.includes('RLS')) {
+            console.log('⚠️ Erro de permissão (RLS), aguardando webhook processar...');
+            toast.info('Aguarde alguns segundos. O plano será ativado automaticamente pelo webhook.');
             
-            // Verificar novamente
+            // Aguardar e verificar novamente
+            await new Promise(resolve => setTimeout(resolve, 3000));
+            
             const { data: retryProfile } = await supabase
               .from('profiles')
               .select('subscription_plan')
@@ -90,11 +99,15 @@ export default function PaymentSuccess() {
             if (retryProfile?.subscription_plan === 'diamond') {
               console.log('✅ Webhook atualizou o plano!');
               toast.success('Plano Diamond ativado!');
+              queryClient.invalidateQueries({ queryKey: ['profile', user.id] });
+              queryClient.invalidateQueries({ queryKey: ['subscription', user.id] });
             } else {
-              toast.error('Aguarde alguns segundos. O plano será ativado automaticamente.');
+              toast.error('Execute o SQL permitir-usuario-atualizar-proprio-plano.sql no Supabase para liberar imediatamente.', {
+                duration: 10000
+              });
             }
           } else {
-            toast.error('Erro ao atualizar plano. O webhook processará em breve.');
+            toast.error(`Erro: ${updateError.message}. O webhook processará em breve.`);
           }
         } else {
           console.log('✅ Plano atualizado para Diamond com sucesso!', updatedProfile);
