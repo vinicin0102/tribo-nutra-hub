@@ -40,6 +40,18 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const [checkingBan, setCheckingBan] = useState(true);
   const [isBanned, setIsBanned] = useState(false);
   const [banMessage, setBanMessage] = useState<string | null>(null);
+  const [loadingTimeout, setLoadingTimeout] = useState(false);
+  
+  // Timeout de segurança: se loading demorar mais de 10 segundos, libera
+  useEffect(() => {
+    if (loading) {
+      const timeout = setTimeout(() => {
+        console.warn('Loading timeout - liberando interface');
+        setLoadingTimeout(true);
+      }, 10000);
+      return () => clearTimeout(timeout);
+    }
+  }, [loading]);
   
   useEffect(() => {
     const checkBan = async () => {
@@ -49,11 +61,17 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
       }
       
       try {
-        const { data: profile } = await supabase
+        const { data: profile, error } = await supabase
           .from('profiles')
           .select('*')
           .eq('user_id', user.id)
-          .single();
+          .maybeSingle();
+        
+        if (error) {
+          console.error('Erro ao verificar ban:', error);
+          setCheckingBan(false);
+          return;
+        }
         
         const isBannedProfile = (profile as { is_banned?: boolean; banned_until?: string | null })?.is_banned;
         const bannedUntilStr = (profile as { is_banned?: boolean; banned_until?: string | null })?.banned_until;
@@ -89,6 +107,8 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
         }
       } catch (error) {
         console.error('Erro ao verificar ban:', error);
+        // Em caso de erro, não bloquear o acesso
+        setIsBanned(false);
       } finally {
         setCheckingBan(false);
       }
@@ -101,7 +121,8 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
     }
   }, [user, loading]);
   
-  if (loading || checkingBan) {
+  // Se loading demorar muito, libera mesmo assim
+  if ((loading && !loadingTimeout) || checkingBan) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#0a0a0a]">
         <div className="bg-primary rounded-2xl p-4 animate-pulse">
