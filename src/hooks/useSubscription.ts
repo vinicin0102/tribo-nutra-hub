@@ -23,20 +23,20 @@ export function useSubscription() {
 
       if (error) {
         console.error('Erro ao carregar assinatura:', error);
-        throw error;
+        // Retornar valores padrão ao invés de lançar erro
+        return { subscription_plan: 'free' as const, subscription_expires_at: null };
       }
       
       if (!data) {
-        console.warn('Perfil não encontrado para verificar assinatura');
-        return null;
+        return { subscription_plan: 'free' as const, subscription_expires_at: null };
       }
       
       return data as Subscription;
     },
     enabled: !!user,
-    retry: 2,
-    refetchOnWindowFocus: true,
-    staleTime: 30000, // 30 segundos
+    retry: 1,
+    refetchOnWindowFocus: false,
+    staleTime: 60000, // 1 minuto
   });
 }
 

@@ -60,14 +60,12 @@ export function usePosts() {
     queryKey: ['posts'],
     queryFn: async () => {
       try {
-        // Buscar posts válidos (com conteúdo não vazio)
+        // Buscar todos os posts ordenados por data
         const { data: posts, error: postsError } = await supabase
           .from('posts')
           .select('*')
-          .not('content', 'is', null)
-          .neq('content', '')
           .order('created_at', { ascending: false })
-          .limit(100); // Limitar para performance
+          .limit(100);
         
         if (postsError) {
           console.error('Erro ao carregar posts:', postsError);
@@ -79,29 +77,27 @@ export function usePosts() {
           return [];
         }
         
-        // Filtrar posts com conteúdo válido e user_id
+        // Filtrar apenas posts com conteúdo válido
         const validPosts = (posts as any[]).filter(p => 
           p.user_id && 
           p.content && 
           typeof p.content === 'string' &&
-          p.content.trim() !== '' &&
-          p.created_at // Deve ter data de criação
+          p.content.trim() !== ''
         );
         
         if (validPosts.length === 0) {
-          console.log('Nenhum post válido encontrado após filtragem');
+          console.log('Nenhum post válido encontrado');
           return [];
         }
         
-        // Get unique user IDs dos posts válidos
+        // Get unique user IDs
         const userIds = [...new Set(validPosts.map(p => p.user_id))];
         
         if (userIds.length === 0) {
-          console.log('Nenhum user_id válido encontrado');
           return [];
         }
         
-        // Fetch profiles separately - apenas posts com perfis válidos aparecerão
+        // Fetch profiles separately
         const { data: profiles, error: profilesError } = await supabase
           .from('profiles')
           .select('*')
@@ -109,27 +105,18 @@ export function usePosts() {
         
         if (profilesError) {
           console.error('Erro ao carregar perfis:', profilesError);
-          // Continuar mesmo sem perfis, mas posts sem perfil não aparecerão
+          // Continuar mesmo sem perfis
         }
         
         // Create a map for quick lookup
         const profileMap = new Map((profiles as any[] || []).map(p => [p.user_id, p]));
         
-        // Filtrar apenas posts que têm perfil associado (validação indireta de user_id válido)
-        // E ordenar por data
-        const combinedPosts = validPosts
-          .filter(post => profileMap.has(post.user_id)) // Apenas posts com perfil válido
-          .map(post => ({
-            ...post,
-            profiles: profileMap.get(post.user_id) || null
-          }))
-          .sort((a, b) => {
-            const dateA = new Date(a.created_at || 0).getTime();
-            const dateB = new Date(b.created_at || 0).getTime();
-            return dateB - dateA; // Mais recente primeiro
-          }) as Post[];
+        // Combine posts with profiles
+        const combinedPosts = validPosts.map(post => ({
+          ...post,
+          profiles: profileMap.get(post.user_id) || null
+        })) as Post[];
         
-        console.log(`Carregados ${combinedPosts.length} posts válidos de ${posts.length} totais (${validPosts.length - combinedPosts.length} sem perfil foram filtrados)`);
         return combinedPosts;
       } catch (error) {
         console.error('Erro ao carregar posts:', error);
@@ -138,7 +125,7 @@ export function usePosts() {
     },
     retry: 2,
     refetchOnWindowFocus: true,
-    staleTime: 30000, // 30 segundos
+    staleTime: 30000,
   });
 }
 
