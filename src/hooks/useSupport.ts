@@ -323,7 +323,9 @@ export function useChangeUserPlan() {
 export function useUpdateUserPoints() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
-  const isAdmin = user?.email === ADMIN_EMAIL;
+  const { data: profile } = useProfile();
+  const profileData = profile as { role?: string } | undefined;
+  const isAdmin = user?.email === ADMIN_EMAIL || profileData?.role === 'admin';
 
   return useMutation({
     mutationFn: async ({ 
@@ -334,18 +336,47 @@ export function useUpdateUserPoints() {
       points: number; 
       reason?: string;
     }) => {
-      if (!isAdmin) throw new Error('Sem permissão. Apenas admin@gmail.com pode executar esta ação.');
+      if (!isAdmin) {
+        console.error('Acesso negado - não é admin:', { userEmail: user?.email, role: profileData?.role });
+        throw new Error('Sem permissão. Apenas admin@gmail.com pode executar esta ação.');
+      }
 
-      const { error } = await supabase
+      console.log('Atualizando pontos:', { userId, points, isAdmin, userEmail: user?.email });
+
+      if (!userId || userId === '') {
+        throw new Error('ID do usuário inválido');
+      }
+
+      if (isNaN(points) || points < 0) {
+        throw new Error('Pontos inválidos');
+      }
+
+      const { data, error } = await supabase
         .from('profiles')
         .update({ points })
-        .eq('user_id', userId);
+        .eq('user_id', userId)
+        .select();
 
-      if (error) throw error;
+      console.log('Resposta da atualização de pontos:', { data, error });
+
+      if (error) {
+        console.error('Erro ao atualizar pontos:', error);
+        throw new Error(error.message || 'Erro ao atualizar pontos');
+      }
+
+      if (!data || data.length === 0) {
+        throw new Error('Usuário não encontrado ou não foi possível atualizar');
+      }
+
+      return data[0];
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['support-users'] });
       queryClient.invalidateQueries({ queryKey: ['profiles'] });
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
+    },
+    onError: (error: any) => {
+      console.error('Erro na mutation de atualização de pontos:', error);
     },
   });
 }

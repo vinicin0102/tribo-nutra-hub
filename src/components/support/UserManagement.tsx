@@ -147,23 +147,33 @@ export function UserManagement() {
   };
 
   const handleUpdatePoints = async () => {
-    if (!selectedUser || !newPoints) return;
+    if (!selectedUser || !newPoints) {
+      toast.error('Preencha o campo de pontos');
+      return;
+    }
+    
     try {
       const points = parseInt(newPoints);
       if (isNaN(points) || points < 0) {
-        toast.error('Pontos inválidos');
+        toast.error('Pontos inválidos. Digite um número maior ou igual a 0');
         return;
       }
+
+      console.log('Tentando atualizar pontos:', { userId: selectedUser.user_id, points });
+
       await updatePoints.mutateAsync({
         userId: selectedUser.user_id,
         points,
       });
-      toast.success(`Pontuação de ${selectedUser.username} alterada para ${points}`);
+
+      toast.success(`Pontuação de ${selectedUser.username} alterada para ${points.toLocaleString('pt-BR')} pontos`);
       setShowPointsDialog(false);
       setSelectedUser(null);
       setNewPoints('');
-    } catch (error) {
-      toast.error('Erro ao alterar pontuação');
+    } catch (error: any) {
+      console.error('Erro ao alterar pontuação:', error);
+      const errorMessage = error?.message || 'Erro desconhecido ao alterar pontuação';
+      toast.error(`Erro: ${errorMessage}`);
     }
   };
 
