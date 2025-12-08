@@ -782,20 +782,20 @@ export default function Support() {
           overflow: 'hidden'
         }}
       >
-        <div className="max-w-2xl mx-auto h-full flex flex-col px-2 sm:px-0" style={{ touchAction: 'manipulation', overflow: 'hidden' }}>
+        <div className="max-w-2xl mx-auto h-full flex flex-col px-1 sm:px-2" style={{ touchAction: 'manipulation', overflow: 'hidden' }}>
           <Card className="flex-1 flex flex-col border border-[#2a2a2a] bg-[#1a1a1a] min-h-0" style={{ touchAction: 'manipulation', overflow: 'hidden' }}>
-            <CardHeader className="border-b border-[#2a2a2a] py-2 px-4 flex-shrink-0">
-              <CardTitle className="flex items-center gap-2 text-white text-sm leading-tight">
-                <MessageSquare className="h-4 w-4 text-primary flex-shrink-0" />
+            <CardHeader className="border-b border-[#2a2a2a] py-2 px-3 flex-shrink-0">
+              <CardTitle className="flex items-center gap-1.5 sm:gap-2 text-white text-xs sm:text-sm leading-tight">
+                <MessageSquare className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary flex-shrink-0" />
                 <span className="truncate">Chat com Suporte</span>
               </CardTitle>
-              <CardDescription className="text-gray-400 text-xs mt-0.5 line-clamp-1">
+              <CardDescription className="text-gray-400 text-[10px] sm:text-xs mt-0.5 line-clamp-1">
                 Envie sua dúvida e nossa equipe responderá em breve
               </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col flex-1 p-0 min-h-0" style={{ touchAction: 'manipulation', overflow: 'hidden' }}>
               {/* Mensagens */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-3 min-h-0" style={{ touchAction: 'manipulation', WebkitOverflowScrolling: 'touch' }}>
+              <div className="flex-1 overflow-y-auto p-2 sm:p-4 space-y-2 sm:space-y-3 min-h-0" style={{ touchAction: 'manipulation', WebkitOverflowScrolling: 'touch' }}>
               {loadingMessages ? (
                 <div className="text-center text-gray-400 py-8">Carregando mensagens...</div>
               ) : messages.length > 0 ? (
@@ -807,13 +807,13 @@ export default function Support() {
                       msg.is_from_support && 'flex-row-reverse'
                     )}
                   >
-                    <Avatar className="h-8 w-8 flex-shrink-0">
+                    <Avatar className="h-7 w-7 sm:h-8 sm:w-8 flex-shrink-0">
                       <AvatarImage 
                         src={msg.profiles?.avatar_url || ''} 
                         className="object-cover object-center"
                       />
                       <AvatarFallback className={cn(
-                        'text-xs',
+                        'text-[10px] sm:text-xs',
                         msg.is_from_support 
                           ? 'bg-primary text-white' 
                           : 'bg-[#2a2a2a] text-white'
@@ -825,28 +825,28 @@ export default function Support() {
                     </Avatar>
                     <div
                       className={cn(
-                        'max-w-[70%] rounded-2xl px-4 py-2',
+                        'max-w-[75%] sm:max-w-[70%] rounded-xl sm:rounded-2xl px-3 py-1.5 sm:px-4 sm:py-2',
                         msg.is_from_support
                           ? 'bg-primary text-white rounded-tr-sm'
                           : 'bg-[#2a2a2a] text-white rounded-tl-sm'
                       )}
                     >
                       {msg.is_from_support ? (
-                        <p className="text-xs font-semibold mb-1 opacity-70">
+                        <p className="text-[10px] sm:text-xs font-semibold mb-0.5 sm:mb-1 opacity-70">
                           Suporte
                         </p>
                       ) : (
-                        <p className="text-xs font-semibold mb-1 opacity-70">
+                        <p className="text-[10px] sm:text-xs font-semibold mb-0.5 sm:mb-1 opacity-70">
                           Você
                         </p>
                       )}
                       {msg.image_url ? (
-                        <div className="space-y-2">
-                          <p className="text-sm">{msg.message}</p>
+                        <div className="space-y-1.5 sm:space-y-2">
+                          <p className="text-xs sm:text-sm">{msg.message}</p>
                           <img 
                             src={msg.image_url} 
                             alt="Imagem enviada" 
-                            className="max-w-full rounded-lg max-h-64 object-cover"
+                            className="max-w-full rounded-lg max-h-48 sm:max-h-64 object-cover"
                           />
                         </div>
                       ) : msg.audio_url ? (
@@ -856,10 +856,10 @@ export default function Support() {
                           isOwn={!msg.is_from_support}
                         />
                       ) : (
-                        <p className="text-sm whitespace-pre-wrap">{msg.message}</p>
+                        <p className="text-xs sm:text-sm whitespace-pre-wrap leading-relaxed break-words">{msg.message}</p>
                       )}
                       <p className={cn(
-                        'text-[10px] mt-1',
+                        'text-[9px] sm:text-[10px] mt-0.5 sm:mt-1',
                         msg.is_from_support ? 'text-white/70' : 'text-gray-400'
                       )}>
                         {formatDistanceToNow(new Date(msg.created_at), { addSuffix: true, locale: ptBR })}
@@ -878,18 +878,18 @@ export default function Support() {
               </div>
 
               {/* Formulário de envio */}
-              <div className="border-t border-[#2a2a2a] p-3 flex-shrink-0 bg-[#1a1a1a]">
-              <form onSubmit={handleSubmit} className="space-y-3">
-                <div className="flex gap-2 items-end">
+              <div className="border-t border-[#2a2a2a] p-2 sm:p-3 flex-shrink-0 bg-[#1a1a1a]">
+              <form onSubmit={handleSubmit} className="space-y-2 sm:space-y-3">
+                <div className="flex gap-1.5 sm:gap-2 items-end">
                   <div className="flex gap-1 flex-shrink-0">
                     <Button
                       type="button"
                       variant="ghost"
                       size="icon"
                       onClick={() => imageInputRef.current?.click()}
-                      className="text-gray-400 hover:text-white h-9 w-9"
+                      className="text-gray-400 hover:text-white h-8 w-8 sm:h-9 sm:w-9"
                     >
-                      <ImageIcon className="h-4 w-4" />
+                      <ImageIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                     </Button>
                     <Button
                       type="button"
@@ -897,20 +897,20 @@ export default function Support() {
                       size="icon"
                       onClick={handleAudioClick}
                       className={cn(
-                        "h-9 w-9",
+                        "h-8 w-8 sm:h-9 sm:w-9",
                         isRecording 
                           ? "text-red-500 hover:text-red-600 animate-pulse" 
                           : "text-gray-400 hover:text-white"
                       )}
                     >
-                      <Mic className="h-4 w-4" />
+                      <Mic className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                     </Button>
                   </div>
                   <Textarea
                     placeholder="Digite sua mensagem..."
                     value={formData.message}
                     onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                    className="flex-1 !bg-[#2a2a2a] !border-[#3a3a3a] !text-white placeholder:!text-gray-500 min-h-[60px] max-h-[120px] resize-none"
+                    className="flex-1 !bg-[#2a2a2a] !border-[#3a3a3a] !text-white placeholder:!text-gray-500 min-h-[50px] sm:min-h-[60px] max-h-[100px] sm:max-h-[120px] resize-none text-sm sm:text-base"
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && !e.shiftKey) {
                         e.preventDefault();
@@ -922,10 +922,10 @@ export default function Support() {
                   <Button
                     type="submit"
                     disabled={loading || !formData.message.trim()}
-                    className="bg-primary hover:bg-primary/90 h-9 w-9 p-0 flex-shrink-0"
+                    className="bg-primary hover:bg-primary/90 h-8 w-8 sm:h-9 sm:w-9 p-0 flex-shrink-0"
                     size="icon"
                   >
-                    <Send className="h-4 w-4" />
+                    <Send className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   </Button>
                 </div>
                 <input
