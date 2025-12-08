@@ -60,10 +60,14 @@ export function usePosts() {
     queryKey: ['posts'],
     queryFn: async () => {
       try {
+        // Buscar posts válidos (com conteúdo não vazio)
         const { data: posts, error: postsError } = await supabase
           .from('posts')
           .select('*')
-          .order('created_at', { ascending: false });
+          .not('content', 'is', null)
+          .neq('content', '')
+          .order('created_at', { ascending: false })
+          .limit(100); // Limitar para performance
         
         if (postsError) {
           console.error('Erro ao carregar posts:', postsError);
@@ -75,10 +79,29 @@ export function usePosts() {
           return [];
         }
         
-        // Get unique user IDs
-        const userIds = [...new Set((posts as any[]).map(p => p.user_id))];
+        // Filtrar posts com conteúdo válido e user_id
+        const validPosts = (posts as any[]).filter(p => 
+          p.user_id && 
+          p.content && 
+          typeof p.content === 'string' &&
+          p.content.trim() !== '' &&
+          p.created_at // Deve ter data de criação
+        );
         
-        // Fetch profiles separately
+        if (validPosts.length === 0) {
+          console.log('Nenhum post válido encontrado após filtragem');
+          return [];
+        }
+        
+        // Get unique user IDs dos posts válidos
+        const userIds = [...new Set(validPosts.map(p => p.user_id))];
+        
+        if (userIds.length === 0) {
+          console.log('Nenhum user_id válido encontrado');
+          return [];
+        }
+        
+        // Fetch profiles separately - apenas posts com perfis válidos aparecerão
         const { data: profiles, error: profilesError } = await supabase
           .from('profiles')
           .select('*')
@@ -86,17 +109,28 @@ export function usePosts() {
         
         if (profilesError) {
           console.error('Erro ao carregar perfis:', profilesError);
-          // Continuar mesmo sem perfis
+          // Continuar mesmo sem perfis, mas posts sem perfil não aparecerão
         }
         
         // Create a map for quick lookup
         const profileMap = new Map((profiles as any[] || []).map(p => [p.user_id, p]));
         
-        // Combine posts with profiles
-        return (posts as any[]).map(post => ({
-          ...post,
-          profiles: profileMap.get(post.user_id) || null
-        })) as Post[];
+        // Filtrar apenas posts que têm perfil associado (validação indireta de user_id válido)
+        // E ordenar por data
+        const combinedPosts = validPosts
+          .filter(post => profileMap.has(post.user_id)) // Apenas posts com perfil válido
+          .map(post => ({
+            ...post,
+            profiles: profileMap.get(post.user_id) || null
+          }))
+          .sort((a, b) => {
+            const dateA = new Date(a.created_at || 0).getTime();
+            const dateB = new Date(b.created_at || 0).getTime();
+            return dateB - dateA; // Mais recente primeiro
+          }) as Post[];
+        
+        console.log(`Carregados ${combinedPosts.length} posts válidos de ${posts.length} totais (${validPosts.length - combinedPosts.length} sem perfil foram filtrados)`);
+        return combinedPosts;
       } catch (error) {
         console.error('Erro ao carregar posts:', error);
         throw error;
