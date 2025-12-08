@@ -182,13 +182,19 @@ export default function Profile() {
 
   const handleSignOut = async () => {
     try {
+      console.log('🔄 Iniciando logout...');
       await signOut();
-      // Forçar navegação após logout
-      window.location.href = '/auth';
+      console.log('✅ Logout concluído, redirecionando...');
+      
+      // Aguardar um pouco para garantir que o estado foi limpo
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Forçar navegação completa
+      window.location.replace('/auth');
     } catch (error) {
-      console.error('Erro ao fazer logout:', error);
-      // Mesmo com erro, tentar navegar
-      window.location.href = '/auth';
+      console.error('❌ Erro ao fazer logout:', error);
+      // Mesmo com erro, forçar navegação
+      window.location.replace('/auth');
     }
   };
 

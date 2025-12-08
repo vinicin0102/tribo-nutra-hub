@@ -42,13 +42,19 @@ export default function SupportDashboard() {
 
   const handleSignOut = async () => {
     try {
+      console.log('🔄 Iniciando logout...');
       await signOut();
-      // Forçar navegação após logout
-      window.location.href = '/support/login';
+      console.log('✅ Logout concluído, redirecionando...');
+      
+      // Aguardar um pouco para garantir que o estado foi limpo
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Forçar navegação completa
+      window.location.replace('/support/login');
     } catch (error) {
-      console.error('Erro ao fazer logout:', error);
-      // Mesmo com erro, tentar navegar
-      window.location.href = '/support/login';
+      console.error('❌ Erro ao fazer logout:', error);
+      // Mesmo com erro, forçar navegação
+      window.location.replace('/support/login');
     }
   };
 
