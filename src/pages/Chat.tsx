@@ -226,12 +226,14 @@ export default function Chat() {
           touchAction: 'manipulation', 
           backgroundColor: '#0a0a0a',
           bottom: 'calc(64px + env(safe-area-inset-bottom, 0px))',
-          overflow: 'hidden'
+          overflow: 'hidden',
+          paddingLeft: 'max(8px, env(safe-area-inset-left, 0px))',
+          paddingRight: 'max(8px, env(safe-area-inset-right, 0px))'
         }}
       >
-        <div className="max-w-2xl mx-auto h-full flex flex-col px-1 sm:px-2" style={{ touchAction: 'manipulation', overflow: 'hidden' }}>
-          <Card className="flex-1 flex flex-col border border-[#2a2a2a] bg-[#1a1a1a] min-h-0" style={{ touchAction: 'manipulation', overflow: 'hidden' }}>
-          <CardHeader className="border-b border-[#2a2a2a] py-2 px-3 flex-shrink-0">
+        <div className="max-w-2xl mx-auto h-full flex flex-col px-2 sm:px-4" style={{ touchAction: 'manipulation', overflow: 'hidden' }}>
+          <Card className="flex-1 flex flex-col border border-[#2a2a2a] bg-[#1a1a1a] min-h-0 rounded-lg sm:rounded-xl" style={{ touchAction: 'manipulation', overflow: 'hidden' }}>
+          <CardHeader className="border-b border-[#2a2a2a] py-2.5 px-3 sm:px-4 flex-shrink-0">
             <CardTitle className="flex items-center gap-2 text-white text-sm sm:text-base">
               <div className="bg-primary rounded-lg p-1.5 sm:p-2">
                 <span className="text-sm sm:text-base">💬</span>
@@ -240,7 +242,7 @@ export default function Chat() {
             </CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col flex-1 p-0 min-h-0" style={{ touchAction: 'manipulation', overflow: 'hidden' }}>
-            <div className="flex-1 overflow-y-auto p-2 sm:p-4 space-y-2 sm:space-y-3 min-h-0" style={{ touchAction: 'manipulation', WebkitOverflowScrolling: 'touch' }}>
+            <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-2 sm:space-y-3 min-h-0" style={{ touchAction: 'manipulation', WebkitOverflowScrolling: 'touch' }}>
               {isLoading ? (
                 <div className="space-y-3">
                   {[1, 2, 3, 4, 5].map((i) => (
@@ -360,7 +362,7 @@ export default function Chat() {
 
             <form 
               onSubmit={handleSubmit} 
-              className="border-t border-[#2a2a2a] p-2 sm:p-3 flex gap-1.5 sm:gap-2 items-center flex-shrink-0 bg-[#1a1a1a]"
+              className="border-t border-[#2a2a2a] p-2.5 sm:p-3 flex gap-1.5 sm:gap-2 items-center flex-shrink-0 bg-[#1a1a1a]"
             >
               <Button
                 type="button"

@@ -565,8 +565,8 @@ export default function Support() {
                 Voltar para lista
               </Button>
 
-              <Card className="border border-[#2a2a2a] bg-[#1a1a1a]">
-                <CardHeader className="border-b border-[#2a2a2a]">
+              <Card className="border border-[#2a2a2a] bg-[#1a1a1a] rounded-lg sm:rounded-xl">
+                <CardHeader className="border-b border-[#2a2a2a] px-3 sm:px-4 py-3">
                   <div className="flex items-center gap-3">
                     <Avatar>
                       <AvatarImage 
@@ -699,10 +699,10 @@ export default function Support() {
                       <Button
                         onClick={handleSendReply}
                         disabled={!replyMessage.trim()}
-                        className="bg-primary hover:bg-primary/90 h-9 w-9 p-0 flex-shrink-0"
+                        className="bg-primary hover:bg-primary/90 h-8 w-8 sm:h-9 sm:w-9 p-0 flex-shrink-0"
                         size="icon"
                       >
-                        <Send className="h-4 w-4" />
+                        <Send className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                       </Button>
                     </div>
                     <input
@@ -779,12 +779,14 @@ export default function Support() {
           touchAction: 'manipulation', 
           backgroundColor: '#0a0a0a',
           bottom: 'calc(64px + env(safe-area-inset-bottom, 0px))',
-          overflow: 'hidden'
+          overflow: 'hidden',
+          paddingLeft: 'max(8px, env(safe-area-inset-left, 0px))',
+          paddingRight: 'max(8px, env(safe-area-inset-right, 0px))'
         }}
       >
-        <div className="max-w-2xl mx-auto h-full flex flex-col px-1 sm:px-2" style={{ touchAction: 'manipulation', overflow: 'hidden' }}>
-          <Card className="flex-1 flex flex-col border border-[#2a2a2a] bg-[#1a1a1a] min-h-0" style={{ touchAction: 'manipulation', overflow: 'hidden' }}>
-            <CardHeader className="border-b border-[#2a2a2a] py-2 px-3 flex-shrink-0">
+        <div className="max-w-2xl mx-auto h-full flex flex-col px-2 sm:px-4" style={{ touchAction: 'manipulation', overflow: 'hidden' }}>
+          <Card className="flex-1 flex flex-col border border-[#2a2a2a] bg-[#1a1a1a] min-h-0 rounded-lg sm:rounded-xl" style={{ touchAction: 'manipulation', overflow: 'hidden' }}>
+            <CardHeader className="border-b border-[#2a2a2a] py-2.5 px-3 sm:px-4 flex-shrink-0">
               <CardTitle className="flex items-center gap-1.5 sm:gap-2 text-white text-xs sm:text-sm leading-tight">
                 <MessageSquare className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary flex-shrink-0" />
                 <span className="truncate">Chat com Suporte</span>
@@ -795,7 +797,7 @@ export default function Support() {
             </CardHeader>
             <CardContent className="flex flex-col flex-1 p-0 min-h-0" style={{ touchAction: 'manipulation', overflow: 'hidden' }}>
               {/* Mensagens */}
-              <div className="flex-1 overflow-y-auto p-2 sm:p-4 space-y-2 sm:space-y-3 min-h-0" style={{ touchAction: 'manipulation', WebkitOverflowScrolling: 'touch' }}>
+              <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-2 sm:space-y-3 min-h-0" style={{ touchAction: 'manipulation', WebkitOverflowScrolling: 'touch' }}>
               {loadingMessages ? (
                 <div className="text-center text-gray-400 py-8">Carregando mensagens...</div>
               ) : messages.length > 0 ? (
@@ -878,7 +880,7 @@ export default function Support() {
               </div>
 
               {/* Formulário de envio */}
-              <div className="border-t border-[#2a2a2a] p-2 sm:p-3 flex-shrink-0 bg-[#1a1a1a]">
+              <div className="border-t border-[#2a2a2a] p-2.5 sm:p-3 flex-shrink-0 bg-[#1a1a1a]">
               <form onSubmit={handleSubmit} className="space-y-2 sm:space-y-3">
                 <div className="flex gap-1.5 sm:gap-2 items-end">
                   <div className="flex gap-1 flex-shrink-0">
