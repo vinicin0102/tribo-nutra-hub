@@ -5,11 +5,16 @@ const ADMIN_EMAIL = 'admin@gmail.com';
 
 export function useIsAdmin() {
   const { user } = useAuth();
-  const { data: profile } = useProfile();
+  const { data: profile, isLoading } = useProfile();
   
   // Se for admin@gmail.com, sempre retorna true
   if (user?.email === ADMIN_EMAIL) {
     return true;
+  }
+  
+  // Se o perfil ainda está carregando, retorna false temporariamente
+  if (isLoading || !profile) {
+    return false;
   }
   
   // Verificar se o perfil tem role admin
