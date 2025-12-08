@@ -59,73 +59,31 @@ export function usePosts() {
   return useQuery({
     queryKey: ['posts'],
     queryFn: async () => {
-      try {
-        // Buscar todos os posts ordenados por data
-        const { data: posts, error: postsError } = await supabase
-          .from('posts')
-          .select('*')
-          .order('created_at', { ascending: false })
-          .limit(100);
-        
-        if (postsError) {
-          console.error('Erro ao carregar posts:', postsError);
-          throw postsError;
-        }
-        
-        if (!posts || posts.length === 0) {
-          console.log('Nenhum post encontrado');
-          return [];
-        }
-        
-        // Filtrar apenas posts com conteúdo válido
-        const validPosts = (posts as any[]).filter(p => 
-          p.user_id && 
-          p.content && 
-          typeof p.content === 'string' &&
-          p.content.trim() !== ''
-        );
-        
-        if (validPosts.length === 0) {
-          console.log('Nenhum post válido encontrado');
-          return [];
-        }
-        
-        // Get unique user IDs
-        const userIds = [...new Set(validPosts.map(p => p.user_id))];
-        
-        if (userIds.length === 0) {
-          return [];
-        }
-        
-        // Fetch profiles separately
-        const { data: profiles, error: profilesError } = await supabase
-          .from('profiles')
-          .select('*')
-          .in('user_id', userIds);
-        
-        if (profilesError) {
-          console.error('Erro ao carregar perfis:', profilesError);
-          // Continuar mesmo sem perfis
-        }
-        
-        // Create a map for quick lookup
-        const profileMap = new Map((profiles as any[] || []).map(p => [p.user_id, p]));
-        
-        // Combine posts with profiles
-        const combinedPosts = validPosts.map(post => ({
-          ...post,
-          profiles: profileMap.get(post.user_id) || null
-        })) as Post[];
-        
-        return combinedPosts;
-      } catch (error) {
-        console.error('Erro ao carregar posts:', error);
-        throw error;
-      }
+      const { data: posts, error: postsError } = await supabase
+        .from('posts')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (postsError) throw postsError;
+      
+      // Get unique user IDs
+      const userIds = [...new Set((posts as any[]).map(p => p.user_id))];
+      
+      // Fetch profiles separately
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('*')
+        .in('user_id', userIds);
+      
+      // Create a map for quick lookup
+      const profileMap = new Map((profiles as any[] || []).map(p => [p.user_id, p]));
+      
+      // Combine posts with profiles
+      return (posts as any[]).map(post => ({
+        ...post,
+        profiles: profileMap.get(post.user_id) || null
+      })) as Post[];
     },
-    retry: 2,
-    refetchOnWindowFocus: true,
-    staleTime: 30000,
   });
 }
 

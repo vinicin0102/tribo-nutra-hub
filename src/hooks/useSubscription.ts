@@ -19,24 +19,12 @@ export function useSubscription() {
         .from('profiles')
         .select('subscription_plan, subscription_expires_at')
         .eq('user_id', user.id)
-        .maybeSingle();
+        .single();
 
-      if (error) {
-        console.error('Erro ao carregar assinatura:', error);
-        // Retornar valores padrão ao invés de lançar erro
-        return { subscription_plan: 'free' as const, subscription_expires_at: null };
-      }
-      
-      if (!data) {
-        return { subscription_plan: 'free' as const, subscription_expires_at: null };
-      }
-      
+      if (error) throw error;
       return data as Subscription;
     },
     enabled: !!user,
-    retry: 1,
-    refetchOnWindowFocus: false,
-    staleTime: 60000, // 1 minuto
   });
 }
 
