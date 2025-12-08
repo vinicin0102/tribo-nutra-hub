@@ -159,21 +159,49 @@ export function UserManagement() {
         return;
       }
 
-      console.log('Tentando atualizar pontos:', { userId: selectedUser.user_id, points });
+      console.log('🔄 [UserManagement] Tentando atualizar pontos:', { 
+        userId: selectedUser.user_id, 
+        username: selectedUser.username,
+        currentPoints: selectedUser.points,
+        newPoints: points 
+      });
 
-      await updatePoints.mutateAsync({
+      const result = await updatePoints.mutateAsync({
         userId: selectedUser.user_id,
         points,
       });
+
+      console.log('✅ [UserManagement] Pontos atualizados com sucesso:', result);
 
       toast.success(`Pontuação de ${selectedUser.username} alterada para ${points.toLocaleString('pt-BR')} pontos`);
       setShowPointsDialog(false);
       setSelectedUser(null);
       setNewPoints('');
+      
+      // Forçar refresh da lista de usuários
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
     } catch (error: any) {
-      console.error('Erro ao alterar pontuação:', error);
+      console.error('❌ [UserManagement] Erro ao alterar pontuação:', error);
+      console.error('Detalhes do erro:', {
+        message: error?.message,
+        code: error?.code,
+        stack: error?.stack
+      });
+      
       const errorMessage = error?.message || 'Erro desconhecido ao alterar pontuação';
-      toast.error(`Erro: ${errorMessage}`);
+      
+      // Mensagem mais específica baseada no erro
+      if (errorMessage.includes('RLS') || errorMessage.includes('policy') || errorMessage.includes('permission')) {
+        toast.error('Erro de permissão. Execute o script criar-policy-admin-update-profiles.sql no Supabase SQL Editor.', {
+          duration: 8000
+        });
+      } else {
+        toast.error(`Erro: ${errorMessage}`, {
+          duration: 5000
+        });
+      }
     }
   };
 

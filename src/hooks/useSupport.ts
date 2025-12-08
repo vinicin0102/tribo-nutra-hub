@@ -351,50 +351,75 @@ export function useUpdateUserPoints() {
         throw new Error('Pontos inválidos');
       }
 
+      console.log('=== INÍCIO ATUALIZAÇÃO DE PONTOS ===');
+      console.log('Dados recebidos:', { userId, points, isAdmin, userEmail: user?.email, userRole: profileData?.role });
+
       // Primeiro, verificar se o usuário existe
       const { data: existingProfile, error: checkError } = await supabase
         .from('profiles')
-        .select('user_id, points, username')
+        .select('user_id, points, username, email, role')
         .eq('user_id', userId)
-        .single();
+        .maybeSingle();
 
       console.log('Perfil existente:', { existingProfile, checkError });
 
       if (checkError) {
-        console.error('Erro ao verificar perfil:', checkError);
-        throw new Error(`Erro ao verificar perfil: ${checkError.message}`);
+        console.error('❌ Erro ao verificar perfil:', checkError);
+        throw new Error(`Erro ao verificar perfil: ${checkError.message} (Código: ${checkError.code})`);
       }
 
       if (!existingProfile) {
+        console.error('❌ Usuário não encontrado:', userId);
         throw new Error('Usuário não encontrado');
       }
+
+      console.log('✅ Perfil encontrado:', existingProfile);
+      console.log('Atualizando pontos de', existingProfile.points, 'para', points);
 
       // Agora atualizar
       const { data, error } = await supabase
         .from('profiles')
-        .update({ points, updated_at: new Date().toISOString() })
+        .update({ 
+          points: points,
+          updated_at: new Date().toISOString() 
+        })
         .eq('user_id', userId)
-        .select();
+        .select('user_id, username, points, email, role');
 
-      console.log('Resposta da atualização de pontos:', { data, error, userId, points });
+      console.log('=== RESPOSTA DA ATUALIZAÇÃO ===');
+      console.log('Data retornada:', data);
+      console.log('Erro retornado:', error);
+      console.log('Status da resposta:', { hasData: !!data, dataLength: data?.length, hasError: !!error });
 
       if (error) {
-        console.error('Erro ao atualizar pontos:', error);
-        console.error('Detalhes do erro:', {
+        console.error('❌ ERRO AO ATUALIZAR PONTOS:', error);
+        console.error('Detalhes completos do erro:', {
           code: error.code,
           message: error.message,
           details: error.details,
-          hint: error.hint
+          hint: error.hint,
+          status: (error as any).status
         });
-        throw new Error(`Erro ao atualizar pontos: ${error.message} (Código: ${error.code})`);
+        
+        // Mensagem de erro mais específica
+        let errorMessage = `Erro ao atualizar pontos: ${error.message}`;
+        if (error.code === '42501' || error.message?.includes('permission') || error.message?.includes('policy')) {
+          errorMessage = 'Erro de permissão. Verifique se a policy RLS foi criada. Execute o script criar-policy-admin-update-profiles.sql no Supabase.';
+        }
+        
+        throw new Error(`${errorMessage} (Código: ${error.code})`);
       }
 
       if (!data || data.length === 0) {
-        console.error('Nenhum dado retornado após atualização');
-        throw new Error('Usuário não encontrado ou não foi possível atualizar. Verifique as permissões RLS.');
+        console.error('❌ Nenhum dado retornado após atualização');
+        console.error('Isso geralmente indica problema de RLS policy');
+        throw new Error('Nenhum dado retornado. Verifique se a policy RLS "Admins can update any profile" foi criada no Supabase.');
       }
 
-      console.log('Pontos atualizados com sucesso:', data[0]);
+      console.log('✅ Pontos atualizados com sucesso!');
+      console.log('Dados atualizados:', data[0]);
+      console.log('=== FIM ATUALIZAÇÃO DE PONTOS ===');
+      
       return data[0];
     },
     onSuccess: () => {
