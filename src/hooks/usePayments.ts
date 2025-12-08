@@ -84,77 +84,40 @@ export function usePaymentHistory() {
 // Hook para criar checkout no Stripe
 export function useCreatePaymentPreference() {
   const { user } = useAuth();
-  const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (planType: 'diamond') => {
+    mutationFn: async ({ planType, duration }: { planType: 'diamond'; duration?: '1m' | '3m' | '6m' }) => {
       if (!user) throw new Error('Usuário não autenticado');
 
-      console.log('Criando checkout Stripe para:', { planType, userId: user.id });
+      console.log('Criando checkout Stripe para:', { planType, duration, userId: user.id });
 
-      try {
-        // Chamar edge function do Supabase
-        const { data, error } = await supabase.functions.invoke('create-stripe-checkout', {
-          body: { 
-            planType,
-          }
-        });
+      const { data, error } = await supabase.functions.invoke('create-stripe-checkout', {
+        body: { planType, duration: duration || '1m' }
+      });
 
-        if (error) {
-          console.error('Erro ao chamar função Stripe:', error);
-          
-          // Tratar erros específicos
-          if (error.message?.includes('Function not found')) {
-            throw new Error('Função de pagamento não encontrada. Entre em contato com o suporte.');
-          }
-          
-          if (error.message?.includes('Variáveis de ambiente faltando')) {
-            throw new Error('Configuração incompleta. Entre em contato com o suporte.');
-          }
-          
-          // Tentar extrair mensagem de erro mais detalhada
-          const errorMessage = error.message || error.error?.message || 'Erro ao processar pagamento';
-          throw new Error(errorMessage);
-        }
-
-        if (!data) {
-          throw new Error('Resposta vazia do servidor');
-        }
-        
-        console.log('Checkout criado com sucesso:', data);
-        return data;
-      } catch (err: any) {
-        console.error('Erro ao criar checkout:', err);
-        throw err;
+      if (error) {
+        console.error('Erro ao chamar função Stripe:', error);
+        throw new Error(error.message || 'Erro ao processar pagamento');
       }
+
+      if (!data) {
+        throw new Error('Resposta vazia do servidor');
+      }
+      
+      console.log('Checkout criado com sucesso:', data);
+      return data;
     },
     onSuccess: (data) => {
-      // Redirecionar para checkout do Stripe
       if (data?.checkout_url) {
         console.log('Redirecionando para:', data.checkout_url);
         window.location.href = data.checkout_url;
       } else {
-        toast.error('URL de checkout não recebida. Verifique os logs do console.');
-        console.error('Dados recebidos:', data);
+        toast.error('URL de checkout não recebida');
       }
     },
     onError: (error: any) => {
       console.error('Erro ao criar checkout:', error);
-      
-      // Mensagens de erro mais amigáveis
-      let errorMessage = 'Erro ao processar pagamento';
-      
-      if (error?.message) {
-        errorMessage = error.message;
-      } else if (error?.error?.message) {
-        errorMessage = error.error.message;
-      } else if (typeof error === 'string') {
-        errorMessage = error;
-      }
-      
-      toast.error(errorMessage, {
-        duration: 5000,
-      });
+      toast.error(error?.message || 'Erro ao processar pagamento', { duration: 5000 });
     },
   });
 }

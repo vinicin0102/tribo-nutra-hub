@@ -5,10 +5,11 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
 import { useCreatePaymentPreference, useUserSubscription, useCancelSubscription, useReactivateSubscription } from '@/hooks/usePayments';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { useState } from 'react';
+import { cn } from '@/lib/utils';
 
 const benefits = [
   'Acesso ao Chat da Comunidade',
@@ -26,15 +27,49 @@ const paymentFeatures = [
   { icon: Clock, text: 'Cancele quando quiser' },
 ];
 
+const plans = [
+  { 
+    id: '6m' as const, 
+    label: 'Semestral', 
+    price: 29.90, 
+    originalPrice: 67, 
+    savings: '55% OFF',
+    period: '/mês',
+    popular: true,
+    description: 'Cobrado R$ 179,40 a cada 6 meses'
+  },
+  { 
+    id: '3m' as const, 
+    label: 'Trimestral', 
+    price: 49, 
+    originalPrice: 67, 
+    savings: '27% OFF',
+    period: '/mês',
+    popular: false,
+    description: 'Cobrado R$ 147 a cada 3 meses'
+  },
+  { 
+    id: '1m' as const, 
+    label: 'Mensal', 
+    price: 67, 
+    originalPrice: null, 
+    savings: null,
+    period: '/mês',
+    popular: false,
+    description: 'Cobrado mensalmente'
+  },
+];
+
 export default function Upgrade() {
   const navigate = useNavigate();
   const createPayment = useCreatePaymentPreference();
   const { data: subscription, isLoading: loadingSub } = useUserSubscription();
   const cancelSubscription = useCancelSubscription();
   const reactivateSubscription = useReactivateSubscription();
+  const [selectedPlan, setSelectedPlan] = useState<'1m' | '3m' | '6m'>('6m');
 
   const handleUpgrade = () => {
-    createPayment.mutate('diamond');
+    createPayment.mutate({ planType: 'diamond', duration: selectedPlan });
   };
 
   const handleCancel = () => {
@@ -49,7 +84,6 @@ export default function Upgrade() {
     reactivateSubscription.mutate(subscription.id);
   };
 
-  // Se já tem assinatura ativa Diamond
   if (loadingSub) {
     return (
       <MainLayout>
@@ -136,6 +170,8 @@ export default function Upgrade() {
     );
   }
 
+  const selectedPlanData = plans.find(p => p.id === selectedPlan)!;
+
   return (
     <MainLayout>
       <div className="max-w-2xl mx-auto px-4 pb-20 pt-4">
@@ -152,23 +188,71 @@ export default function Upgrade() {
           </p>
         </div>
 
-        {/* Pricing Card */}
-        <Card className="border border-[#2a2a2a] bg-[#1a1a1a] overflow-hidden mb-6">
-          <div className="bg-gradient-to-r from-cyan-500/20 to-blue-500/20 border-b border-cyan-500/30 p-6 text-center">
-            <Badge className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white mb-3">
-              <Zap className="h-3 w-3 mr-1" />
-              Mais popular
-            </Badge>
-            <div className="mb-2">
-              <span className="text-5xl font-bold text-white">R$ 197</span>
-              <span className="text-gray-400 ml-2">/mês</span>
-            </div>
-            <p className="text-sm text-gray-400">
-              Cancele quando quiser
-            </p>
-          </div>
+        {/* Plan Selection */}
+        <div className="grid gap-3 mb-6">
+          {plans.map((plan) => (
+            <Card
+              key={plan.id}
+              onClick={() => setSelectedPlan(plan.id)}
+              className={cn(
+                "border cursor-pointer transition-all",
+                selectedPlan === plan.id
+                  ? "border-cyan-500 bg-cyan-500/10"
+                  : "border-[#2a2a2a] bg-[#1a1a1a] hover:border-[#3a3a3a]"
+              )}
+            >
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className={cn(
+                      "w-5 h-5 rounded-full border-2 flex items-center justify-center",
+                      selectedPlan === plan.id
+                        ? "border-cyan-500 bg-cyan-500"
+                        : "border-gray-500"
+                    )}>
+                      {selectedPlan === plan.id && (
+                        <Check className="h-3 w-3 text-white" />
+                      )}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-white font-semibold">{plan.label}</span>
+                        {plan.popular && (
+                          <Badge className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white text-xs">
+                            <Zap className="h-3 w-3 mr-1" />
+                            Mais popular
+                          </Badge>
+                        )}
+                        {plan.savings && (
+                          <Badge variant="outline" className="border-green-500 text-green-500 text-xs">
+                            {plan.savings}
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-400 mt-1">{plan.description}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    {plan.originalPrice && (
+                      <span className="text-sm text-gray-500 line-through mr-2">
+                        R$ {plan.originalPrice}
+                      </span>
+                    )}
+                    <span className="text-xl font-bold text-white">
+                      R$ {plan.price.toFixed(2).replace('.', ',')}
+                    </span>
+                    <span className="text-gray-400 text-sm">{plan.period}</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
 
+        {/* Benefits Card */}
+        <Card className="border border-[#2a2a2a] bg-[#1a1a1a] overflow-hidden mb-6">
           <CardContent className="p-6 space-y-4">
+            <h3 className="text-white font-semibold mb-2">Benefícios inclusos:</h3>
             {benefits.map((benefit, index) => (
               <div key={index} className="flex items-start gap-3">
                 <div className="bg-primary/20 rounded-full p-1 mt-0.5">
@@ -198,7 +282,10 @@ export default function Upgrade() {
             className="w-full h-14 text-lg font-semibold bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 disabled:opacity-50"
           >
             <Gem className="h-5 w-5 mr-2" />
-            {createPayment.isPending ? 'Processando...' : 'Assinar Plano Diamond'}
+            {createPayment.isPending 
+              ? 'Processando...' 
+              : `Assinar por R$ ${selectedPlanData.price.toFixed(2).replace('.', ',')}${selectedPlanData.period}`
+            }
           </Button>
           <Button
             onClick={() => navigate('/')}
@@ -236,4 +323,3 @@ export default function Upgrade() {
     </MainLayout>
   );
 }
-
