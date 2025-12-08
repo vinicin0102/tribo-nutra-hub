@@ -146,15 +146,42 @@ export function UserManagement() {
     }
   };
 
-  const handleUpdatePoints = async () => {
-    if (!selectedUser || !newPoints) {
+  const handleUpdatePoints = async (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
+    console.log('🔄 [UserManagement] handleUpdatePoints chamado', { 
+      selectedUser: selectedUser?.user_id, 
+      newPoints,
+      isPending: updatePoints.isPending
+    });
+
+    if (!selectedUser) {
+      console.error('❌ selectedUser é null');
+      toast.error('Usuário não selecionado');
+      return;
+    }
+
+    if (!newPoints || newPoints.trim() === '') {
+      console.error('❌ newPoints está vazio');
       toast.error('Preencha o campo de pontos');
       return;
     }
     
     try {
-      const points = parseInt(newPoints);
-      if (isNaN(points) || points < 0) {
+      const points = parseInt(newPoints.trim());
+      console.log('📊 Pontos parseados:', { raw: newPoints, parsed: points, isNaN: isNaN(points) });
+
+      if (isNaN(points)) {
+        console.error('❌ Pontos não é um número válido');
+        toast.error('Pontos inválidos. Digite um número válido');
+        return;
+      }
+
+      if (points < 0) {
+        console.error('❌ Pontos é negativo');
         toast.error('Pontos inválidos. Digite um número maior ou igual a 0');
         return;
       }
@@ -174,32 +201,35 @@ export function UserManagement() {
       console.log('✅ [UserManagement] Pontos atualizados com sucesso:', result);
 
       toast.success(`Pontuação de ${selectedUser.username} alterada para ${points.toLocaleString('pt-BR')} pontos`);
+      
+      // Fechar dialog e limpar
       setShowPointsDialog(false);
       setSelectedUser(null);
       setNewPoints('');
       
-      // Forçar refresh da lista de usuários
+      // Forçar refresh da lista de usuários após 500ms
       setTimeout(() => {
         window.location.reload();
-      }, 1000);
+      }, 500);
     } catch (error: any) {
       console.error('❌ [UserManagement] Erro ao alterar pontuação:', error);
-      console.error('Detalhes do erro:', {
+      console.error('Detalhes completos do erro:', {
         message: error?.message,
         code: error?.code,
-        stack: error?.stack
+        stack: error?.stack,
+        name: error?.name
       });
       
       const errorMessage = error?.message || 'Erro desconhecido ao alterar pontuação';
       
       // Mensagem mais específica baseada no erro
-      if (errorMessage.includes('RLS') || errorMessage.includes('policy') || errorMessage.includes('permission')) {
-        toast.error('Erro de permissão. Execute o script criar-policy-admin-update-profiles.sql no Supabase SQL Editor.', {
-          duration: 8000
+      if (errorMessage.includes('RLS') || errorMessage.includes('policy') || errorMessage.includes('permission') || errorMessage.includes('42501')) {
+        toast.error('Erro de permissão. Execute o script FIX-RLS-DEFINITIVO.sql no Supabase SQL Editor.', {
+          duration: 10000
         });
       } else {
         toast.error(`Erro: ${errorMessage}`, {
-          duration: 5000
+          duration: 8000
         });
       }
     }
@@ -500,11 +530,29 @@ export function UserManagement() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowPointsDialog(false)} className="border-[#3a3a3a] text-white">
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setShowPointsDialog(false);
+                setSelectedUser(null);
+                setNewPoints('');
+              }} 
+              className="border-[#3a3a3a] text-white"
+              disabled={updatePoints.isPending}
+            >
               Cancelar
             </Button>
-            <Button onClick={handleUpdatePoints} className="bg-primary">
-              Salvar
+            <Button 
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('🖱️ Botão Salvar clicado');
+                handleUpdatePoints();
+              }} 
+              className="bg-primary"
+              disabled={updatePoints.isPending || !newPoints || newPoints.trim() === ''}
+            >
+              {updatePoints.isPending ? 'Salvando...' : 'Salvar'}
             </Button>
           </DialogFooter>
         </DialogContent>
