@@ -42,10 +42,21 @@ export function useProfile() {
         .eq('user_id', user.id)
         .maybeSingle();
       
-      if (error) throw error;
+      if (error) {
+        console.error('Erro ao carregar perfil:', error);
+        throw error;
+      }
+      
+      if (!data) {
+        console.warn('Perfil não encontrado para user_id:', user.id);
+      }
+      
       return data as Profile | null;
     },
     enabled: !!user,
+    retry: 2,
+    refetchOnWindowFocus: true,
+    staleTime: 30000, // 30 segundos
   });
 }
 

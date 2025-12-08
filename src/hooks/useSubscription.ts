@@ -19,12 +19,24 @@ export function useSubscription() {
         .from('profiles')
         .select('subscription_plan, subscription_expires_at')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erro ao carregar assinatura:', error);
+        throw error;
+      }
+      
+      if (!data) {
+        console.warn('Perfil não encontrado para verificar assinatura');
+        return null;
+      }
+      
       return data as Subscription;
     },
     enabled: !!user,
+    retry: 2,
+    refetchOnWindowFocus: true,
+    staleTime: 30000, // 30 segundos
   });
 }
 
