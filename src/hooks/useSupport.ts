@@ -319,48 +319,79 @@ export function useChangeUserPlan() {
         throw new Error('Plano inválido. Use "free" ou "diamond".');
       }
 
-      // Usar função RPC com SECURITY DEFINER para ignorar RLS
-      // Se expiresAt for null, não passar o parâmetro (usa DEFAULT)
-      const rpcParams: any = {
-        p_user_id: userId,
-        p_plan: plan
-      };
-      
-      // Só adicionar expires_at se não for null
-      if (expiresAt !== null && expiresAt !== undefined) {
-        rpcParams.p_expires_at = expiresAt;
-      }
+      // Tentar usar função RPC primeiro
+      try {
+        const rpcParams: any = {
+          p_user_id: userId,
+          p_plan: plan
+        };
+        
+        if (expiresAt !== null && expiresAt !== undefined) {
+          rpcParams.p_expires_at = expiresAt;
+        }
 
-      const { data: rpcData, error: rpcError } = await (supabase.rpc as any)(
-        'change_user_plan_admin',
-        rpcParams
-      );
+        const { data: rpcData, error: rpcError } = await (supabase.rpc as any)(
+          'change_user_plan_admin',
+          rpcParams
+        );
 
-      console.log('=== RESPOSTA DA ALTERAÇÃO DE PLANO (RPC) ===');
-      console.log('RPC Data retornada:', rpcData);
-      console.log('RPC Erro retornado:', rpcError);
+        console.log('=== RESPOSTA DA ALTERAÇÃO DE PLANO (RPC) ===');
+        console.log('RPC Data retornada:', rpcData);
+        console.log('RPC Erro retornado:', rpcError);
 
-      if (rpcError) {
-        console.error('❌ ERRO AO ALTERAR PLANO (RPC):', rpcError);
-        throw new Error(rpcError.message || 'Erro ao alterar plano via RPC');
-      }
+        if (rpcError) {
+          // Se erro é "function does not exist", tentar UPDATE direto
+          if (rpcError.message?.includes('does not exist') || rpcError.message?.includes('não encontrada')) {
+            console.warn('⚠️ Função RPC não encontrada, tentando UPDATE direto...');
+            throw new Error('FALLBACK_TO_UPDATE');
+          }
+          console.error('❌ ERRO AO ALTERAR PLANO (RPC):', rpcError);
+          throw new Error(rpcError.message || 'Erro ao alterar plano via RPC');
+        }
 
-      // Verificar se a função retornou sucesso
-      if (rpcData && typeof rpcData === 'object') {
-        if (rpcData.success === false) {
-          console.error('❌ Função RPC retornou erro:', rpcData.error);
-          throw new Error(rpcData.error || 'Erro ao alterar plano');
+        // Verificar se a função retornou sucesso
+        if (rpcData && typeof rpcData === 'object') {
+          if (rpcData.success === false) {
+            console.error('❌ Função RPC retornou erro:', rpcData.error);
+            throw new Error(rpcData.error || 'Erro ao alterar plano');
+          }
+          
+          if (rpcData.success === true) {
+            console.log('✅ Plano alterado com sucesso via RPC:', rpcData);
+            return rpcData;
+          }
+        }
+
+        // Se chegou aqui, a função RPC não retornou o formato esperado
+        console.warn('⚠️ Resposta inesperada da função RPC, tentando UPDATE direto...');
+        throw new Error('FALLBACK_TO_UPDATE');
+      } catch (error: any) {
+        // Se a função RPC não existe ou falhou, tentar UPDATE direto
+        if (error.message === 'FALLBACK_TO_UPDATE' || error.message?.includes('does not exist') || error.message?.includes('não encontrada')) {
+          console.log('🔄 Tentando UPDATE direto na tabela profiles...');
+          
+          const { data, error: updateError } = await supabase
+            .from('profiles')
+            .update({
+              subscription_plan: plan,
+              subscription_expires_at: expiresAt || null,
+              updated_at: new Date().toISOString()
+            })
+            .eq('user_id', userId)
+            .select('user_id, username, subscription_plan, subscription_expires_at');
+
+          if (updateError) {
+            console.error('❌ ERRO AO ATUALIZAR PLANO (UPDATE DIRETO):', updateError);
+            throw new Error(`Erro ao atualizar plano: ${updateError.message}. Execute o SQL criar-funcao-change-plan-admin-final.sql no Supabase SQL Editor.`);
+          }
+
+          console.log('✅ Plano alterado com sucesso (UPDATE direto):', data);
+          return { success: true, data };
         }
         
-        if (rpcData.success === true) {
-          console.log('✅ Plano alterado com sucesso via RPC:', rpcData);
-          return rpcData;
-        }
+        // Se não for erro de função não encontrada, relançar o erro
+        throw error;
       }
-
-      // Se chegou aqui, a função RPC não retornou o formato esperado
-      console.error('❌ Resposta inesperada da função RPC:', rpcData);
-      throw new Error('Resposta inesperada da função de alteração de plano');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['support-users'] });
