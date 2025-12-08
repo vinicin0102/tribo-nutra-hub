@@ -31,16 +31,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, 5000);
 
     try {
-      const { data: { subscription } } = supabase.auth.onAuthStateChange(
-        (event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
           if (mounted) {
-            setSession(session);
-            setUser(session?.user ?? null);
-            setLoading(false);
+        setSession(session);
+        setUser(session?.user ?? null);
+        setLoading(false);
             clearTimeout(timeoutId);
           }
-        }
-      );
+      }
+    );
 
       supabase.auth.getSession()
         .then(({ data: { session }, error }) => {
@@ -48,9 +48,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             if (error) {
               console.error('Erro ao obter sessão:', error);
             }
-            setSession(session);
-            setUser(session?.user ?? null);
-            setLoading(false);
+      setSession(session);
+      setUser(session?.user ?? null);
+      setLoading(false);
             clearTimeout(timeoutId);
           }
         })
@@ -60,7 +60,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setLoading(false);
             clearTimeout(timeoutId);
           }
-        });
+    });
 
       return () => {
         mounted = false;
@@ -101,7 +101,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    try {
+      console.log('🔄 Fazendo logout...');
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error('Erro ao fazer logout:', error);
+      }
+      
+      // Limpar estado local imediatamente
+      setUser(null);
+      setSession(null);
+      setLoading(false);
+      
+      console.log('✅ Logout concluído');
+    } catch (error) {
+      console.error('Erro ao fazer logout:', error);
+      // Mesmo com erro, limpar estado local
+      setUser(null);
+      setSession(null);
+      setLoading(false);
+    }
   };
 
   return (

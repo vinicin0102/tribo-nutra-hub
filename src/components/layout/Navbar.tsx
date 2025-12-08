@@ -20,8 +20,15 @@ export function Navbar() {
   const isAdmin = useIsAdmin();
 
   const handleSignOut = async () => {
-    await signOut();
-    navigate('/auth');
+    try {
+      await signOut();
+      // Forçar navegação após logout
+      window.location.href = '/auth';
+    } catch (error) {
+      console.error('Erro ao fazer logout:', error);
+      // Mesmo com erro, tentar navegar
+      window.location.href = '/auth';
+    }
   };
 
   return (
