@@ -224,8 +224,8 @@ export function UserManagement() {
       
       // Mensagem mais específica baseada no erro
       if (errorMessage.includes('RLS') || errorMessage.includes('policy') || errorMessage.includes('permission') || errorMessage.includes('42501')) {
-        toast.error('Erro de permissão. Execute o script FIX-RLS-DEFINITIVO.sql no Supabase SQL Editor.', {
-          duration: 10000
+        toast.error('Erro de permissão. Execute o script FIX-RLS-DEFINITIVO.sql no Supabase SQL Editor. Veja EXECUTAR-SQL-AGORA.md', {
+          duration: 12000
         });
       } else {
         toast.error(`Erro: ${errorMessage}`, {
