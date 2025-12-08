@@ -320,13 +320,20 @@ export function useChangeUserPlan() {
       }
 
       // Usar função RPC com SECURITY DEFINER para ignorar RLS
+      // Se expiresAt for null, não passar o parâmetro (usa DEFAULT)
+      const rpcParams: any = {
+        p_user_id: userId,
+        p_plan: plan
+      };
+      
+      // Só adicionar expires_at se não for null
+      if (expiresAt !== null && expiresAt !== undefined) {
+        rpcParams.p_expires_at = expiresAt;
+      }
+
       const { data: rpcData, error: rpcError } = await (supabase.rpc as any)(
         'change_user_plan_admin',
-        {
-          p_user_id: userId,
-          p_plan: plan,
-          p_expires_at: expiresAt || null
-        }
+        rpcParams
       );
 
       console.log('=== RESPOSTA DA ALTERAÇÃO DE PLANO (RPC) ===');
