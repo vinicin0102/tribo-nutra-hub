@@ -23,6 +23,14 @@ export async function uploadAudio(
 
     if (uploadError) {
       console.error('Erro no upload de áudio:', uploadError);
+      
+      // Erro específico: bucket não existe
+      if (uploadError.message?.includes('Bucket not found') || 
+          uploadError.message?.includes('not found') ||
+          uploadError.message?.includes('does not exist')) {
+        throw new Error('O bucket "images" não existe no Supabase Storage. Acesse: Supabase Dashboard → Storage → New bucket → Nome: "images" → Marque "Public bucket" → Create');
+      }
+      
       throw uploadError;
     }
 
