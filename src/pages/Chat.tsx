@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { useChatMessages, useSendMessage } from '@/hooks/useChat';
 import { useDeleteChatMessage, useIsSupport } from '@/hooks/useSupport';
 import { useAuth } from '@/contexts/AuthContext';
@@ -233,12 +234,15 @@ export default function Chat() {
       >
         <div className="max-w-2xl mx-auto h-full flex flex-col px-0 sm:px-4" style={{ touchAction: 'manipulation', overflow: 'hidden' }}>
           <Card className="flex-1 flex flex-col border border-[#2a2a2a] bg-[#1a1a1a] min-h-0 rounded-lg sm:rounded-xl my-1 sm:my-0" style={{ touchAction: 'manipulation', overflow: 'hidden' }}>
-          <CardHeader className="border-b border-[#2a2a2a] py-2.5 px-4 sm:px-4 flex-shrink-0">
+          <CardHeader className="border-b-2 border-t-2 border-[#2a2a2a] py-2.5 px-4 sm:px-4 flex-shrink-0 relative">
             <CardTitle className="flex items-center gap-2 text-white text-sm sm:text-base">
               <div className="bg-primary rounded-lg p-1.5 sm:p-2">
                 <span className="text-sm sm:text-base">💬</span>
               </div>
               <span className="truncate">Chat da Tribo</span>
+              <Badge className="ml-2 bg-primary text-primary-foreground text-[10px] sm:text-xs px-2 py-0.5 rounded-full">
+                Chat Comunidade
+              </Badge>
             </CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col flex-1 p-0 min-h-0" style={{ touchAction: 'manipulation', overflow: 'hidden' }}>
