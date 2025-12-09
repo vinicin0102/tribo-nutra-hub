@@ -30,45 +30,62 @@ export function useRewards() {
   return useQuery({
     queryKey: ['rewards'],
     queryFn: async () => {
-      console.log('🔍 Buscando prêmios...');
+      console.log('🔍 [useRewards] Iniciando busca de prêmios...');
       
-      // Tentar buscar SEM filtro de is_active primeiro
-      let { data, error } = await (supabase.from('rewards') as any)
-        .select('*')
-        .order('points_cost', { ascending: true });
-
-      // Se falhar, tentar com filtro
-      if (error || !data || data.length === 0) {
-        console.log('⚠️ Tentando com filtro is_active...');
-        const result = await (supabase.from('rewards') as any)
+      try {
+        // Buscar SEM filtro nenhum - pegar tudo
+        const { data, error } = await (supabase.from('rewards') as any)
           .select('*')
-          .eq('is_active', true)
           .order('points_cost', { ascending: true });
-        data = result.data;
-        error = result.error;
-      }
 
-      if (error) {
-        console.error('❌ Erro ao buscar prêmios:', error);
-        // Retornar array vazio em vez de lançar erro
+        console.log('📊 [useRewards] Resposta do Supabase:', { data, error });
+
+        if (error) {
+          console.error('❌ [useRewards] Erro:', error);
+          // Tentar buscar sem order
+          const { data: data2, error: error2 } = await (supabase.from('rewards') as any)
+            .select('*');
+          
+          if (error2) {
+            console.error('❌ [useRewards] Erro na segunda tentativa:', error2);
+            return [] as Reward[];
+          }
+          
+          console.log('✅ [useRewards] Segunda tentativa funcionou:', data2);
+          const rewards = (data2 || []).map((reward: any) => ({
+            ...reward,
+            points_required: reward.points_cost || reward.points_required || 0,
+            is_active: reward.is_active !== false,
+          })) as Reward[];
+          return rewards;
+        }
+        
+        console.log('✅ [useRewards] Prêmios encontrados:', data?.length || 0);
+        console.log('📋 [useRewards] Dados completos:', JSON.stringify(data, null, 2));
+        
+        if (!data || data.length === 0) {
+          console.warn('⚠️ [useRewards] Nenhum prêmio encontrado!');
+          return [] as Reward[];
+        }
+        
+        // Mapear points_cost para points_required para compatibilidade
+        const rewards = data.map((reward: any) => ({
+          ...reward,
+          points_required: reward.points_cost || reward.points_required || 0,
+          is_active: reward.is_active !== false,
+        })) as Reward[];
+        
+        console.log('📦 [useRewards] Prêmios mapeados:', rewards.length, rewards);
+        return rewards;
+      } catch (err) {
+        console.error('💥 [useRewards] Erro inesperado:', err);
         return [] as Reward[];
       }
-      
-      console.log('✅ Prêmios encontrados:', data?.length || 0, data);
-      
-      // Mapear points_cost para points_required para compatibilidade
-      const rewards = (data || []).map((reward: any) => ({
-        ...reward,
-        points_required: reward.points_cost || reward.points_required || 0,
-        is_active: reward.is_active !== false, // Garantir que seja true se não for false
-      })) as Reward[];
-      
-      console.log('📦 Prêmios mapeados:', rewards);
-      return rewards;
     },
-    retry: 2,
-    staleTime: 0, // Sempre buscar do servidor
+    retry: 3,
+    staleTime: 0,
     refetchOnWindowFocus: true,
+    refetchOnMount: true,
   });
 }
 
