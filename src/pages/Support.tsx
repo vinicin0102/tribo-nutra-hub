@@ -797,7 +797,7 @@ export default function Support() {
             </CardHeader>
             <CardContent className="flex flex-col flex-1 p-0 min-h-0" style={{ touchAction: 'manipulation', overflow: 'hidden' }}>
               {/* Mensagens */}
-              <div className="flex-1 overflow-y-auto p-4 sm:p-4 space-y-2 sm:space-y-3 min-h-0" style={{ touchAction: 'manipulation', WebkitOverflowScrolling: 'touch' }}>
+              <div className="flex-1 overflow-y-auto px-3 py-3 sm:px-4 sm:py-4 space-y-2 sm:space-y-3 min-h-0" style={{ touchAction: 'manipulation', WebkitOverflowScrolling: 'touch' }}>
               {loadingMessages ? (
                 <div className="text-center text-gray-400 py-8">Carregando mensagens...</div>
               ) : messages.length > 0 ? (

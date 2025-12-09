@@ -242,7 +242,7 @@ export default function Chat() {
             </CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col flex-1 p-0 min-h-0" style={{ touchAction: 'manipulation', overflow: 'hidden' }}>
-            <div className="flex-1 overflow-y-auto p-4 sm:p-4 space-y-2 sm:space-y-3 min-h-0" style={{ touchAction: 'manipulation', WebkitOverflowScrolling: 'touch' }}>
+            <div className="flex-1 overflow-y-auto px-3 py-3 sm:px-4 sm:py-4 space-y-2 sm:space-y-3 min-h-0" style={{ touchAction: 'manipulation', WebkitOverflowScrolling: 'touch' }}>
               {isLoading ? (
                 <div className="space-y-3">
                   {[1, 2, 3, 4, 5].map((i) => (
@@ -276,7 +276,7 @@ export default function Chat() {
                         </Avatar>
                         <div
                           className={cn(
-                            'max-w-[75%] sm:max-w-[70%] rounded-xl sm:rounded-2xl px-3 py-1.5 sm:px-4 sm:py-2 relative group',
+                            'max-w-[80%] sm:max-w-[70%] rounded-xl sm:rounded-2xl px-3 py-2 sm:px-4 sm:py-2 relative group',
                             isOwn 
                               ? 'gradient-primary text-primary-foreground rounded-tr-sm' 
                               : 'bg-[#2a2a2a] text-white rounded-tl-sm'
