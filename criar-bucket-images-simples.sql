@@ -1,37 +1,36 @@
 -- ============================================
--- CRIAR BUCKET 'images' - VERSÃO SIMPLES
+-- CRIAR BUCKET 'images' NO SUPABASE STORAGE
 -- ============================================
--- Execute este script no Supabase SQL Editor
+-- Copie TODO este conteúdo e cole no Supabase SQL Editor
 -- ============================================
 
--- 1. Criar bucket 'images' (se não existir)
+-- Criar o bucket 'images'
 INSERT INTO storage.buckets (id, name, public)
 VALUES ('images', 'images', true)
-ON CONFLICT (id) DO UPDATE SET
-  public = true;
+ON CONFLICT (id) DO UPDATE SET public = true;
 
--- 2. Política para UPLOAD (usuários autenticados)
+-- Permitir que usuários autenticados façam upload
 CREATE POLICY IF NOT EXISTS "Allow authenticated uploads"
 ON storage.objects
 FOR INSERT
 TO authenticated
 WITH CHECK (bucket_id = 'images');
 
--- 3. Política para LEITURA (público)
+-- Permitir que qualquer pessoa veja os arquivos
 CREATE POLICY IF NOT EXISTS "Allow public reads"
 ON storage.objects
 FOR SELECT
 TO public
 USING (bucket_id = 'images');
 
--- 4. Política para DELETAR (usuários autenticados)
+-- Permitir que usuários autenticados deletem arquivos
 CREATE POLICY IF NOT EXISTS "Allow authenticated deletes"
 ON storage.objects
 FOR DELETE
 TO authenticated
 USING (bucket_id = 'images');
 
--- 5. Verificar se funcionou
+-- Verificar se funcionou (deve mostrar "Bucket criado!")
 SELECT 
   '✅ Bucket criado!' as status,
   id,
@@ -39,4 +38,3 @@ SELECT
   public
 FROM storage.buckets
 WHERE id = 'images';
-
