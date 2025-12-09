@@ -47,6 +47,7 @@ export default function Chat() {
   const [isRecording, setIsRecording] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+  const recordingStartTimeRef = useRef<number>(0);
 
   const handleDelete = async (messageId: string) => {
     try {
@@ -118,6 +119,9 @@ export default function Chat() {
       mediaRecorder.onstop = async () => {
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
         
+        // Calcular duração baseada no tempo de gravação
+        const recordingDuration = Math.round((Date.now() - recordingStartTimeRef.current) / 1000);
+        
         // Parar todas as tracks do stream
         stream.getTracks().forEach(track => track.stop());
         
@@ -125,7 +129,6 @@ export default function Chat() {
         const reader = new FileReader();
         reader.onloadend = async () => {
           const base64Audio = reader.result as string;
-          const audioDuration = Math.round(audioBlob.size / 16000);
           
           try {
             if (!user) {
@@ -142,11 +145,12 @@ export default function Chat() {
                 user_id: user.id,
                 content: '🎤 Mensagem de áudio',
                 audio_url: base64Audio,
-                audio_duration: audioDuration,
+                audio_duration: recordingDuration > 0 ? recordingDuration : 1,
               });
             
             if (error) {
               console.error('Erro SQL:', error);
+              console.error('Detalhes do erro:', JSON.stringify(error, null, 2));
               throw error;
             }
             
@@ -160,6 +164,7 @@ export default function Chat() {
         reader.readAsDataURL(audioBlob);
       };
 
+      recordingStartTimeRef.current = Date.now();
       mediaRecorder.start();
       setIsRecording(true);
       toast.info('Gravando áudio... Clique novamente para parar');
