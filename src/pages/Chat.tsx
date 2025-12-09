@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { useChatMessages, useSendMessage } from '@/hooks/useChat';
 import { useDeleteChatMessage, useIsSupport } from '@/hooks/useSupport';
 import { useAuth } from '@/contexts/AuthContext';
@@ -232,7 +233,12 @@ export default function Chat() {
         }}
       >
         <div className="max-w-2xl mx-auto h-full flex flex-col px-0 sm:px-4" style={{ touchAction: 'manipulation', overflow: 'hidden' }}>
-          <Card className="flex-1 flex flex-col border border-[#2a2a2a] bg-[#1a1a1a] min-h-0 rounded-lg sm:rounded-xl my-1 sm:my-0" style={{ touchAction: 'manipulation', overflow: 'hidden' }}>
+          <Card className="flex-1 flex flex-col border border-[#2a2a2a] border-t-2 bg-[#1a1a1a] min-h-0 rounded-lg sm:rounded-xl my-1 sm:my-0" style={{ touchAction: 'manipulation', overflow: 'hidden' }}>
+          <div className="border-b border-[#2a2a2a] px-3 py-2 flex items-center justify-center flex-shrink-0">
+            <Badge className="bg-primary text-primary-foreground text-[10px] sm:text-xs px-2 py-0.5 rounded-full">
+              Chat Comunidade
+            </Badge>
+          </div>
           <CardContent className="flex flex-col flex-1 p-0 min-h-0" style={{ touchAction: 'manipulation', overflow: 'hidden' }}>
             <div className="flex-1 overflow-y-auto px-3 pt-4 pb-3 sm:px-4 sm:pt-4 sm:pb-4 space-y-2 sm:space-y-3 min-h-0" style={{ touchAction: 'manipulation', WebkitOverflowScrolling: 'touch' }}>
               {isLoading ? (
