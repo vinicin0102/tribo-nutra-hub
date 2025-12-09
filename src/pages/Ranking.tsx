@@ -168,7 +168,7 @@ export default function Ranking() {
                   <div
                     key={user.id}
                     className={cn(
-                      'flex items-center gap-3 p-4 transition-colors hover:bg-[#2a2a2a]',
+                      'flex items-center gap-3 p-4 transition-colors hover:bg-[#2a2a2a] overflow-hidden',
                       user.user_id === currentProfile?.user_id && 'bg-primary/10',
                       getRankBg(user.rank)
                     )}
@@ -185,22 +185,22 @@ export default function Ranking() {
                         {user.username?.charAt(0).toUpperCase() || 'U'}
                       </AvatarFallback>
                     </Avatar>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
                         {user.subscription_plan === 'diamond' && (
-                          <Badge className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white border-0 text-[10px] px-1.5 py-0">
+                          <Badge className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white border-0 text-[10px] px-1.5 py-0 flex-shrink-0">
                             💎 Diamond
                           </Badge>
                         )}
-                        <p className="font-semibold text-sm text-white">
+                        <p className="font-semibold text-sm text-white truncate min-w-0">
                           {user.username}
                         </p>
                         {user.user_id === currentProfile?.user_id && (
-                          <Badge className="bg-primary text-white text-xs">você</Badge>
+                          <Badge className="bg-primary text-white text-xs flex-shrink-0">você</Badge>
                         )}
                         {user.tier && (
                           <Badge className={cn(
-                            'text-xs flex items-center gap-1.5',
+                            'text-xs flex items-center gap-1.5 flex-shrink-0',
                             getTierInfo(user.tier).bg,
                             getTierInfo(user.tier).border,
                             getTierInfo(user.tier).color
@@ -210,7 +210,7 @@ export default function Ranking() {
                           </Badge>
                         )}
                       </div>
-                      <p className="text-xs text-gray-400 mt-1">
+                      <p className="text-xs text-gray-400 mt-1 truncate">
                         {user.full_name || 'Membro da Tribo'}
                       </p>
                     </div>
