@@ -32,14 +32,26 @@ export function useRewards() {
     queryFn: async () => {
       console.log('🔍 Buscando prêmios...');
       
-      const { data, error } = await (supabase.from('rewards') as any)
+      // Tentar buscar SEM filtro de is_active primeiro
+      let { data, error } = await (supabase.from('rewards') as any)
         .select('*')
-        .eq('is_active', true)
         .order('points_cost', { ascending: true });
+
+      // Se falhar, tentar com filtro
+      if (error || !data || data.length === 0) {
+        console.log('⚠️ Tentando com filtro is_active...');
+        const result = await (supabase.from('rewards') as any)
+          .select('*')
+          .eq('is_active', true)
+          .order('points_cost', { ascending: true });
+        data = result.data;
+        error = result.error;
+      }
 
       if (error) {
         console.error('❌ Erro ao buscar prêmios:', error);
-        throw error;
+        // Retornar array vazio em vez de lançar erro
+        return [] as Reward[];
       }
       
       console.log('✅ Prêmios encontrados:', data?.length || 0, data);
@@ -48,13 +60,15 @@ export function useRewards() {
       const rewards = (data || []).map((reward: any) => ({
         ...reward,
         points_required: reward.points_cost || reward.points_required || 0,
+        is_active: reward.is_active !== false, // Garantir que seja true se não for false
       })) as Reward[];
       
       console.log('📦 Prêmios mapeados:', rewards);
       return rewards;
     },
     retry: 2,
-    staleTime: 30000, // 30 segundos
+    staleTime: 0, // Sempre buscar do servidor
+    refetchOnWindowFocus: true,
   });
 }
 
