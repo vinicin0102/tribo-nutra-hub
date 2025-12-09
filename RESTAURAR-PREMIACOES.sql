@@ -7,7 +7,7 @@
 -- Garantir que a tabela rewards existe
 CREATE TABLE IF NOT EXISTS public.rewards (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name TEXT NOT NULL UNIQUE,
+  name TEXT NOT NULL,
   description TEXT,
   image_url TEXT,
   points_cost INTEGER NOT NULL,
@@ -16,6 +16,18 @@ CREATE TABLE IF NOT EXISTS public.rewards (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
+
+-- Criar constraint UNIQUE na coluna name se não existir
+DO $$ 
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint 
+    WHERE conname = 'rewards_name_key' 
+      AND conrelid = 'public.rewards'::regclass
+  ) THEN
+    ALTER TABLE public.rewards ADD CONSTRAINT rewards_name_key UNIQUE (name);
+  END IF;
+END $$;
 
 -- Adicionar coluna points_required se não existir (para compatibilidade)
 DO $$ 
@@ -87,7 +99,8 @@ ON CONFLICT (name) DO UPDATE SET
   points_cost = EXCLUDED.points_cost,
   stock = EXCLUDED.stock,
   is_active = EXCLUDED.is_active,
-  updated_at = NOW();
+  updated_at = NOW()
+ON CONFLICT DO NOTHING;
 
 -- Atualizar points_required com o mesmo valor de points_cost
 UPDATE public.rewards SET points_required = points_cost WHERE points_required IS NULL OR points_required != points_cost;
