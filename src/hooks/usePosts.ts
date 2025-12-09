@@ -3,6 +3,15 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEffect } from 'react';
 
+export interface UserBadge {
+  badge_id: string;
+  badges: {
+    name: string;
+    icon: string;
+    points_required: number | null;
+  };
+}
+
 export interface Post {
   id: string;
   user_id: string;
@@ -22,6 +31,7 @@ export interface Post {
     subscription_plan?: string;
     tier?: string;
   } | null;
+  user_badges?: UserBadge[];
 }
 
 export interface Comment {
@@ -75,13 +85,28 @@ export function usePosts() {
         .select('*')
         .in('user_id', userIds);
       
-      // Create a map for quick lookup
+      // Fetch user badges with badge details
+      const { data: userBadges } = await supabase
+        .from('user_badges')
+        .select('user_id, badge_id, badges(name, icon, points_required)')
+        .in('user_id', userIds);
+      
+      // Create maps for quick lookup
       const profileMap = new Map((profiles as any[] || []).map(p => [p.user_id, p]));
       
-      // Combine posts with profiles
+      // Group badges by user_id
+      const badgesMap = new Map<string, UserBadge[]>();
+      (userBadges as any[] || []).forEach(ub => {
+        const existing = badgesMap.get(ub.user_id) || [];
+        existing.push({ badge_id: ub.badge_id, badges: ub.badges });
+        badgesMap.set(ub.user_id, existing);
+      });
+      
+      // Combine posts with profiles and badges
       return (posts as any[]).map(post => ({
         ...post,
-        profiles: profileMap.get(post.user_id) || null
+        profiles: profileMap.get(post.user_id) || null,
+        user_badges: badgesMap.get(post.user_id) || []
       })) as Post[];
     },
   });
