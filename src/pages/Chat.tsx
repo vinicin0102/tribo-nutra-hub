@@ -157,22 +157,33 @@ export default function Chat() {
                 });
               
               if (error) {
-                // Se der erro de coluna não encontrada, tentar sem os campos de áudio
-                if (error.message?.includes('audio_duration') || error.message?.includes('audio_url')) {
-                  console.warn('Colunas de áudio não encontradas, enviando sem áudio:', error.message);
-                  toast.warning('Enviando mensagem de texto (áudio não disponível ainda)');
+                // Verificar se é erro de schema (coluna não encontrada)
+                const isSchemaError = error.message?.includes('audio_duration') || 
+                                     error.message?.includes('audio_url') ||
+                                     error.message?.includes('schema cache') ||
+                                     error.code === '42703' ||
+                                     error.hint?.includes('audio');
+                
+                if (isSchemaError) {
+                  console.warn('Colunas de áudio não encontradas. Execute o SQL no Supabase:', error.message);
                   
-                  // Enviar apenas como mensagem de texto
+                  // Enviar apenas como mensagem de texto informando que precisa executar SQL
                   const { error: textError } = await supabase
                     .from('chat_messages')
                     .insert({
                       user_id: user.id,
-                      content: '🎤 Mensagem de áudio (áudio não disponível)',
+                      content: '🎤 Áudio gravado (execute SQL para habilitar)',
                     });
                   
                   if (textError) {
                     throw textError;
                   }
+                  
+                  toast.error('Execute o SQL no Supabase para habilitar áudio', {
+                    duration: 10000,
+                    description: 'Arquivo: EXECUTAR-ESTE-SQL-AGORA-AUDIO.sql',
+                  });
+                  return; // Não mostrar erro adicional
                 } else {
                   throw error;
                 }
