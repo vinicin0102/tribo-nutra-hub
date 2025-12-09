@@ -33,45 +33,17 @@ export function useRewards() {
       console.log('🔍 [useRewards] Buscando prêmios...');
       
       try {
-        // Buscar prêmios ativos
-        const { data, error } = await (supabase.from('rewards') as any)
+        const { data, error } = await supabase
+          .from('rewards')
           .select('*')
           .eq('is_active', true)
-          .order('points_cost', { ascending: true });
+          .order('points_required', { ascending: true });
 
         console.log('📊 [useRewards] Resposta:', { data, error });
 
         if (error) {
           console.error('❌ [useRewards] Erro:', error);
-          // Tentar sem filtro de is_active
-          const { data: data2, error: error2 } = await (supabase.from('rewards') as any)
-            .select('*')
-            .order('points_cost', { ascending: true });
-          
-          if (error2) {
-            console.error('❌ [useRewards] Erro na segunda tentativa:', error2);
-            return [] as Reward[];
-          }
-          
-          console.log('✅ [useRewards] Segunda tentativa funcionou:', data2?.length);
-          const rewards = (data2 || []).map((reward: any) => ({
-            id: reward.id,
-            name: reward.name,
-            description: reward.description,
-            image_url: reward.image_url || null,
-            points_cost: reward.points_cost || 0,
-            points_required: reward.points_cost || reward.points_required || 0,
-            stock: reward.stock,
-            is_active: reward.is_active !== false,
-            created_at: reward.created_at,
-          })) as Reward[];
-          
-          console.log('📦 [useRewards] Prêmios encontrados:', rewards.length);
-          rewards.forEach((r) => {
-            console.log(`  - ${r.name}: ${r.points_cost} pts | Imagem: ${r.image_url ? 'SIM' : 'NÃO'}`);
-          });
-          
-          return rewards;
+          return [] as Reward[];
         }
         
         if (!data || data.length === 0) {
@@ -80,22 +52,18 @@ export function useRewards() {
         }
         
         // Mapear para o formato esperado
-        const rewards = data.map((reward: any) => ({
+        const rewards = data.map((reward) => ({
           id: reward.id,
           name: reward.name,
           description: reward.description,
           image_url: reward.image_url || null,
-          points_cost: reward.points_cost || 0,
-          points_required: reward.points_cost || reward.points_required || 0,
-          stock: reward.stock,
+          points_required: reward.points_required,
+          points_cost: reward.points_required, // Alias
           is_active: reward.is_active !== false,
           created_at: reward.created_at,
         })) as Reward[];
         
         console.log('✅ [useRewards] Prêmios encontrados:', rewards.length);
-        rewards.forEach((r) => {
-          console.log(`  - ${r.name}: ${r.points_cost} pts | Imagem: ${r.image_url ? 'SIM' : 'NÃO'}`);
-        });
         
         return rewards;
       } catch (err: any) {
