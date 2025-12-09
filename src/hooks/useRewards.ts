@@ -102,7 +102,6 @@ export function useRewards() {
     staleTime: 0,
     refetchOnWindowFocus: true,
     refetchOnMount: true,
-    refetchInterval: 5000, // Refetch a cada 5 segundos para debug
   });
 }
 
