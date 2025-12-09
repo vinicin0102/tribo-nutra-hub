@@ -222,14 +222,15 @@ export default function Chat() {
   return (
     <MainLayout>
       <div 
-        className="fixed inset-0 top-16 bg-[#0a0a0a]" 
+        className="fixed inset-0 top-0 bg-[#0a0a0a]" 
         style={{ 
           touchAction: 'manipulation', 
           backgroundColor: '#0a0a0a',
           bottom: 'calc(64px + env(safe-area-inset-bottom, 0px))',
           overflow: 'hidden',
           paddingLeft: 'max(12px, env(safe-area-inset-left, 0px))',
-          paddingRight: 'max(12px, env(safe-area-inset-right, 0px))'
+          paddingRight: 'max(12px, env(safe-area-inset-right, 0px))',
+          paddingTop: 'max(0px, env(safe-area-inset-top, 0px))'
         }}
       >
         <div className="max-w-2xl mx-auto h-full flex flex-col px-0 sm:px-4" style={{ touchAction: 'manipulation', overflow: 'hidden' }}>

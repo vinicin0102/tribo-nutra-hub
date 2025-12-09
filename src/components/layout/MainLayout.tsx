@@ -26,10 +26,13 @@ export function MainLayout({ children }: MainLayoutProps) {
   // Páginas onde o botão de IA NÃO deve aparecer
   const hideAIButton = location.pathname === '/chat' || location.pathname === '/support';
   
+  // Páginas onde o Navbar NÃO deve aparecer
+  const hideNavbar = location.pathname === '/chat' || location.pathname === '/support';
+  
   return (
     <div className="min-h-screen bg-[#0a0a0a]">
-      <Navbar />
-      <main className="container pb-20 pt-16 bg-[#0a0a0a]">
+      {!hideNavbar && <Navbar />}
+      <main className={`container pb-20 bg-[#0a0a0a] ${hideNavbar ? 'pt-0' : 'pt-16'}`}>
         {children}
       </main>
       <BottomNav />
