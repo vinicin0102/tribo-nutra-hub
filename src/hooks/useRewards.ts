@@ -30,62 +30,79 @@ export function useRewards() {
   return useQuery({
     queryKey: ['rewards'],
     queryFn: async () => {
-      console.log('🔍 [useRewards] Iniciando busca de prêmios...');
+      console.log('🔍 [useRewards] Buscando prêmios...');
       
       try {
-        // Buscar SEM filtro nenhum - pegar tudo
-        const { data, error } = await (supabase.from('rewards') as any)
-          .select('*')
-          .order('points_cost', { ascending: true });
+        // Tentar buscar de várias formas
+        let data: any[] | null = null;
+        let error: any = null;
 
-        console.log('📊 [useRewards] Resposta do Supabase:', { data, error });
-
-        if (error) {
-          console.error('❌ [useRewards] Erro:', error);
-          // Tentar buscar sem order
-          const { data: data2, error: error2 } = await (supabase.from('rewards') as any)
-            .select('*');
+        // Tentativa 1: Buscar tudo sem filtro
+        const result1 = await (supabase.from('rewards') as any).select('*');
+        console.log('📊 [useRewards] Tentativa 1:', result1);
+        
+        if (result1.error) {
+          console.error('❌ [useRewards] Erro na tentativa 1:', result1.error);
+          // Tentativa 2: Sem order
+          const result2 = await (supabase.from('rewards') as any).select('*');
+          console.log('📊 [useRewards] Tentativa 2:', result2);
           
-          if (error2) {
-            console.error('❌ [useRewards] Erro na segunda tentativa:', error2);
-            return [] as Reward[];
+          if (result2.error) {
+            console.error('❌ [useRewards] Erro na tentativa 2:', result2.error);
+            // Tentativa 3: Apenas campos básicos
+            const result3 = await (supabase.from('rewards') as any)
+              .select('id, name, description, image_url, points_cost, stock, is_active, created_at');
+            console.log('📊 [useRewards] Tentativa 3:', result3);
+            
+            if (result3.error) {
+              console.error('❌ [useRewards] Todas as tentativas falharam:', result3.error);
+              return [] as Reward[];
+            }
+            
+            data = result3.data;
+          } else {
+            data = result2.data;
           }
-          
-          console.log('✅ [useRewards] Segunda tentativa funcionou:', data2);
-          const rewards = (data2 || []).map((reward: any) => ({
-            ...reward,
-            points_required: reward.points_cost || reward.points_required || 0,
-            is_active: reward.is_active !== false,
-          })) as Reward[];
-          return rewards;
+        } else {
+          data = result1.data;
         }
         
-        console.log('✅ [useRewards] Prêmios encontrados:', data?.length || 0);
-        console.log('📋 [useRewards] Dados completos:', JSON.stringify(data, null, 2));
+        console.log('✅ [useRewards] Dados recebidos:', data?.length || 0, data);
         
         if (!data || data.length === 0) {
-          console.warn('⚠️ [useRewards] Nenhum prêmio encontrado!');
+          console.warn('⚠️ [useRewards] Nenhum prêmio encontrado no banco!');
           return [] as Reward[];
         }
         
-        // Mapear points_cost para points_required para compatibilidade
+        // Mapear para o formato esperado
         const rewards = data.map((reward: any) => ({
-          ...reward,
+          id: reward.id,
+          name: reward.name,
+          description: reward.description,
+          image_url: reward.image_url,
+          points_cost: reward.points_cost || 0,
           points_required: reward.points_cost || reward.points_required || 0,
+          stock: reward.stock,
           is_active: reward.is_active !== false,
+          created_at: reward.created_at,
         })) as Reward[];
         
-        console.log('📦 [useRewards] Prêmios mapeados:', rewards.length, rewards);
+        console.log('📦 [useRewards] Prêmios processados:', rewards.length);
+        rewards.forEach((r, i) => {
+          console.log(`  ${i + 1}. ${r.name} - ${r.points_cost} pontos - Imagem: ${r.image_url ? 'SIM' : 'NÃO'}`);
+        });
+        
         return rewards;
-      } catch (err) {
+      } catch (err: any) {
         console.error('💥 [useRewards] Erro inesperado:', err);
         return [] as Reward[];
       }
     },
-    retry: 3,
+    retry: 2,
     staleTime: 0,
     refetchOnWindowFocus: true,
     refetchOnMount: true,
+    refetchInterval: 5000, // Refetch a cada 5 segundos para debug
   });
 }
 
