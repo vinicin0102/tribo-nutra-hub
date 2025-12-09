@@ -29,7 +29,6 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useHasDiamondAccess } from '@/hooks/useSubscription';
 import { useNavigate } from 'react-router-dom';
-import { uploadAudio } from '@/lib/audioUpload';
 
 export default function Chat() {
   const { user } = useAuth();
@@ -120,43 +119,46 @@ export default function Chat() {
       mediaRecorder.onstop = async () => {
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
         
-        // Calcular duração baseada no tempo de gravação
-        const recordingDuration = Math.round((Date.now() - recordingStartTimeRef.current) / 1000);
-        
         // Parar todas as tracks do stream
         stream.getTracks().forEach(track => track.stop());
         
-        try {
-          if (!user) {
-            toast.error('Você precisa estar logado');
-            return;
-          }
+        // Converter áudio para base64 (como estava funcionando antes)
+        const reader = new FileReader();
+        reader.onloadend = async () => {
+          const base64Audio = reader.result as string;
+          const audioDuration = Math.round((Date.now() - recordingStartTimeRef.current) / 1000);
+          
+          try {
+            if (!user) {
+              toast.error('Você precisa estar logado');
+              return;
+            }
 
-          toast.info('Enviando áudio...');
-          
-          // Fazer upload do áudio para o Storage
-          const audioUrl = await uploadAudio(audioBlob, user.id);
-          
-          // Enviar mensagem simples indicando que há um áudio
-          // O áudio está no Storage, mas por enquanto só enviamos a mensagem de texto
-          // Quando as colunas forem adicionadas, podemos atualizar para incluir a URL
-          const { error } = await supabase
-            .from('chat_messages')
-            .insert({
-              user_id: user.id,
-              content: `🎤 Áudio (${recordingDuration}s) - ${audioUrl}`,
-            });
-          
-          if (error) {
-            console.error('Erro ao enviar mensagem:', error);
-            throw error;
+            toast.info('Enviando áudio...');
+            
+            // Tentar inserir com campos de áudio (como estava antes)
+            const { error } = await supabase
+              .from('chat_messages')
+              .insert({
+                user_id: user.id,
+                content: '🎤 Mensagem de áudio',
+                audio_url: base64Audio,
+                audio_duration: audioDuration > 0 ? audioDuration : 1,
+              });
+            
+            if (error) {
+              console.error('Erro ao enviar áudio:', error);
+              throw error;
+            }
+            
+            toast.success('Áudio enviado!');
+          } catch (error: any) {
+            console.error('Erro ao enviar áudio:', error);
+            toast.error(`Erro: ${error?.message || 'Tente novamente'}`);
           }
-          
-          toast.success('Áudio enviado!');
-        } catch (error: any) {
-          console.error('Erro ao enviar áudio:', error);
-          toast.error(`Erro: ${error?.message || 'Tente novamente'}`);
-        }
+        };
+        
+        reader.readAsDataURL(audioBlob);
       };
 
       recordingStartTimeRef.current = Date.now();
