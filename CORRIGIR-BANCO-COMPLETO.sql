@@ -199,11 +199,7 @@ WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can update own subscription" 
 ON public.profiles FOR UPDATE 
 USING (auth.uid() = user_id)
-WITH CHECK (
-  auth.uid() = user_id AND
-  (OLD.subscription_plan IS DISTINCT FROM NEW.subscription_plan OR
-   OLD.subscription_expires_at IS DISTINCT FROM NEW.subscription_expires_at)
-);
+WITH CHECK (auth.uid() = user_id);
 
 -- ============================================
 -- PARTE 6: POLÍTICAS RLS PARA REWARDS
