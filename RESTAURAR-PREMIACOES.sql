@@ -11,12 +11,26 @@ CREATE TABLE IF NOT EXISTS public.rewards (
   description TEXT,
   image_url TEXT,
   points_cost INTEGER NOT NULL,
-  points_required INTEGER, -- Alias para compatibilidade
   stock INTEGER DEFAULT -1,
   is_active BOOLEAN DEFAULT true,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
+
+-- Adicionar coluna points_required se não existir (para compatibilidade)
+DO $$ 
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_schema = 'public' 
+      AND table_name = 'rewards' 
+      AND column_name = 'points_required'
+  ) THEN
+    ALTER TABLE public.rewards ADD COLUMN points_required INTEGER;
+    -- Copiar valores de points_cost para points_required
+    UPDATE public.rewards SET points_required = points_cost WHERE points_required IS NULL;
+  END IF;
+END $$;
 
 -- Garantir que a tabela redemptions existe
 CREATE TABLE IF NOT EXISTS public.redemptions (
@@ -30,12 +44,11 @@ CREATE TABLE IF NOT EXISTS public.redemptions (
 );
 
 -- Inserir ou atualizar prêmios
-INSERT INTO public.rewards (name, description, points_cost, points_required, stock, is_active, image_url, created_at)
+INSERT INTO public.rewards (name, description, points_cost, stock, is_active, image_url, created_at)
 VALUES
   (
     'Pix Misterioso',
     'Receba um valor surpresa via Pix! Pode ser de R$ 10 a R$ 100!',
-    2500,
     2500,
     999,
     true,
@@ -46,7 +59,6 @@ VALUES
     'Um Dia de Anúncios',
     'Ganhe um dia completo de anúncios gerenciados por minha conta profissional!',
     5000,
-    5000,
     50,
     true,
     NULL,
@@ -55,7 +67,6 @@ VALUES
   (
     'Viagem Tudo Pago',
     'Uma viagem completa com todas as despesas pagas! Hospedagem, alimentação e transporte inclusos.',
-    75000,
     75000,
     5,
     true,
@@ -66,7 +77,6 @@ VALUES
     'iPhone Novo',
     'Ganhe um iPhone novinho em folha! O modelo mais recente disponível.',
     50000,
-    50000,
     3,
     true,
     NULL,
@@ -75,10 +85,12 @@ VALUES
 ON CONFLICT (name) DO UPDATE SET
   description = EXCLUDED.description,
   points_cost = EXCLUDED.points_cost,
-  points_required = EXCLUDED.points_required,
   stock = EXCLUDED.stock,
   is_active = EXCLUDED.is_active,
   updated_at = NOW();
+
+-- Atualizar points_required com o mesmo valor de points_cost
+UPDATE public.rewards SET points_required = points_cost WHERE points_required IS NULL OR points_required != points_cost;
 
 -- Habilitar RLS se não estiver habilitado
 ALTER TABLE public.rewards ENABLE ROW LEVEL SECURITY;
