@@ -77,7 +77,7 @@ export function BadgesList() {
             Conquistas
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4" style={{ overflow: 'visible' }}>
           {/* Info de como ganhar pontos */}
           <div className="bg-muted/50 rounded-lg p-3 text-xs space-y-1">
             <div className="flex items-center gap-1 font-medium text-foreground">
