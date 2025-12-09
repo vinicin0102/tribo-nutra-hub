@@ -72,22 +72,11 @@ export default function Rewards() {
   const navigate = useNavigate();
 
   const handleRedeem = async (rewardId: string) => {
-    // Verificar se tem acesso Diamond (suporte sempre tem acesso)
-    if (!isSupport && !hasDiamondAccess) {
-      toast.error('Recurso exclusivo para assinantes Diamond', {
-        description: 'Faça upgrade para resgatar prêmios!',
-        action: {
-          label: 'Assinar Diamond',
-          onClick: () => navigate('/upgrade')
-        },
-        duration: 5000,
-      });
-      return;
-    }
-
+    // Todos podem resgatar prêmios se tiverem pontos suficientes
     try {
       await redeemReward.mutateAsync(rewardId);
       setSelectedReward(null);
+      toast.success('Solicitação de resgate enviada! Aguarde a avaliação do suporte.');
     } catch (error) {
       // Erro já é tratado no hook
     }
