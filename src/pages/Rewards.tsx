@@ -156,29 +156,18 @@ export default function Rewards() {
                       )}
                     >
                       <div className="aspect-video bg-[#2a2a2a] overflow-hidden relative">
-                        {reward.image_url ? (
-                          <>
-                            <img
-                              src={reward.image_url}
-                              alt={reward.name}
-                              className="w-full h-full object-cover"
-                              onLoad={() => {
-                                console.log('✅ Imagem carregada:', reward.name, reward.image_url);
-                              }}
-                              onError={(e) => {
-                                console.error('❌ Erro ao carregar imagem:', reward.name, reward.image_url);
-                                // Se a imagem falhar, mostrar placeholder
-                                (e.target as HTMLImageElement).src = 'https://via.placeholder.com/400x300/FF6B35/FFFFFF?text=' + encodeURIComponent(reward.name);
-                              }}
-                            />
-                            {console.log('🖼️ Renderizando imagem para:', reward.name, 'URL:', reward.image_url)}
-                          </>
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/10">
-                            <Gift className="h-16 w-16 text-primary/50" />
-                            {console.warn('⚠️ Sem imagem para:', reward.name)}
-                          </div>
-                        )}
+                        <img
+                          src={reward.image_url || `https://via.placeholder.com/400x300/FF6B35/FFFFFF?text=${encodeURIComponent(reward.name)}`}
+                          alt={reward.name}
+                          className="w-full h-full object-cover"
+                          loading="lazy"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            if (!target.src.includes('placeholder')) {
+                              target.src = `https://via.placeholder.com/400x300/FF6B35/FFFFFF?text=${encodeURIComponent(reward.name)}`;
+                            }
+                          }}
+                        />
                       </div>
                       <CardContent className="p-4">
                         <div className="flex items-start justify-between mb-2">

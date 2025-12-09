@@ -67,7 +67,7 @@ export function useRewards() {
           data = result1.data;
         }
         
-        console.log('✅ [useRewards] Dados recebidos:', data?.length || 0, data);
+        console.log('✅ [useRewards] Dados recebidos:', data?.length || 0);
         
         if (!data || data.length === 0) {
           console.warn('⚠️ [useRewards] Nenhum prêmio encontrado no banco!');
@@ -75,22 +75,23 @@ export function useRewards() {
         }
         
         // Mapear para o formato esperado
-        const rewards = data.map((reward: any) => ({
-          id: reward.id,
-          name: reward.name,
-          description: reward.description,
-          image_url: reward.image_url,
-          points_cost: reward.points_cost || 0,
-          points_required: reward.points_cost || reward.points_required || 0,
-          stock: reward.stock,
-          is_active: reward.is_active !== false,
-          created_at: reward.created_at,
-        })) as Reward[];
+        const rewards = data.map((reward: any) => {
+          const rewardObj = {
+            id: reward.id,
+            name: reward.name,
+            description: reward.description,
+            image_url: reward.image_url || null,
+            points_cost: reward.points_cost || 0,
+            points_required: reward.points_cost || reward.points_required || 0,
+            stock: reward.stock,
+            is_active: reward.is_active !== false,
+            created_at: reward.created_at,
+          };
+          console.log(`🎁 Prêmio: ${rewardObj.name} | Imagem: ${rewardObj.image_url || 'SEM IMAGEM'}`);
+          return rewardObj;
+        }) as Reward[];
         
-        console.log('📦 [useRewards] Prêmios processados:', rewards.length);
-        rewards.forEach((r, i) => {
-          console.log(`  ${i + 1}. ${r.name} - ${r.points_cost} pontos - Imagem: ${r.image_url ? 'SIM' : 'NÃO'}`);
-        });
+        console.log('📦 [useRewards] Total de prêmios:', rewards.length);
         
         return rewards;
       } catch (err: any) {
