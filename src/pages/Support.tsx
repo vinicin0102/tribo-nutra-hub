@@ -786,15 +786,6 @@ export default function Support() {
       >
         <div className="max-w-2xl mx-auto h-full flex flex-col px-0 sm:px-4" style={{ touchAction: 'manipulation', overflow: 'hidden' }}>
           <Card className="flex-1 flex flex-col border border-[#2a2a2a] bg-[#1a1a1a] min-h-0 rounded-lg sm:rounded-xl my-1 sm:my-0" style={{ touchAction: 'manipulation', overflow: 'hidden' }}>
-            <CardHeader className="border-b border-[#2a2a2a] py-2.5 px-4 sm:px-4 flex-shrink-0">
-              <CardTitle className="flex items-center gap-1.5 sm:gap-2 text-white text-xs sm:text-sm leading-tight">
-                <MessageSquare className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary flex-shrink-0" />
-                <span className="truncate">Chat com Suporte</span>
-              </CardTitle>
-              <CardDescription className="text-gray-400 text-[10px] sm:text-xs mt-0.5 line-clamp-1">
-                Envie sua dúvida e nossa equipe responderá em breve
-              </CardDescription>
-            </CardHeader>
             <CardContent className="flex flex-col flex-1 p-0 min-h-0" style={{ touchAction: 'manipulation', overflow: 'hidden' }}>
               {/* Mensagens */}
               <div className="flex-1 overflow-y-auto px-3 pt-4 pb-3 sm:px-4 sm:pt-4 sm:pb-4 space-y-2 sm:space-y-3 min-h-0" style={{ touchAction: 'manipulation', WebkitOverflowScrolling: 'touch' }}>
