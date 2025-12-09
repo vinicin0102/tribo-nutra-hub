@@ -55,7 +55,15 @@ const getStatusLabel = (status: string) => {
 
 export default function Rewards() {
   const { data: profile } = useProfile();
-  const { data: rewards, isLoading: rewardsLoading } = useRewards();
+  const { data: rewards, isLoading: rewardsLoading, error: rewardsError } = useRewards();
+  
+  // Debug
+  console.log('🎯 [Rewards Page] Estado:', {
+    rewardsLoading,
+    rewardsError,
+    rewardsCount: rewards?.length || 0,
+    rewards: rewards
+  });
   const { data: redemptions, isLoading: redemptionsLoading } = useRedemptions();
   const redeemReward = useRedeemReward();
   const [selectedReward, setSelectedReward] = useState<string | null>(null);
