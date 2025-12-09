@@ -404,6 +404,27 @@ export default function Support() {
               console.error('Erro SQL:', error);
               throw error;
             }
+            
+            // Enviar mensagem automática após 1 segundo
+            setTimeout(async () => {
+              try {
+                const { error: autoMessageError } = await supabase
+                  .from('support_chat')
+                  .insert({
+                    user_id: user.id,
+                    message: 'Olá! Recebemos sua mensagem. Nossa equipe de suporte responderá em até 10 minutos. Obrigado pela paciência! 🙏',
+                    is_from_support: true,
+                    support_user_id: null, // Mensagem automática
+                  });
+
+                if (autoMessageError) {
+                  console.error('Erro ao enviar mensagem automática:', autoMessageError);
+                }
+              } catch (error) {
+                console.error('Erro ao enviar mensagem automática:', error);
+              }
+            }, 1000);
+            
             loadUserMessages();
             toast.success('Áudio enviado!');
           }
