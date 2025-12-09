@@ -133,9 +133,6 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   }
   
   if (!user) {
-    // Limpar qualquer estado residual
-    localStorage.removeItem('sb-' + supabase.supabaseUrl.split('//')[1].split('.')[0] + '-auth-token');
-    sessionStorage.clear();
     return <Navigate to="/auth" replace />;
   }
   
