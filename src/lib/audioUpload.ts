@@ -23,15 +23,26 @@ export async function uploadAudio(
 
     if (uploadError) {
       console.error('Erro no upload de áudio:', uploadError);
+      console.error('Código do erro:', uploadError.statusCode);
+      console.error('Mensagem completa:', uploadError.message);
       
       // Erro específico: bucket não existe
       if (uploadError.message?.includes('Bucket not found') || 
           uploadError.message?.includes('not found') ||
-          uploadError.message?.includes('does not exist')) {
-        throw new Error('O bucket "images" não existe no Supabase Storage. Acesse: Supabase Dashboard → Storage → New bucket → Nome: "images" → Marque "Public bucket" → Create');
+          uploadError.message?.includes('does not exist') ||
+          uploadError.statusCode === '404' ||
+          uploadError.error === 'Bucket not found') {
+        throw new Error('O bucket "images" não existe no Supabase Storage. Execute o SQL: EXECUTAR-ESTE-SQL-BUCKET.sql no Supabase SQL Editor');
       }
       
-      throw uploadError;
+      // Outros erros de permissão
+      if (uploadError.message?.includes('permission') || 
+          uploadError.message?.includes('policy') ||
+          uploadError.statusCode === '403') {
+        throw new Error('Erro de permissão. Verifique se as políticas RLS foram criadas. Execute: VERIFICAR-BUCKET-COMPLETO.sql');
+      }
+      
+      throw new Error(`Erro ao fazer upload: ${uploadError.message || 'Erro desconhecido'}`);
     }
 
     // Obter URL pública
