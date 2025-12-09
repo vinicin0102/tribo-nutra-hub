@@ -8,13 +8,26 @@ export async function uploadAudio(
   userId: string
 ): Promise<string> {
   try {
+    // Verificar se o bucket existe primeiro
+    const { data: buckets, error: listError } = await supabase.storage.listBuckets();
+    
+    if (listError) {
+      console.error('Erro ao listar buckets:', listError);
+    } else {
+      const imagesBucket = buckets?.find(b => b.id === 'images');
+      if (!imagesBucket) {
+        throw new Error('O bucket "images" não existe. Acesse: Supabase Dashboard → Storage → New bucket → Nome: "images" → Marque "Public bucket" → Create');
+      }
+      console.log('Bucket encontrado:', imagesBucket);
+    }
+
     // Gerar nome único para o arquivo
     const fileName = `${userId}-${Date.now()}.webm`;
     const filePath = `audios/${fileName}`;
 
     // Fazer upload
     const { error: uploadError } = await supabase.storage
-      .from('images') // Usando o mesmo bucket 'images' por enquanto
+      .from('images')
       .upload(filePath, audioBlob, {
         cacheControl: '3600',
         upsert: false,
@@ -32,7 +45,7 @@ export async function uploadAudio(
           uploadError.message?.includes('does not exist') ||
           uploadError.statusCode === '404' ||
           uploadError.error === 'Bucket not found') {
-        throw new Error('O bucket "images" não existe no Supabase Storage. Execute o SQL: EXECUTAR-ESTE-SQL-BUCKET.sql no Supabase SQL Editor');
+        throw new Error('O bucket "images" não existe. Acesse: Supabase Dashboard → Storage → New bucket → Nome: "images" → Marque "Public bucket" → Create');
       }
       
       // Outros erros de permissão
