@@ -144,10 +144,8 @@ export default function Ranking() {
           </Card>
         )}
 
-        {/* Badges/Conquistas - Estática */}
-        <div style={{ position: 'sticky', top: '80px', zIndex: 10 }}>
-          <BadgesList />
-        </div>
+        {/* Badges/Conquistas - Estática na posição */}
+        <BadgesList />
 
         {/* Ranking List - Estático */}
         <div style={{ position: 'sticky', top: '80px', zIndex: 9 }}>

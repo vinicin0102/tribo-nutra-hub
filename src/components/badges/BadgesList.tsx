@@ -70,14 +70,14 @@ export function BadgesList() {
 
   return (
     <TooltipProvider>
-      <Card className="border border-[#2a2a2a] bg-[#1a1a1a]">
+      <Card className="border border-[#2a2a2a] bg-[#1a1a1a]" style={{ position: 'sticky', top: '80px', zIndex: 10 }}>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-white">
             <Star className="h-5 w-5 text-primary" />
             Conquistas
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4" style={{ overflow: 'visible' }}>
+        <CardContent className="space-y-4">
           {/* Info de como ganhar pontos */}
           <div className="bg-muted/50 rounded-lg p-3 text-xs space-y-1">
             <div className="flex items-center gap-1 font-medium text-foreground">
