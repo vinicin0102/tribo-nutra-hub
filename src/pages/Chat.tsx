@@ -138,7 +138,7 @@ export default function Chat() {
             
             // Tentar usar função RPC primeiro (bypass do cache)
             try {
-              const { data: messageId, error: rpcError } = await supabase.rpc('send_chat_message_with_audio', {
+              const { data: messageId, error: rpcError } = await (supabase.rpc as any)('send_chat_message_with_audio', {
                 p_user_id: user.id,
                 p_content: '🎤 Mensagem de áudio',
                 p_audio_url: base64Audio,
