@@ -147,16 +147,15 @@ export default function Ranking() {
         {/* Badges/Conquistas - Estática na posição */}
         <BadgesList />
 
-        {/* Ranking List - Estático */}
-        <div style={{ position: 'sticky', top: '80px', zIndex: 9 }}>
-          <Card className="border border-[#2a2a2a] bg-[#1a1a1a]">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-white">
-                <Trophy className="h-5 w-5 text-primary" />
-                Ranking Global
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-0" style={{ maxHeight: 'calc(100vh - 400px)', overflowY: 'auto' }}>
+        {/* Ranking List */}
+        <Card className="border border-[#2a2a2a] bg-[#1a1a1a]">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-white">
+              <Trophy className="h-5 w-5 text-primary" />
+              Ranking Global
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
             {rankingLoading ? (
               <div className="space-y-2 p-4">
                 {[1, 2, 3, 4, 5].map((i) => (

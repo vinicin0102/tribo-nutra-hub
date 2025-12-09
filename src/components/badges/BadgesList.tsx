@@ -70,7 +70,7 @@ export function BadgesList() {
 
   return (
     <TooltipProvider>
-      <Card className="border border-[#2a2a2a] bg-[#1a1a1a]" style={{ position: 'sticky', top: '80px', zIndex: 10 }}>
+      <Card className="border border-[#2a2a2a] bg-[#1a1a1a]">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-white">
             <Star className="h-5 w-5 text-primary" />
