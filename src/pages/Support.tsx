@@ -588,7 +588,7 @@ export default function Support() {
                   </div>
                 </CardHeader>
                 <CardContent className="flex flex-col h-[calc(100vh-20rem)] p-0" style={{ touchAction: 'manipulation' }}>
-                  <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-2 sm:space-y-3" style={{ touchAction: 'manipulation' }}>
+                  <div className="flex-1 overflow-y-auto px-3 py-3 sm:px-4 sm:py-4 space-y-2 sm:space-y-3" style={{ touchAction: 'manipulation' }}>
                     {loadingMessages ? (
                       <div className="text-center text-gray-400 py-8">Carregando mensagens...</div>
                     ) : messages.length > 0 ? (
@@ -611,7 +611,7 @@ export default function Support() {
                           </Avatar>
                           <div
                             className={cn(
-                              'max-w-[70%] rounded-2xl px-4 py-2',
+                              'max-w-[75%] sm:max-w-[70%] rounded-xl sm:rounded-2xl px-3 py-2 sm:px-4 sm:py-2',
                               msg.is_from_support
                                 ? 'bg-primary text-white rounded-tr-sm'
                                 : 'bg-[#2a2a2a] text-white rounded-tl-sm'
@@ -827,7 +827,7 @@ export default function Support() {
                     </Avatar>
                     <div
                       className={cn(
-                        'max-w-[75%] sm:max-w-[70%] rounded-xl sm:rounded-2xl px-3 py-1.5 sm:px-4 sm:py-2',
+                        'max-w-[80%] sm:max-w-[70%] rounded-xl sm:rounded-2xl px-3 py-2 sm:px-4 sm:py-2',
                         msg.is_from_support
                           ? 'bg-primary text-white rounded-tr-sm'
                           : 'bg-[#2a2a2a] text-white rounded-tl-sm'
