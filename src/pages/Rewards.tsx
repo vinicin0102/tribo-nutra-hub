@@ -155,15 +155,23 @@ export default function Rewards() {
                           : 'border-[#2a2a2a] bg-[#1a1a1a] opacity-60'
                       )}
                     >
-                      {reward.image_url && (
-                        <div className="aspect-video bg-[#2a2a2a] overflow-hidden">
+                      <div className="aspect-video bg-[#2a2a2a] overflow-hidden">
+                        {reward.image_url ? (
                           <img
                             src={reward.image_url}
                             alt={reward.name}
                             className="w-full h-full object-cover"
+                            onError={(e) => {
+                              // Se a imagem falhar, mostrar placeholder
+                              (e.target as HTMLImageElement).src = 'https://via.placeholder.com/400x300/FF6B35/FFFFFF?text=' + encodeURIComponent(reward.name);
+                            }}
                           />
-                        </div>
-                      )}
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/10">
+                            <Gift className="h-16 w-16 text-primary/50" />
+                          </div>
+                        )}
+                      </div>
                       <CardContent className="p-4">
                         <div className="flex items-start justify-between mb-2">
                           <h3 className="font-semibold text-white text-lg">
