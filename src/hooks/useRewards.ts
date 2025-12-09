@@ -33,50 +33,28 @@ export function useRewards() {
       console.log('🔍 [useRewards] Buscando prêmios...');
       
       try {
-        // Tentar buscar de várias formas
-        let data: any[] | null = null;
-        let error: any = null;
+        // Buscar prêmios ativos
+        const { data, error } = await (supabase.from('rewards') as any)
+          .select('*')
+          .eq('is_active', true)
+          .order('points_cost', { ascending: true });
 
-        // Tentativa 1: Buscar tudo sem filtro
-        const result1 = await (supabase.from('rewards') as any).select('*');
-        console.log('📊 [useRewards] Tentativa 1:', result1);
-        
-        if (result1.error) {
-          console.error('❌ [useRewards] Erro na tentativa 1:', result1.error);
-          // Tentativa 2: Sem order
-          const result2 = await (supabase.from('rewards') as any).select('*');
-          console.log('📊 [useRewards] Tentativa 2:', result2);
+        console.log('📊 [useRewards] Resposta:', { data, error });
+
+        if (error) {
+          console.error('❌ [useRewards] Erro:', error);
+          // Tentar sem filtro de is_active
+          const { data: data2, error: error2 } = await (supabase.from('rewards') as any)
+            .select('*')
+            .order('points_cost', { ascending: true });
           
-          if (result2.error) {
-            console.error('❌ [useRewards] Erro na tentativa 2:', result2.error);
-            // Tentativa 3: Apenas campos básicos
-            const result3 = await (supabase.from('rewards') as any)
-              .select('id, name, description, image_url, points_cost, stock, is_active, created_at');
-            console.log('📊 [useRewards] Tentativa 3:', result3);
-            
-            if (result3.error) {
-              console.error('❌ [useRewards] Todas as tentativas falharam:', result3.error);
-              return [] as Reward[];
-            }
-            
-            data = result3.data;
-          } else {
-            data = result2.data;
+          if (error2) {
+            console.error('❌ [useRewards] Erro na segunda tentativa:', error2);
+            return [] as Reward[];
           }
-        } else {
-          data = result1.data;
-        }
-        
-        console.log('✅ [useRewards] Dados recebidos:', data?.length || 0);
-        
-        if (!data || data.length === 0) {
-          console.warn('⚠️ [useRewards] Nenhum prêmio encontrado no banco!');
-          return [] as Reward[];
-        }
-        
-        // Mapear para o formato esperado
-        const rewards = data.map((reward: any) => {
-          const rewardObj = {
+          
+          console.log('✅ [useRewards] Segunda tentativa funcionou:', data2?.length);
+          const rewards = (data2 || []).map((reward: any) => ({
             id: reward.id,
             name: reward.name,
             description: reward.description,
@@ -86,12 +64,38 @@ export function useRewards() {
             stock: reward.stock,
             is_active: reward.is_active !== false,
             created_at: reward.created_at,
-          };
-          console.log(`🎁 Prêmio: ${rewardObj.name} | Imagem: ${rewardObj.image_url || 'SEM IMAGEM'}`);
-          return rewardObj;
-        }) as Reward[];
+          })) as Reward[];
+          
+          console.log('📦 [useRewards] Prêmios encontrados:', rewards.length);
+          rewards.forEach((r) => {
+            console.log(`  - ${r.name}: ${r.points_cost} pts | Imagem: ${r.image_url ? 'SIM' : 'NÃO'}`);
+          });
+          
+          return rewards;
+        }
         
-        console.log('📦 [useRewards] Total de prêmios:', rewards.length);
+        if (!data || data.length === 0) {
+          console.warn('⚠️ [useRewards] Nenhum prêmio encontrado!');
+          return [] as Reward[];
+        }
+        
+        // Mapear para o formato esperado
+        const rewards = data.map((reward: any) => ({
+          id: reward.id,
+          name: reward.name,
+          description: reward.description,
+          image_url: reward.image_url || null,
+          points_cost: reward.points_cost || 0,
+          points_required: reward.points_cost || reward.points_required || 0,
+          stock: reward.stock,
+          is_active: reward.is_active !== false,
+          created_at: reward.created_at,
+        })) as Reward[];
+        
+        console.log('✅ [useRewards] Prêmios encontrados:', rewards.length);
+        rewards.forEach((r) => {
+          console.log(`  - ${r.name}: ${r.points_cost} pts | Imagem: ${r.image_url ? 'SIM' : 'NÃO'}`);
+        });
         
         return rewards;
       } catch (err: any) {
@@ -99,7 +103,7 @@ export function useRewards() {
         return [] as Reward[];
       }
     },
-    retry: 2,
+    retry: 3,
     staleTime: 0,
     refetchOnWindowFocus: true,
     refetchOnMount: true,
