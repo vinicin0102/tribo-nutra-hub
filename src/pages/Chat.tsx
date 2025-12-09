@@ -137,43 +137,19 @@ export default function Chat() {
           // Fazer upload do áudio para o Storage
           const audioUrl = await uploadAudio(audioBlob, user.id);
           
-          // Enviar mensagem com URL do áudio no content (funciona sem colunas especiais)
+          // Enviar mensagem simples indicando que há um áudio
+          // O áudio está no Storage, mas por enquanto só enviamos a mensagem de texto
+          // Quando as colunas forem adicionadas, podemos atualizar para incluir a URL
           const { error } = await supabase
             .from('chat_messages')
             .insert({
               user_id: user.id,
-              content: `🎤 Áudio (${recordingDuration}s)`,
+              content: `🎤 Áudio (${recordingDuration}s) - ${audioUrl}`,
             });
           
           if (error) {
             console.error('Erro ao enviar mensagem:', error);
             throw error;
-          }
-          
-          // Tentar atualizar com URL do áudio se as colunas existirem (opcional)
-          // Se não existirem, a mensagem já foi enviada com sucesso
-          try {
-            const { data: messages } = await supabase
-              .from('chat_messages')
-              .select('id')
-              .eq('user_id', user.id)
-              .order('created_at', { ascending: false })
-              .limit(1)
-              .single();
-            
-            if (messages) {
-              // Tentar atualizar com audio_url se a coluna existir
-              await supabase
-                .from('chat_messages')
-                .update({ 
-                  content: `🎤 Áudio (${recordingDuration}s)`,
-                  // Tentar adicionar audio_url se a coluna existir (pode falhar silenciosamente)
-                } as any)
-                .eq('id', messages.id);
-            }
-          } catch (updateError) {
-            // Ignorar erro de atualização - mensagem já foi enviada
-            console.log('Colunas de áudio não disponíveis, mas mensagem foi enviada');
           }
           
           toast.success('Áudio enviado!');
