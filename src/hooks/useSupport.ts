@@ -309,83 +309,38 @@ export function useChangeUserPlan() {
         throw new Error('Sem permissão. Apenas admins podem executar esta ação.');
       }
 
-      console.log('Alterando plano:', { userId, plan, expiresAt, isAdmin, userEmail: user?.email });
+      console.log('Alterando plano via RPC:', { userId, plan, expiresAt });
 
-      if (!userId || userId === '') {
-        throw new Error('ID do usuário inválido');
+      // Usar função RPC com SECURITY DEFINER para ignorar RLS
+      const { data: rpcData, error: rpcError } = await (supabase.rpc as any)(
+        'change_user_plan_admin',
+        {
+          p_user_id: userId,
+          p_plan: plan,
+          p_expires_at: expiresAt || null
+        }
+      );
+
+      console.log('Resposta RPC change_user_plan_admin:', { rpcData, rpcError });
+
+      if (rpcError) {
+        console.error('Erro RPC:', rpcError);
+        throw new Error(rpcError.message || 'Erro ao alterar plano');
       }
 
-      if (plan !== 'free' && plan !== 'diamond') {
-        throw new Error('Plano inválido. Use "free" ou "diamond".');
-      }
-
-      // Verificar se o usuário existe primeiro
-      console.log('🔍 Verificando se o usuário existe...', { userId });
-      
-      const { data: existingUser, error: checkError } = await supabase
-        .from('profiles')
-        .select('user_id, username, subscription_plan')
-        .eq('user_id', userId)
-        .maybeSingle();
-
-      console.log('Usuário encontrado:', { existingUser, checkError });
-
-      if (checkError) {
-        console.error('❌ Erro ao verificar usuário:', checkError);
-        throw new Error(`Erro ao verificar usuário: ${checkError.message}`);
-      }
-
-      if (!existingUser) {
-        console.error('❌ Usuário não encontrado:', userId);
-        throw new Error('Usuário não encontrado no banco de dados');
-      }
-
-      console.log('✅ Usuário encontrado:', existingUser);
-      console.log('🔄 Atualizando plano diretamente na tabela profiles...');
-      
-      // Usar UPDATE direto (mais simples e confiável)
-      const { data, error: updateError } = await supabase
-        .from('profiles')
-        .update({
-          subscription_plan: plan,
-          subscription_expires_at: expiresAt || null,
-          updated_at: new Date().toISOString()
-        })
-        .eq('user_id', userId)
-        .select('user_id, username, subscription_plan, subscription_expires_at');
-
-      console.log('=== RESPOSTA DA ALTERAÇÃO DE PLANO ===');
-      console.log('Data retornada:', data);
-      console.log('Erro retornado:', updateError);
-      console.log('Data length:', data?.length);
-
-      if (updateError) {
-        console.error('❌ ERRO AO ATUALIZAR PLANO:', updateError);
-        console.error('Detalhes do erro:', {
-          code: updateError.code,
-          message: updateError.message,
-          details: updateError.details,
-          hint: updateError.hint
-        });
-        
-        // Mensagem mais específica baseada no erro
-        if (updateError.code === '42501' || updateError.message?.includes('permission') || updateError.message?.includes('policy') || updateError.message?.includes('RLS')) {
-          throw new Error('Erro de permissão (RLS). Execute o SQL SOLUCAO-SIMPLES-ALTERAR-PLANO-V2.sql no Supabase SQL Editor.');
+      // Verificar resposta da função
+      if (rpcData && typeof rpcData === 'object') {
+        if (rpcData.success === false) {
+          throw new Error(rpcData.error || 'Erro ao alterar plano');
         }
         
-        throw new Error(`Erro ao atualizar plano: ${updateError.message}`);
+        if (rpcData.success === true) {
+          console.log('✅ Plano alterado com sucesso:', rpcData.message);
+          return { success: true, message: rpcData.message };
+        }
       }
 
-      if (!data || data.length === 0) {
-        console.error('❌ UPDATE não retornou dados. Possíveis causas:');
-        console.error('1. RLS policy bloqueando o UPDATE');
-        console.error('2. Usuário não existe (mas verificamos acima)');
-        console.error('3. SELECT não tem permissão');
-        throw new Error('Plano não foi atualizado. Verifique as RLS policies. Execute SOLUCAO-SIMPLES-ALTERAR-PLANO-V2.sql');
-      }
-
-      console.log('✅ Plano alterado com sucesso:', data[0]);
-      return { success: true, data: data[0] };
+      return { success: true };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['support-users'] });

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Send, Trash2, Mic } from 'lucide-react';
+import { Send, Trash2, Mic, Square, X, RotateCcw, Check, Play, Pause } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { MainLayout } from '@/components/layout/MainLayout';
@@ -31,6 +31,12 @@ import { useHasDiamondAccess } from '@/hooks/useSubscription';
 import { useNavigate } from 'react-router-dom';
 import { uploadAudio } from '@/lib/audioUpload';
 
+interface AudioPreview {
+  blob: Blob;
+  url: string;
+  duration: number;
+}
+
 export default function Chat() {
   const { user } = useAuth();
   const { data: messages, isLoading } = useChatMessages();
@@ -46,9 +52,18 @@ export default function Chat() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const [isRecording, setIsRecording] = useState(false);
+  const [recordingTime, setRecordingTime] = useState(0);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const recordingStartTimeRef = useRef<number>(0);
+  const recordingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const isCancelledRef = useRef(false);
+  
+  // Preview de áudio
+  const [audioPreview, setAudioPreview] = useState<AudioPreview | null>(null);
+  const [isPlayingPreview, setIsPlayingPreview] = useState(false);
+  const [isSendingAudio, setIsSendingAudio] = useState(false);
+  const previewAudioRef = useRef<HTMLAudioElement | null>(null);
 
   const handleDelete = async (messageId: string) => {
     try {
@@ -63,10 +78,22 @@ export default function Chat() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  // Cleanup audio preview URL on unmount
+  useEffect(() => {
+    return () => {
+      if (audioPreview?.url) {
+        URL.revokeObjectURL(audioPreview.url);
+      }
+      if (previewAudioRef.current) {
+        previewAudioRef.current.pause();
+        previewAudioRef.current = null;
+      }
+    };
+  }, []);
+
   // Detectar mudanças na altura do viewport quando o teclado aparece/desaparece
   useEffect(() => {
     const handleResize = () => {
-      // Usar visualViewport.height diretamente quando disponível (melhor para mobile)
       if (window.visualViewport) {
         setViewportHeight(window.visualViewport.height);
       } else {
@@ -74,10 +101,8 @@ export default function Chat() {
       }
     };
 
-    // Usar visualViewport se disponível (melhor para mobile)
     if (window.visualViewport) {
       window.visualViewport.addEventListener('resize', handleResize);
-      // Atualizar imediatamente
       handleResize();
       return () => window.visualViewport?.removeEventListener('resize', handleResize);
     } else {
@@ -89,14 +114,12 @@ export default function Chat() {
 
   // Prevenir scroll da página quando o teclado abrir
   useEffect(() => {
-    // Bloquear scroll do body quando o componente montar
     document.body.style.overflow = 'hidden';
     document.body.style.position = 'fixed';
     document.body.style.width = '100%';
     document.body.style.height = '100%';
     
     return () => {
-      // Restaurar scroll quando o componente desmontar
       document.body.style.overflow = '';
       document.body.style.position = '';
       document.body.style.width = '';
@@ -104,12 +127,26 @@ export default function Chat() {
     };
   }, []);
 
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
   const startRecording = async () => {
     try {
+      // Limpar preview anterior se existir
+      if (audioPreview?.url) {
+        URL.revokeObjectURL(audioPreview.url);
+        setAudioPreview(null);
+      }
+
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
+      isCancelledRef.current = false;
+      setRecordingTime(0);
 
       mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
@@ -118,50 +155,38 @@ export default function Chat() {
       };
 
       mediaRecorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        
         // Parar todas as tracks do stream
         stream.getTracks().forEach(track => track.stop());
         
-        // Calcular duração
+        // Se foi cancelado, não fazer nada
+        if (isCancelledRef.current) {
+          audioChunksRef.current = [];
+          return;
+        }
+
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
         const audioDuration = Math.round((Date.now() - recordingStartTimeRef.current) / 1000);
         
-        try {
-          if (!user) {
-            toast.error('Você precisa estar logado');
-            return;
-          }
-
-          toast.info('Enviando áudio...');
-          
-          // Fazer upload do áudio para o Storage
-          const audioUrl = await uploadAudio(audioBlob, user.id);
-          
-          // Salvar mensagem com URL do áudio no content (formato especial para identificar)
-          // Formato: 🎤AUDIO:URL|DURATION
-          const { error } = await supabase
-            .from('chat_messages')
-            .insert({
-              user_id: user.id,
-              content: `🎤AUDIO:${audioUrl}|${audioDuration}`,
-            });
-          
-          if (error) {
-            console.error('Erro ao enviar mensagem:', error);
-            throw error;
-          }
-          
-          toast.success('Áudio enviado!');
-        } catch (error: any) {
-          console.error('Erro ao enviar áudio:', error);
-          toast.error(`Erro: ${error?.message || 'Tente novamente'}`);
-        }
+        // Criar URL para preview
+        const previewUrl = URL.createObjectURL(audioBlob);
+        
+        setAudioPreview({
+          blob: audioBlob,
+          url: previewUrl,
+          duration: audioDuration
+        });
       };
 
       recordingStartTimeRef.current = Date.now();
       mediaRecorder.start();
       setIsRecording(true);
-      toast.info('Gravando áudio... Clique novamente para parar');
+      
+      // Iniciar timer
+      recordingIntervalRef.current = setInterval(() => {
+        setRecordingTime(prev => prev + 1);
+      }, 1000);
+      
+      toast.info('Gravando áudio...');
     } catch (error) {
       console.error('Erro ao acessar microfone:', error);
       toast.error('Não foi possível acessar o microfone');
@@ -169,17 +194,115 @@ export default function Chat() {
   };
 
   const stopRecording = () => {
+    if (recordingIntervalRef.current) {
+      clearInterval(recordingIntervalRef.current);
+      recordingIntervalRef.current = null;
+    }
+    
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop();
       setIsRecording(false);
     }
   };
 
+  const cancelRecording = () => {
+    isCancelledRef.current = true;
+    
+    if (recordingIntervalRef.current) {
+      clearInterval(recordingIntervalRef.current);
+      recordingIntervalRef.current = null;
+    }
+    
+    if (mediaRecorderRef.current && isRecording) {
+      // Parar o stream manualmente
+      mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+    }
+    
+    setRecordingTime(0);
+    toast.info('Gravação cancelada');
+  };
+
+  const discardAudio = () => {
+    if (audioPreview?.url) {
+      URL.revokeObjectURL(audioPreview.url);
+    }
+    if (previewAudioRef.current) {
+      previewAudioRef.current.pause();
+      previewAudioRef.current = null;
+    }
+    setAudioPreview(null);
+    setIsPlayingPreview(false);
+    toast.info('Áudio descartado');
+  };
+
+  const rerecordAudio = () => {
+    discardAudio();
+    startRecording();
+  };
+
+  const togglePreviewPlayback = () => {
+    if (!audioPreview) return;
+
+    if (isPlayingPreview && previewAudioRef.current) {
+      previewAudioRef.current.pause();
+      setIsPlayingPreview(false);
+    } else {
+      if (!previewAudioRef.current) {
+        previewAudioRef.current = new Audio(audioPreview.url);
+        previewAudioRef.current.onended = () => setIsPlayingPreview(false);
+      }
+      previewAudioRef.current.play();
+      setIsPlayingPreview(true);
+    }
+  };
+
+  const confirmSendAudio = async () => {
+    if (!audioPreview || !user) return;
+
+    setIsSendingAudio(true);
+    
+    try {
+      // Fazer upload do áudio para o Storage
+      const audioUrl = await uploadAudio(audioPreview.blob, user.id);
+      
+      // Salvar mensagem com URL do áudio
+      const { error } = await supabase
+        .from('chat_messages')
+        .insert({
+          user_id: user.id,
+          content: `🎤AUDIO:${audioUrl}|${audioPreview.duration}`,
+        });
+      
+      if (error) {
+        console.error('Erro ao enviar mensagem:', error);
+        throw error;
+      }
+      
+      // Limpar preview
+      if (audioPreview.url) {
+        URL.revokeObjectURL(audioPreview.url);
+      }
+      if (previewAudioRef.current) {
+        previewAudioRef.current.pause();
+        previewAudioRef.current = null;
+      }
+      setAudioPreview(null);
+      setIsPlayingPreview(false);
+      
+      toast.success('Áudio enviado!');
+    } catch (error: any) {
+      console.error('Erro ao enviar áudio:', error);
+      toast.error(`Erro: ${error?.message || 'Tente novamente'}`);
+    } finally {
+      setIsSendingAudio(false);
+    }
+  };
+
   const checkDiamondAccess = () => {
-    // Suporte sempre tem acesso
     if (isSupport) return true;
     
-    // Verificar se tem plano Diamond
     if (!hasDiamondAccess) {
       toast.error('Recurso exclusivo para assinantes Diamond', {
         description: 'Faça upgrade para enviar mensagens no chat!',
@@ -196,12 +319,7 @@ export default function Chat() {
 
   const handleAudioClick = () => {
     if (!checkDiamondAccess()) return;
-    
-    if (isRecording) {
-      stopRecording();
-    } else {
-      startRecording();
-    }
+    startRecording();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -217,6 +335,138 @@ export default function Chat() {
       console.error('Error sending message:', error);
     }
   };
+
+  // Renderizar controles de gravação
+  const renderRecordingControls = () => (
+    <div className="border-t border-[#2a2a2a] p-3 sm:p-3 flex gap-2 items-center flex-shrink-0 bg-[#1a1a1a]">
+      <div className="flex-1 flex items-center gap-3">
+        <div className="flex items-center gap-2 text-red-500">
+          <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+          <span className="text-sm font-medium">Gravando</span>
+          <span className="text-sm">{formatTime(recordingTime)}</span>
+        </div>
+      </div>
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        onClick={cancelRecording}
+        className="h-9 w-9 text-gray-400 hover:text-red-500 hover:bg-red-500/10"
+      >
+        <X className="h-4 w-4" />
+      </Button>
+      <Button
+        type="button"
+        size="icon"
+        onClick={stopRecording}
+        className="h-9 w-9 bg-green-600 hover:bg-green-700"
+      >
+        <Square className="h-4 w-4 fill-current" />
+      </Button>
+    </div>
+  );
+
+  // Renderizar preview de áudio
+  const renderAudioPreview = () => (
+    <div className="border-t border-[#2a2a2a] p-3 sm:p-3 flex flex-col gap-2 flex-shrink-0 bg-[#1a1a1a]">
+      <div className="flex items-center gap-3">
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          onClick={togglePreviewPlayback}
+          className="h-9 w-9 text-primary hover:text-primary/80"
+        >
+          {isPlayingPreview ? (
+            <Pause className="h-4 w-4" />
+          ) : (
+            <Play className="h-4 w-4" />
+          )}
+        </Button>
+        <div className="flex-1 flex items-center gap-2">
+          <div className="flex-1 h-1 bg-[#3a3a3a] rounded-full overflow-hidden">
+            <div className="h-full bg-primary rounded-full" style={{ width: '100%' }} />
+          </div>
+          <span className="text-xs text-gray-400">{formatTime(audioPreview?.duration || 0)}</span>
+        </div>
+      </div>
+      <div className="flex gap-2">
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={discardAudio}
+          className="flex-1 h-8 text-gray-400 hover:text-red-500 hover:bg-red-500/10"
+        >
+          <X className="h-3.5 w-3.5 mr-1" />
+          Descartar
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={rerecordAudio}
+          className="flex-1 h-8 text-gray-400 hover:text-white"
+        >
+          <RotateCcw className="h-3.5 w-3.5 mr-1" />
+          Regravar
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          onClick={confirmSendAudio}
+          disabled={isSendingAudio}
+          className="flex-1 h-8"
+        >
+          <Check className="h-3.5 w-3.5 mr-1" />
+          {isSendingAudio ? 'Enviando...' : 'Enviar'}
+        </Button>
+      </div>
+    </div>
+  );
+
+  // Renderizar formulário padrão
+  const renderDefaultForm = () => (
+    <form 
+      onSubmit={handleSubmit} 
+      className="border-t border-[#2a2a2a] p-3 sm:p-3 flex gap-1.5 sm:gap-2 items-center flex-shrink-0 bg-[#1a1a1a]"
+    >
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        onClick={handleAudioClick}
+        className="h-8 w-8 sm:h-9 sm:w-9 flex-shrink-0 text-gray-400 hover:text-white"
+      >
+        <Mic className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+      </Button>
+      <Input
+        placeholder="Digite sua mensagem..."
+        value={newMessage}
+        onChange={(e) => setNewMessage(e.target.value)}
+        className="flex-1 !bg-[#2a2a2a] !border-[#3a3a3a] !text-white placeholder:!text-gray-500 text-sm sm:text-base h-8 sm:h-9"
+        onFocus={(e) => {
+          if (window.visualViewport) {
+            setViewportHeight(window.visualViewport.height);
+          }
+          setTimeout(() => {
+            if (window.visualViewport) {
+              setViewportHeight(window.visualViewport.height);
+            }
+            messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+          }, 300);
+        }}
+      />
+      <Button 
+        type="submit" 
+        disabled={sendMessage.isPending || !newMessage.trim()}
+        size="icon"
+        className="h-8 w-8 sm:h-9 sm:w-9 flex-shrink-0"
+      >
+        <Send className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+      </Button>
+    </form>
+  );
 
   return (
     <MainLayout>
@@ -321,7 +571,6 @@ export default function Chat() {
                           )}
                           {message.content.startsWith('🎤AUDIO:') ? (
                             (() => {
-                              // Extrair URL e duração do formato: 🎤AUDIO:URL|DURATION
                               const match = message.content.match(/🎤AUDIO:(.+?)\|(\d+)/);
                               if (match) {
                                 const [, audioUrl, duration] = match;
@@ -368,52 +617,7 @@ export default function Chat() {
               )}
             </div>
 
-            <form 
-              onSubmit={handleSubmit} 
-              className="border-t border-[#2a2a2a] p-3 sm:p-3 flex gap-1.5 sm:gap-2 items-center flex-shrink-0 bg-[#1a1a1a]"
-            >
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                onClick={handleAudioClick}
-                className={cn(
-                  "h-8 w-8 sm:h-9 sm:w-9 flex-shrink-0",
-                  isRecording 
-                    ? "text-red-500 hover:text-red-600 animate-pulse" 
-                    : "text-gray-400 hover:text-white"
-                )}
-              >
-                <Mic className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-              </Button>
-              <Input
-                placeholder="Digite sua mensagem..."
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                className="flex-1 !bg-[#2a2a2a] !border-[#3a3a3a] !text-white placeholder:!text-gray-500 text-sm sm:text-base h-8 sm:h-9"
-                onFocus={(e) => {
-                  // Atualizar altura imediatamente quando o input receber foco
-                  if (window.visualViewport) {
-                    setViewportHeight(window.visualViewport.height);
-                  }
-                  // Scroll para o final quando o input receber foco (aguardar teclado aparecer)
-                  setTimeout(() => {
-                    if (window.visualViewport) {
-                      setViewportHeight(window.visualViewport.height);
-                    }
-                    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
-                  }, 300);
-                }}
-              />
-              <Button 
-                type="submit" 
-                disabled={sendMessage.isPending || !newMessage.trim()}
-                size="icon"
-                className="h-8 w-8 sm:h-9 sm:w-9 flex-shrink-0"
-              >
-                <Send className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-              </Button>
-            </form>
+            {isRecording ? renderRecordingControls() : audioPreview ? renderAudioPreview() : renderDefaultForm()}
           </CardContent>
         </Card>
         </div>
