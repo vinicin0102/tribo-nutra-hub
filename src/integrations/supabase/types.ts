@@ -540,6 +540,10 @@ export type Database = {
           success: boolean
         }[]
       }
+      change_user_plan_admin: {
+        Args: { p_expires_at?: string; p_plan: string; p_user_id: string }
+        Returns: Json
+      }
       mute_user: {
         Args: { p_hours: number; p_user_id: string }
         Returns: {
@@ -560,6 +564,10 @@ export type Database = {
           message: string
           success: boolean
         }[]
+      }
+      update_user_points_admin: {
+        Args: { p_points: number; p_user_id: string }
+        Returns: Json
       }
     }
     Enums: {
