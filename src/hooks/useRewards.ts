@@ -30,22 +30,31 @@ export function useRewards() {
   return useQuery({
     queryKey: ['rewards'],
     queryFn: async () => {
+      console.log('🔍 Buscando prêmios...');
+      
       const { data, error } = await (supabase.from('rewards') as any)
         .select('*')
         .eq('is_active', true)
         .order('points_cost', { ascending: true });
 
       if (error) {
-        console.error('Erro ao buscar prêmios:', error);
+        console.error('❌ Erro ao buscar prêmios:', error);
         throw error;
       }
       
+      console.log('✅ Prêmios encontrados:', data?.length || 0, data);
+      
       // Mapear points_cost para points_required para compatibilidade
-      return (data || []).map((reward: any) => ({
+      const rewards = (data || []).map((reward: any) => ({
         ...reward,
         points_required: reward.points_cost || reward.points_required || 0,
       })) as Reward[];
+      
+      console.log('📦 Prêmios mapeados:', rewards);
+      return rewards;
     },
+    retry: 2,
+    staleTime: 30000, // 30 segundos
   });
 }
 
