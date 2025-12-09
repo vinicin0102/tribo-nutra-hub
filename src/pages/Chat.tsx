@@ -136,53 +136,44 @@ export default function Chat() {
 
             toast.info('Enviando áudio...');
             
-            // Tentar inserir com campos de áudio usando RPC para bypass do cache
-            // Se as colunas não existirem, o RPC vai falhar mas vamos tentar inserção direta
+            // Tentar usar função RPC primeiro (bypass do cache)
             try {
-              const { error } = await supabase
-                .from('chat_messages')
-                .insert({
-                  user_id: user.id,
-                  content: '🎤 Mensagem de áudio',
-                  audio_url: base64Audio,
-                  audio_duration: audioDuration > 0 ? audioDuration : 1,
-                } as any); // Usar 'as any' para bypass do TypeScript
+              const { data: messageId, error: rpcError } = await supabase.rpc('send_chat_message_with_audio', {
+                p_user_id: user.id,
+                p_content: '🎤 Mensagem de áudio',
+                p_audio_url: base64Audio,
+                p_audio_duration: audioDuration > 0 ? audioDuration : 1,
+              });
               
-              if (error) {
-                // Se for erro de coluna não encontrada, tentar sem as colunas
-                if (error.message?.includes('audio_duration') || 
-                    error.message?.includes('audio_url') ||
-                    error.message?.includes('schema cache') ||
-                    error.code === '42703') {
-                  
-                  console.warn('Colunas de áudio não encontradas. Enviando como mensagem de texto.');
-                  
-                  // Enviar apenas como mensagem de texto
-                  const { error: textError } = await supabase
-                    .from('chat_messages')
-                    .insert({
-                      user_id: user.id,
-                      content: `🎤 Áudio gravado (${audioDuration}s) - Execute FORCAR-COLUNAS-AUDIO.sql no Supabase`,
-                    });
-                  
-                  if (textError) {
-                    throw textError;
-                  }
-                  
-                  toast.error('Execute FORCAR-COLUNAS-AUDIO.sql no Supabase para habilitar áudio', {
-                    duration: 10000,
-                  });
-                  return;
-                }
-                
-                throw error;
+              if (!rpcError && messageId) {
+                toast.success('Áudio enviado!');
+                return;
               }
               
-              toast.success('Áudio enviado!');
-            } catch (insertError: any) {
-              console.error('Erro ao inserir áudio:', insertError);
-              throw insertError;
+              // Se RPC não existir ou falhar, tentar inserção direta
+              if (rpcError && !rpcError.message?.includes('function') && !rpcError.message?.includes('does not exist')) {
+                console.warn('RPC falhou, tentando inserção direta:', rpcError);
+              }
+            } catch (rpcError) {
+              console.log('RPC não disponível, tentando inserção direta');
             }
+            
+            // Fallback: tentar inserção direta
+            const { error } = await supabase
+              .from('chat_messages')
+              .insert({
+                user_id: user.id,
+                content: '🎤 Mensagem de áudio',
+                audio_url: base64Audio,
+                audio_duration: audioDuration > 0 ? audioDuration : 1,
+              } as any);
+            
+            if (error) {
+              console.error('Erro ao enviar áudio:', error);
+              throw error;
+            }
+            
+            toast.success('Áudio enviado!');
           } catch (error: any) {
             console.error('Erro ao enviar áudio:', error);
             toast.error(`Erro: ${error?.message || 'Tente novamente'}`);
