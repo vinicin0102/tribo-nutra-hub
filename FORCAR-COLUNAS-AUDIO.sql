@@ -56,6 +56,27 @@ WHERE table_schema = 'public'
   AND column_name IN ('audio_url', 'audio_duration', 'image_url')
 ORDER BY column_name;
 
--- Passo 4: IMPORTANTE - Aguardar 1-2 minutos após executar
--- O cache do PostgREST precisa atualizar
+-- Passo 4: Forçar atualização do schema cache do PostgREST
+-- Isso força o PostgREST a recarregar o schema
+NOTIFY pgrst, 'reload schema';
+
+-- Passo 5: Verificar novamente após alguns segundos
+-- Execute este SELECT novamente em 30 segundos para confirmar
+SELECT 
+  '✅ Verificação final:' as status,
+  column_name, 
+  data_type,
+  is_nullable
+FROM information_schema.columns
+WHERE table_schema = 'public' 
+  AND table_name = 'chat_messages'
+  AND column_name IN ('audio_url', 'audio_duration', 'image_url')
+ORDER BY column_name;
+
+-- IMPORTANTE: Após executar este script:
+-- 1. Aguarde 2-3 minutos
+-- 2. Feche o app completamente
+-- 3. Limpe o cache do navegador (Ctrl+Shift+R)
+-- 4. Abra o app novamente
+-- 5. Teste enviar um áudio
 

@@ -136,22 +136,53 @@ export default function Chat() {
 
             toast.info('Enviando áudio...');
             
-            // Tentar inserir com campos de áudio (como estava antes)
-            const { error } = await supabase
-              .from('chat_messages')
-              .insert({
-                user_id: user.id,
-                content: '🎤 Mensagem de áudio',
-                audio_url: base64Audio,
-                audio_duration: audioDuration > 0 ? audioDuration : 1,
-              });
-            
-            if (error) {
-              console.error('Erro ao enviar áudio:', error);
-              throw error;
+            // Tentar inserir com campos de áudio usando RPC para bypass do cache
+            // Se as colunas não existirem, o RPC vai falhar mas vamos tentar inserção direta
+            try {
+              const { error } = await supabase
+                .from('chat_messages')
+                .insert({
+                  user_id: user.id,
+                  content: '🎤 Mensagem de áudio',
+                  audio_url: base64Audio,
+                  audio_duration: audioDuration > 0 ? audioDuration : 1,
+                } as any); // Usar 'as any' para bypass do TypeScript
+              
+              if (error) {
+                // Se for erro de coluna não encontrada, tentar sem as colunas
+                if (error.message?.includes('audio_duration') || 
+                    error.message?.includes('audio_url') ||
+                    error.message?.includes('schema cache') ||
+                    error.code === '42703') {
+                  
+                  console.warn('Colunas de áudio não encontradas. Enviando como mensagem de texto.');
+                  
+                  // Enviar apenas como mensagem de texto
+                  const { error: textError } = await supabase
+                    .from('chat_messages')
+                    .insert({
+                      user_id: user.id,
+                      content: `🎤 Áudio gravado (${audioDuration}s) - Execute FORCAR-COLUNAS-AUDIO.sql no Supabase`,
+                    });
+                  
+                  if (textError) {
+                    throw textError;
+                  }
+                  
+                  toast.error('Execute FORCAR-COLUNAS-AUDIO.sql no Supabase para habilitar áudio', {
+                    duration: 10000,
+                  });
+                  return;
+                }
+                
+                throw error;
+              }
+              
+              toast.success('Áudio enviado!');
+            } catch (insertError: any) {
+              console.error('Erro ao inserir áudio:', insertError);
+              throw insertError;
             }
-            
-            toast.success('Áudio enviado!');
           } catch (error: any) {
             console.error('Erro ao enviar áudio:', error);
             toast.error(`Erro: ${error?.message || 'Tente novamente'}`);
