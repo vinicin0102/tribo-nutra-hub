@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Post, useLikePost, useUserLikes } from '@/hooks/usePosts';
 import { CommentsSection } from './CommentsSection';
 import { useDeletePost, useIsSupport } from '@/hooks/useSupport';
+import { PostBadges } from '@/components/badges/PostBadges';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -90,7 +91,7 @@ export function PostCard({ post }: PostCardProps) {
           </AvatarFallback>
         </Avatar>
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             {(profile as any)?.subscription_plan === 'diamond' && (
               <Badge className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white border-0 text-[10px] px-1.5 py-0">
                 💎 Diamond
@@ -99,6 +100,9 @@ export function PostCard({ post }: PostCardProps) {
             <p className="font-semibold text-base leading-tight truncate text-white">
               {profile?.full_name || profile?.username || 'Usuário'}
             </p>
+            {post.user_badges && post.user_badges.length > 0 && (
+              <PostBadges badges={post.user_badges} maxDisplay={3} />
+            )}
             {isSupportPost && (
               <Badge className="bg-primary text-white text-xs px-2 py-0.5">
                 <Shield className="h-3 w-3 mr-1" />
