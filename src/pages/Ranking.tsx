@@ -145,7 +145,7 @@ export default function Ranking() {
         )}
 
         {/* Badges/Conquistas - Estático */}
-        <div style={{ position: 'sticky', top: '80px', zIndex: 10 }}>
+        <div style={{ position: 'sticky', top: '80px', zIndex: 10, backgroundColor: '#0a0a0a' }}>
           <BadgesList />
         </div>
 
