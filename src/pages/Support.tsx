@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { HelpCircle, Send, ChevronDown, ChevronUp, MessageSquare, ArrowLeft, User, Image as ImageIcon, Mic } from 'lucide-react';
 import { AudioPlayer } from '@/components/chat/AudioPlayer';
 import { uploadImage } from '@/lib/upload';
+import { uploadAudio } from '@/lib/audioUpload';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -80,6 +81,7 @@ export default function Support() {
   const [isRecording, setIsRecording] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+  const recordingStartTimeRef = useRef<number>(0);
 
   // Carregar conversas para suporte e configurar realtime
   useEffect(() => {
@@ -352,75 +354,63 @@ export default function Support() {
         // Parar todas as tracks do stream
         stream.getTracks().forEach(track => track.stop());
         
-        // Converter áudio para base64 para envio temporário
-        const reader = new FileReader();
-        reader.onloadend = async () => {
-          const base64Audio = reader.result as string;
-          const audioDuration = Math.round(audioBlob.size / 16000); // Estimativa
-          
-          try {
-            if (!user) {
-              toast.error('Você precisa estar logado');
-              return;
-            }
-
-            toast.info('Enviando áudio...');
-            
-            // Tentar enviar com as colunas de áudio, se falharem, enviar apenas texto
-            const messageData: any = {
-              message: '🎤 Mensagem de áudio',
-            };
-            
-            // Tentar adicionar áudio (pode falhar se colunas não existirem)
-            try {
-              messageData.audio_url = base64Audio;
-              messageData.audio_duration = audioDuration;
-            } catch (e) {
-              console.log('Colunas de áudio não disponíveis, enviando apenas texto');
-            }
-            
-            if (isSupport && selectedUserId) {
-              // Suporte enviando para aluno
-              const { error } = await supabase
-                .from('support_chat')
-                .insert({
-                  user_id: selectedUserId,
-                  support_user_id: user.id,
-                  is_from_support: true,
-                  ...messageData,
-                });
-              
-              if (error) {
-                console.error('Erro SQL:', error);
-                throw error;
-              }
-              loadMessages(selectedUserId);
-              loadConversations();
-              toast.success('Áudio enviado!');
-            } else if (!isSupport) {
-              // Aluno enviando para suporte
-              const { error } = await supabase
-                .from('support_chat')
-                .insert({
-                  user_id: user.id,
-                  is_from_support: false,
-                  ...messageData,
-                });
-              
-              if (error) {
-                console.error('Erro SQL:', error);
-                throw error;
-              }
-              loadUserMessages();
-              toast.success('Áudio enviado!');
-            }
-          } catch (error: any) {
-            console.error('Erro ao enviar áudio:', error);
-            toast.error(`Erro: ${error?.message || 'Execute o script SQL add-media-to-support-chat.sql no Supabase'}`);
-          }
-        };
+        // Calcular duração
+        const audioDuration = Math.round((Date.now() - recordingStartTimeRef.current) / 1000);
         
-        reader.readAsDataURL(audioBlob);
+        try {
+          if (!user) {
+            toast.error('Você precisa estar logado');
+            return;
+          }
+
+          toast.info('Enviando áudio...');
+          
+          // Fazer upload do áudio para o Storage
+          const audioUrl = await uploadAudio(audioBlob, user.id);
+          
+          // Salvar mensagem com URL do áudio no message (formato especial para identificar)
+          // Formato: 🎤AUDIO:URL|DURATION
+          const audioMessage = `🎤AUDIO:${audioUrl}|${audioDuration}`;
+          
+          if (isSupport && selectedUserId) {
+            // Suporte enviando para aluno
+            const { error } = await supabase
+              .from('support_chat')
+              .insert({
+                user_id: selectedUserId,
+                support_user_id: user.id,
+                is_from_support: true,
+                message: audioMessage,
+              });
+            
+            if (error) {
+              console.error('Erro SQL:', error);
+              throw error;
+            }
+            loadMessages(selectedUserId);
+            loadConversations();
+            toast.success('Áudio enviado!');
+          } else if (!isSupport) {
+            // Aluno enviando para suporte
+            const { error } = await supabase
+              .from('support_chat')
+              .insert({
+                user_id: user.id,
+                is_from_support: false,
+                message: audioMessage,
+              });
+            
+            if (error) {
+              console.error('Erro SQL:', error);
+              throw error;
+            }
+            loadUserMessages();
+            toast.success('Áudio enviado!');
+          }
+        } catch (error: any) {
+          console.error('Erro ao enviar áudio:', error);
+          toast.error(`Erro: ${error?.message || 'Tente novamente'}`);
+        }
       };
 
       mediaRecorder.start();
@@ -631,12 +621,22 @@ export default function Support() {
                                   className="max-w-full rounded-lg max-h-64 object-cover"
                                 />
                               </div>
-                            ) : msg.audio_url ? (
-                              <AudioPlayer 
-                                audioUrl={msg.audio_url} 
-                                duration={msg.audio_duration || undefined}
-                                isOwn={msg.is_from_support}
-                              />
+                            ) : msg.message?.startsWith('🎤AUDIO:') ? (
+                              (() => {
+                                // Extrair URL e duração do formato: 🎤AUDIO:URL|DURATION
+                                const match = msg.message.match(/🎤AUDIO:(.+?)\|(\d+)/);
+                                if (match) {
+                                  const [, audioUrl, duration] = match;
+                                  return (
+                                    <AudioPlayer 
+                                      audioUrl={audioUrl} 
+                                      duration={parseInt(duration) || undefined}
+                                      isOwn={msg.is_from_support}
+                                    />
+                                  );
+                                }
+                                return <p className="text-sm whitespace-pre-wrap">{msg.message}</p>;
+                              })()
                             ) : (
                               <p className="text-sm whitespace-pre-wrap">{msg.message}</p>
                             )}
@@ -848,12 +848,22 @@ export default function Support() {
                             className="max-w-full rounded-lg max-h-48 sm:max-h-64 object-cover"
                           />
                         </div>
-                      ) : msg.audio_url ? (
-                        <AudioPlayer 
-                          audioUrl={msg.audio_url} 
-                          duration={msg.audio_duration || undefined}
-                          isOwn={!msg.is_from_support}
-                        />
+                      ) : msg.message?.startsWith('🎤AUDIO:') ? (
+                        (() => {
+                          // Extrair URL e duração do formato: 🎤AUDIO:URL|DURATION
+                          const match = msg.message.match(/🎤AUDIO:(.+?)\|(\d+)/);
+                          if (match) {
+                            const [, audioUrl, duration] = match;
+                            return (
+                              <AudioPlayer 
+                                audioUrl={audioUrl} 
+                                duration={parseInt(duration) || undefined}
+                                isOwn={!msg.is_from_support}
+                              />
+                            );
+                          }
+                          return <p className="text-xs sm:text-sm whitespace-pre-wrap leading-relaxed break-words">{msg.message}</p>;
+                        })()
                       ) : (
                         <p className="text-xs sm:text-sm whitespace-pre-wrap leading-relaxed break-words">{msg.message}</p>
                       )}

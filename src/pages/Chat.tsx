@@ -29,6 +29,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useHasDiamondAccess } from '@/hooks/useSubscription';
 import { useNavigate } from 'react-router-dom';
+import { uploadAudio } from '@/lib/audioUpload';
 
 export default function Chat() {
   const { user } = useAuth();
@@ -122,65 +123,39 @@ export default function Chat() {
         // Parar todas as tracks do stream
         stream.getTracks().forEach(track => track.stop());
         
-        // Converter áudio para base64 (como estava funcionando antes)
-        const reader = new FileReader();
-        reader.onloadend = async () => {
-          const base64Audio = reader.result as string;
-          const audioDuration = Math.round((Date.now() - recordingStartTimeRef.current) / 1000);
-          
-          try {
-            if (!user) {
-              toast.error('Você precisa estar logado');
-              return;
-            }
-
-            toast.info('Enviando áudio...');
-            
-            // Tentar usar função RPC primeiro (bypass do cache)
-            try {
-              const { data: messageId, error: rpcError } = await (supabase.rpc as any)('send_chat_message_with_audio', {
-                p_user_id: user.id,
-                p_content: '🎤 Mensagem de áudio',
-                p_audio_url: base64Audio,
-                p_audio_duration: audioDuration > 0 ? audioDuration : 1,
-              });
-              
-              if (!rpcError && messageId) {
-                toast.success('Áudio enviado!');
-                return;
-              }
-              
-              // Se RPC não existir ou falhar, tentar inserção direta
-              if (rpcError && !rpcError.message?.includes('function') && !rpcError.message?.includes('does not exist')) {
-                console.warn('RPC falhou, tentando inserção direta:', rpcError);
-              }
-            } catch (rpcError) {
-              console.log('RPC não disponível, tentando inserção direta');
-            }
-            
-            // Fallback: tentar inserção direta
-            const { error } = await supabase
-              .from('chat_messages')
-              .insert({
-                user_id: user.id,
-                content: '🎤 Mensagem de áudio',
-                audio_url: base64Audio,
-                audio_duration: audioDuration > 0 ? audioDuration : 1,
-              } as any);
-            
-            if (error) {
-              console.error('Erro ao enviar áudio:', error);
-              throw error;
-            }
-            
-            toast.success('Áudio enviado!');
-          } catch (error: any) {
-            console.error('Erro ao enviar áudio:', error);
-            toast.error(`Erro: ${error?.message || 'Tente novamente'}`);
-          }
-        };
+        // Calcular duração
+        const audioDuration = Math.round((Date.now() - recordingStartTimeRef.current) / 1000);
         
-        reader.readAsDataURL(audioBlob);
+        try {
+          if (!user) {
+            toast.error('Você precisa estar logado');
+            return;
+          }
+
+          toast.info('Enviando áudio...');
+          
+          // Fazer upload do áudio para o Storage
+          const audioUrl = await uploadAudio(audioBlob, user.id);
+          
+          // Salvar mensagem com URL do áudio no content (formato especial para identificar)
+          // Formato: 🎤AUDIO:URL|DURATION
+          const { error } = await supabase
+            .from('chat_messages')
+            .insert({
+              user_id: user.id,
+              content: `🎤AUDIO:${audioUrl}|${audioDuration}`,
+            });
+          
+          if (error) {
+            console.error('Erro ao enviar mensagem:', error);
+            throw error;
+          }
+          
+          toast.success('Áudio enviado!');
+        } catch (error: any) {
+          console.error('Erro ao enviar áudio:', error);
+          toast.error(`Erro: ${error?.message || 'Tente novamente'}`);
+        }
       };
 
       recordingStartTimeRef.current = Date.now();
@@ -344,12 +319,22 @@ export default function Chat() {
                               {message.profiles?.username || 'Usuário'}
                             </p>
                           )}
-                          {(message as any).audio_url ? (
-                            <AudioPlayer 
-                              audioUrl={(message as any).audio_url} 
-                              duration={(message as any).audio_duration || undefined}
-                              isOwn={isOwn}
-                            />
+                          {message.content.startsWith('🎤AUDIO:') ? (
+                            (() => {
+                              // Extrair URL e duração do formato: 🎤AUDIO:URL|DURATION
+                              const match = message.content.match(/🎤AUDIO:(.+?)\|(\d+)/);
+                              if (match) {
+                                const [, audioUrl, duration] = match;
+                                return (
+                                  <AudioPlayer 
+                                    audioUrl={audioUrl} 
+                                    duration={parseInt(duration) || undefined}
+                                    isOwn={isOwn}
+                                  />
+                                );
+                              }
+                              return <p className="text-xs sm:text-sm leading-relaxed break-words">{message.content}</p>;
+                            })()
                           ) : (
                             <p className="text-xs sm:text-sm leading-relaxed break-words">{message.content}</p>
                           )}
