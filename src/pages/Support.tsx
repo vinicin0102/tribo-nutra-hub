@@ -588,7 +588,7 @@ export default function Support() {
                   </div>
                 </CardHeader>
                 <CardContent className="flex flex-col h-[calc(100vh-20rem)] p-0" style={{ touchAction: 'manipulation' }}>
-                  <div className="flex-1 overflow-y-auto px-3 py-3 sm:px-4 sm:py-4 space-y-2 sm:space-y-3" style={{ touchAction: 'manipulation' }}>
+                  <div className="flex-1 overflow-y-auto px-3 pt-4 pb-3 sm:px-4 sm:pt-4 sm:pb-4 space-y-2 sm:space-y-3" style={{ touchAction: 'manipulation' }}>
                     {loadingMessages ? (
                       <div className="text-center text-gray-400 py-8">Carregando mensagens...</div>
                     ) : messages.length > 0 ? (
