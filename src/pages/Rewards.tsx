@@ -141,9 +141,12 @@ export default function Rewards() {
               </div>
             ) : rewards && rewards.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {rewards.map((reward) => {
-                  const canAfford = (profile?.points || 0) >= (reward.points_cost || reward.points_required);
-                  const isOutOfStock = reward.stock !== undefined && reward.stock === 0;
+                {(() => {
+                  console.log('📦 Renderizando prêmios:', rewards.length, rewards);
+                  return rewards.map((reward) => {
+                    console.log('🎁 Prêmio:', reward.name, 'Imagem:', reward.image_url);
+                    const canAfford = (profile?.points || 0) >= (reward.points_cost || reward.points_required);
+                    const isOutOfStock = reward.stock !== undefined && reward.stock === 0;
 
                   return (
                     <Card
@@ -155,20 +158,28 @@ export default function Rewards() {
                           : 'border-[#2a2a2a] bg-[#1a1a1a] opacity-60'
                       )}
                     >
-                      <div className="aspect-video bg-[#2a2a2a] overflow-hidden">
+                      <div className="aspect-video bg-[#2a2a2a] overflow-hidden relative">
                         {reward.image_url ? (
-                          <img
-                            src={reward.image_url}
-                            alt={reward.name}
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              // Se a imagem falhar, mostrar placeholder
-                              (e.target as HTMLImageElement).src = 'https://via.placeholder.com/400x300/FF6B35/FFFFFF?text=' + encodeURIComponent(reward.name);
-                            }}
-                          />
+                          <>
+                            <img
+                              src={reward.image_url}
+                              alt={reward.name}
+                              className="w-full h-full object-cover"
+                              onLoad={() => {
+                                console.log('✅ Imagem carregada:', reward.name, reward.image_url);
+                              }}
+                              onError={(e) => {
+                                console.error('❌ Erro ao carregar imagem:', reward.name, reward.image_url);
+                                // Se a imagem falhar, mostrar placeholder
+                                (e.target as HTMLImageElement).src = 'https://via.placeholder.com/400x300/FF6B35/FFFFFF?text=' + encodeURIComponent(reward.name);
+                              }}
+                            />
+                            {console.log('🖼️ Renderizando imagem para:', reward.name, 'URL:', reward.image_url)}
+                          </>
                         ) : (
                           <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/10">
                             <Gift className="h-16 w-16 text-primary/50" />
+                            {console.warn('⚠️ Sem imagem para:', reward.name)}
                           </div>
                         )}
                       </div>
@@ -231,7 +242,8 @@ export default function Rewards() {
                       </CardContent>
                     </Card>
                   );
-                })}
+                });
+                })()}
               </div>
             ) : (
               <Card className="border border-[#2a2a2a] bg-[#1a1a1a]">
