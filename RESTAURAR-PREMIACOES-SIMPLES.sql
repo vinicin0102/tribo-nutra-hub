@@ -107,6 +107,9 @@ ON public.redemptions FOR INSERT
 TO authenticated
 WITH CHECK (auth.uid() = user_id);
 
+-- Garantir que todos os prêmios estão ativos
+UPDATE public.rewards SET is_active = true WHERE is_active IS NULL OR is_active = false;
+
 -- Verificar prêmios criados
 SELECT 
   '✅ Prêmios restaurados!' as status,
@@ -114,7 +117,8 @@ SELECT
   name,
   points_cost,
   stock,
-  is_active
+  is_active,
+  created_at
 FROM public.rewards 
 ORDER BY points_cost ASC;
 

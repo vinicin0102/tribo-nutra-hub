@@ -33,10 +33,18 @@ export function useRewards() {
       const { data, error } = await (supabase.from('rewards') as any)
         .select('*')
         .eq('is_active', true)
-        .order('points_required', { ascending: true });
+        .order('points_cost', { ascending: true });
 
-      if (error) throw error;
-      return data as Reward[];
+      if (error) {
+        console.error('Erro ao buscar prêmios:', error);
+        throw error;
+      }
+      
+      // Mapear points_cost para points_required para compatibilidade
+      return (data || []).map((reward: any) => ({
+        ...reward,
+        points_required: reward.points_cost || reward.points_required || 0,
+      })) as Reward[];
     },
   });
 }
