@@ -138,20 +138,48 @@ export default function Chat() {
 
             toast.info('Enviando áudio...');
             
-            // Enviar mensagem com áudio
-            const { error } = await supabase
-              .from('chat_messages')
-              .insert({
-                user_id: user.id,
-                content: '🎤 Mensagem de áudio',
-                audio_url: base64Audio,
-                audio_duration: recordingDuration > 0 ? recordingDuration : 1,
-              });
+            // Preparar dados para inserção
+            const messageData: any = {
+              user_id: user.id,
+              content: '🎤 Mensagem de áudio',
+            };
             
-            if (error) {
-              console.error('Erro SQL:', error);
-              console.error('Detalhes do erro:', JSON.stringify(error, null, 2));
-              throw error;
+            // Adicionar campos de áudio apenas se não houver erro de schema
+            // Isso permite que funcione mesmo se as colunas não existirem ainda
+            try {
+              // Tentar inserir com campos de áudio
+              const { error } = await supabase
+                .from('chat_messages')
+                .insert({
+                  ...messageData,
+                  audio_url: base64Audio,
+                  audio_duration: recordingDuration > 0 ? recordingDuration : 1,
+                });
+              
+              if (error) {
+                // Se der erro de coluna não encontrada, tentar sem os campos de áudio
+                if (error.message?.includes('audio_duration') || error.message?.includes('audio_url')) {
+                  console.warn('Colunas de áudio não encontradas, enviando sem áudio:', error.message);
+                  toast.warning('Enviando mensagem de texto (áudio não disponível ainda)');
+                  
+                  // Enviar apenas como mensagem de texto
+                  const { error: textError } = await supabase
+                    .from('chat_messages')
+                    .insert({
+                      user_id: user.id,
+                      content: '🎤 Mensagem de áudio (áudio não disponível)',
+                    });
+                  
+                  if (textError) {
+                    throw textError;
+                  }
+                } else {
+                  throw error;
+                }
+              }
+            } catch (insertError: any) {
+              console.error('Erro ao inserir mensagem:', insertError);
+              throw insertError;
             }
             
             toast.success('Áudio enviado!');
