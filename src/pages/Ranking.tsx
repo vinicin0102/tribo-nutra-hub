@@ -144,8 +144,10 @@ export default function Ranking() {
           </Card>
         )}
 
-        {/* Badges/Conquistas */}
-        <BadgesList />
+        {/* Badges/Conquistas - Estático */}
+        <div style={{ position: 'sticky', top: '80px', zIndex: 10 }}>
+          <BadgesList />
+        </div>
 
         {/* Ranking List */}
         <Card className="border border-[#2a2a2a] bg-[#1a1a1a]">
