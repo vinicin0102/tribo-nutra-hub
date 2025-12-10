@@ -115,6 +115,56 @@ export type Database = {
         }
         Relationships: []
       }
+      lessons: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          duration_minutes: number | null
+          external_links: Json | null
+          id: string
+          is_published: boolean | null
+          module_id: string
+          order_index: number
+          title: string
+          updated_at: string | null
+          vturb_code: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          duration_minutes?: number | null
+          external_links?: Json | null
+          id?: string
+          is_published?: boolean | null
+          module_id: string
+          order_index?: number
+          title: string
+          updated_at?: string | null
+          vturb_code?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          duration_minutes?: number | null
+          external_links?: Json | null
+          id?: string
+          is_published?: boolean | null
+          module_id?: string
+          order_index?: number
+          title?: string
+          updated_at?: string | null
+          vturb_code?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lessons_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       likes: {
         Row: {
           created_at: string | null
@@ -143,6 +193,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      modules: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          is_published: boolean | null
+          order_index: number
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_published?: boolean | null
+          order_index?: number
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_published?: boolean | null
+          order_index?: number
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       notifications: {
         Row: {
@@ -544,6 +624,7 @@ export type Database = {
         Args: { p_expires_at?: string; p_plan: string; p_user_id: string }
         Returns: Json
       }
+      is_admin: { Args: never; Returns: boolean }
       mute_user: {
         Args: { p_hours: number; p_user_id: string }
         Returns: {

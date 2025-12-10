@@ -1,18 +1,16 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Shield, Users, MessageSquare, Trash2, Ban, CheckCircle, LogOut, Home, Gift } from 'lucide-react';
-// Dashboard do suporte com 3 abas: Chat, Resgates e Usuários
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Shield, Users, MessageSquare, LogOut, Home, Gift, BookOpen } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useSupportUsers, useBanUser, useUnbanUser, useIsSupport } from '@/hooks/useSupport';
+import { useIsSupport } from '@/hooks/useSupport';
 import { useIsAdmin } from '@/hooks/useAdmin';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
 import { SupportChat } from '@/components/support/SupportChat';
 import { UserManagement } from '@/components/support/UserManagement';
 import { RewardManagement } from '@/components/support/RewardManagement';
+import { ContentManagement } from '@/components/support/ContentManagement';
 
 export default function SupportDashboard() {
   const navigate = useNavigate();
@@ -105,22 +103,23 @@ export default function SupportDashboard() {
 
       <div className="container py-6 px-4">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList className={`bg-[#1a1a1a] border border-[#2a2a2a] w-full ${canAccessAdminPanel ? 'grid-cols-3' : 'grid-cols-2'}`}>
-            <TabsTrigger value="chat" className="data-[state=active]:bg-primary">
-              <MessageSquare className="h-4 w-4 mr-2" />
-              <span className="hidden sm:inline">Chat de Suporte</span>
-              <span className="sm:hidden">Chat</span>
+          <TabsList className="bg-[#1a1a1a] border border-[#2a2a2a] w-full grid grid-cols-4">
+            <TabsTrigger value="chat" className="data-[state=active]:bg-primary text-xs">
+              <MessageSquare className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Chat</span>
             </TabsTrigger>
-            <TabsTrigger value="rewards" className="data-[state=active]:bg-primary">
-              <Gift className="h-4 w-4 mr-2" />
+            <TabsTrigger value="rewards" className="data-[state=active]:bg-primary text-xs">
+              <Gift className="h-4 w-4 sm:mr-2" />
               <span className="hidden sm:inline">Resgates</span>
-              <span className="sm:hidden">Prêmios</span>
+            </TabsTrigger>
+            <TabsTrigger value="content" className="data-[state=active]:bg-primary text-xs">
+              <BookOpen className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Conteúdo</span>
             </TabsTrigger>
             {canAccessAdminPanel && (
-              <TabsTrigger value="users" className="data-[state=active]:bg-primary">
-                <Users className="h-4 w-4 mr-2" />
+              <TabsTrigger value="users" className="data-[state=active]:bg-primary text-xs">
+                <Users className="h-4 w-4 sm:mr-2" />
                 <span className="hidden sm:inline">Usuários</span>
-                <span className="sm:hidden">Users</span>
               </TabsTrigger>
             )}
           </TabsList>
@@ -131,6 +130,10 @@ export default function SupportDashboard() {
 
           <TabsContent value="rewards" className="space-y-4">
             <RewardManagement />
+          </TabsContent>
+
+          <TabsContent value="content" className="space-y-4">
+            <ContentManagement />
           </TabsContent>
 
           {canAccessAdminPanel && (
