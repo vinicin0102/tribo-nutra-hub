@@ -3,30 +3,55 @@ import { useLesson, useLessons, useModules, Lesson as LessonType } from '@/hooks
 import { ArrowLeft, ArrowRight, ExternalLink, Clock, ChevronDown, ChevronUp, List } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
 
 function VturbPlayer({ code }: { code: string }) {
-  // Se o código for um iframe completo, extrair o src ou usar diretamente
-  if (code.includes('<iframe') || code.includes('<script')) {
-    return (
-      <div 
-        className="w-full aspect-video bg-black rounded-lg overflow-hidden"
-        dangerouslySetInnerHTML={{ __html: code }}
-      />
-    );
-  }
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  // Se for apenas o ID do vídeo, criar o iframe
+  useEffect(() => {
+    if (!code || !containerRef.current) return;
+
+    // Limpar container
+    containerRef.current.innerHTML = '';
+
+    // Extrair script src e player id do código Vturb
+    const scriptMatch = code.match(/s\.src="([^"]+)"/);
+    const playerIdMatch = code.match(/id="([^"]+)"/);
+
+    if (scriptMatch && playerIdMatch) {
+      const scriptSrc = scriptMatch[1];
+      const playerId = playerIdMatch[1];
+
+      // Criar elemento do player
+      const player = document.createElement('div');
+      player.id = playerId;
+      player.style.cssText = 'display: block; margin: 0 auto; width: 100%; height: 100%;';
+      containerRef.current.appendChild(player);
+
+      // Criar e injetar script
+      const script = document.createElement('script');
+      script.src = scriptSrc;
+      script.async = true;
+      document.head.appendChild(script);
+
+      return () => {
+        // Cleanup: remover script do head
+        if (script.parentNode) {
+          script.parentNode.removeChild(script);
+        }
+      };
+    } else if (code.includes('<iframe')) {
+      // Fallback para iframe direto
+      containerRef.current.innerHTML = code;
+    }
+  }, [code]);
+
   return (
-    <div className="w-full aspect-video bg-black rounded-lg overflow-hidden">
-      <iframe
-        src={`https://scripts.converteai.net/${code}`}
-        className="w-full h-full"
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-        allowFullScreen
-      />
-    </div>
+    <div 
+      ref={containerRef}
+      className="w-full aspect-video bg-black rounded-lg overflow-hidden"
+    />
   );
 }
 
