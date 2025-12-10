@@ -15,18 +15,23 @@ function VturbPlayer({ code }: { code: string }) {
     // Limpar container
     containerRef.current.innerHTML = '';
 
+    // Normalizar aspas curvas para aspas retas
+    const normalizedCode = code
+      .replace(/"/g, '"')
+      .replace(/"/g, '"');
+
     // Extrair script src e player id do código Vturb
-    const scriptMatch = code.match(/s\.src="([^"]+)"/);
-    const playerIdMatch = code.match(/id="([^"]+)"/);
+    const scriptMatch = normalizedCode.match(/s\.src="([^"]+)"/);
+    const playerIdMatch = normalizedCode.match(/id="([^"]+)"/);
 
     if (scriptMatch && playerIdMatch) {
       const scriptSrc = scriptMatch[1];
       const playerId = playerIdMatch[1];
 
-      // Criar elemento do player
-      const player = document.createElement('div');
+      // Criar elemento vturb-smartplayer (elemento correto do Vturb)
+      const player = document.createElement('vturb-smartplayer');
       player.id = playerId;
-      player.style.cssText = 'display: block; margin: 0 auto; width: 100%; height: 100%;';
+      player.style.cssText = 'display: block; margin: 0 auto; width: 100%;';
       containerRef.current.appendChild(player);
 
       // Criar e injetar script
@@ -36,13 +41,11 @@ function VturbPlayer({ code }: { code: string }) {
       document.head.appendChild(script);
 
       return () => {
-        // Cleanup: remover script do head
         if (script.parentNode) {
           script.parentNode.removeChild(script);
         }
       };
     } else if (code.includes('<iframe')) {
-      // Fallback para iframe direto
       containerRef.current.innerHTML = code;
     }
   }, [code]);
