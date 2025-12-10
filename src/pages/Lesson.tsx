@@ -82,6 +82,35 @@ function VideoPlayer({ code }: { code: string }) {
   );
 }
 
+// Função para detectar e converter URLs em links clicáveis
+function linkifyText(text: string): (string | { url: string; text: string })[] {
+  const urlRegex = /(https?:\/\/[^\s]+)|(www\.[^\s]+)|([a-zA-Z0-9-]+\.[a-zA-Z]{2,}[^\s]*)/g;
+  
+  const parts: (string | { url: string; text: string })[] = [];
+  let lastIndex = 0;
+  let match;
+  
+  while ((match = urlRegex.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push(text.substring(lastIndex, match.index));
+    }
+    
+    let url = match[0];
+    if (!url.startsWith('http')) {
+      url = 'https://' + url;
+    }
+    parts.push({ url, text: match[0] });
+    
+    lastIndex = match.index + match[0].length;
+  }
+  
+  if (lastIndex < text.length) {
+    parts.push(text.substring(lastIndex));
+  }
+  
+  return parts.length > 0 ? parts : [text];
+}
+
 function LessonSidebar({ 
   lessons, 
   currentLessonId, 
@@ -232,7 +261,21 @@ export default function Lesson() {
           {lesson.description && (
             <div className="bg-[#1a1a1a] rounded-xl p-4 border border-[#2a2a2a]">
               <h3 className="font-medium text-white mb-2">Descrição</h3>
-              <p className="text-gray-400 text-sm whitespace-pre-wrap">{lesson.description}</p>
+              <p className="text-gray-400 text-sm whitespace-pre-wrap">
+                {linkifyText(lesson.description).map((part, i) => 
+                  typeof part === 'string' ? part : (
+                    <a 
+                      key={i}
+                      href={part.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary hover:underline"
+                    >
+                      {part.text}
+                    </a>
+                  )
+                )}
+              </p>
             </div>
           )}
 
