@@ -1,4 +1,4 @@
-import { User, LogOut, Settings, Shield } from 'lucide-react';
+import { User, LogOut, Settings, Shield, HelpCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -86,6 +86,10 @@ export function Navbar() {
               <DropdownMenuItem onClick={() => navigate('/profile')}>
                 <Settings className="mr-2 h-4 w-4" />
                 Configurações
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate('/support')}>
+                <HelpCircle className="mr-2 h-4 w-4" />
+                Suporte
               </DropdownMenuItem>
               {isAdmin && (
                 <>
