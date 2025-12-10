@@ -6,7 +6,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
 
-function VturbPlayer({ code }: { code: string }) {
+function VideoPlayer({ code }: { code: string }) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -20,32 +20,56 @@ function VturbPlayer({ code }: { code: string }) {
       .replace(/"/g, '"')
       .replace(/"/g, '"');
 
-    // Extrair script src e player id do código Vturb
-    const scriptMatch = normalizedCode.match(/s\.src="([^"]+)"/);
-    const playerIdMatch = normalizedCode.match(/id="([^"]+)"/);
+    // Detectar tipo de player
+    const isVturb = normalizedCode.includes('vturb-smartplayer') || normalizedCode.includes('converteai.net');
+    const isVoomly = normalizedCode.includes('voomly.com') || normalizedCode.includes('voomly-embed');
+    const isIframe = normalizedCode.includes('<iframe');
 
-    if (scriptMatch && playerIdMatch) {
-      const scriptSrc = scriptMatch[1];
-      const playerId = playerIdMatch[1];
+    if (isVturb) {
+      // Vturb player
+      const scriptMatch = normalizedCode.match(/s\.src="([^"]+)"/);
+      const playerIdMatch = normalizedCode.match(/id="([^"]+)"/);
 
-      // Criar elemento vturb-smartplayer (elemento correto do Vturb)
-      const player = document.createElement('vturb-smartplayer');
-      player.id = playerId;
-      player.style.cssText = 'display: block; margin: 0 auto; width: 100%;';
-      containerRef.current.appendChild(player);
+      if (scriptMatch && playerIdMatch) {
+        const scriptSrc = scriptMatch[1];
+        const playerId = playerIdMatch[1];
 
-      // Criar e injetar script
-      const script = document.createElement('script');
-      script.src = scriptSrc;
-      script.async = true;
-      document.head.appendChild(script);
+        const player = document.createElement('vturb-smartplayer');
+        player.id = playerId;
+        player.style.cssText = 'display: block; margin: 0 auto; width: 100%;';
+        containerRef.current.appendChild(player);
 
-      return () => {
-        if (script.parentNode) {
-          script.parentNode.removeChild(script);
-        }
-      };
-    } else if (code.includes('<iframe')) {
+        const script = document.createElement('script');
+        script.src = scriptSrc;
+        script.async = true;
+        document.head.appendChild(script);
+
+        return () => {
+          if (script.parentNode) {
+            script.parentNode.removeChild(script);
+          }
+        };
+      }
+    } else if (isVoomly) {
+      // Voomly player - extrair iframe src
+      const iframeSrcMatch = normalizedCode.match(/src="([^"]+voomly[^"]+)"/);
+      
+      if (iframeSrcMatch) {
+        const iframe = document.createElement('iframe');
+        iframe.src = iframeSrcMatch[1];
+        iframe.style.cssText = 'width: 100%; height: 100%; border: none;';
+        iframe.allow = 'autoplay; fullscreen; picture-in-picture';
+        iframe.allowFullscreen = true;
+        containerRef.current.appendChild(iframe);
+      } else {
+        // Fallback: inserir código HTML diretamente
+        containerRef.current.innerHTML = code;
+      }
+    } else if (isIframe) {
+      // Iframe genérico
+      containerRef.current.innerHTML = code;
+    } else {
+      // Fallback: tentar inserir código diretamente
       containerRef.current.innerHTML = code;
     }
   }, [code]);
@@ -187,7 +211,7 @@ export default function Lesson() {
 
         {/* Video Player */}
         {lesson.vturb_code ? (
-          <VturbPlayer code={lesson.vturb_code} />
+          <VideoPlayer code={lesson.vturb_code} />
         ) : (
           <div className="w-full aspect-video bg-[#1a1a1a] rounded-lg flex items-center justify-center">
             <p className="text-gray-500">Vídeo não disponível</p>
