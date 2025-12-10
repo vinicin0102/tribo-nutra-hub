@@ -1,13 +1,13 @@
-import { Home, MessageCircle, Trophy, Gift, HelpCircle } from 'lucide-react';
+import { Home, MessageCircle, Trophy, Gift, BookOpen } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 
 const navItems = [
   { icon: Home, label: 'Feed', path: '/' },
+  { icon: BookOpen, label: 'Aulas', path: '/courses' },
   { icon: MessageCircle, label: 'Chat', path: '/chat' },
   { icon: Trophy, label: 'Ranking', path: '/ranking' },
-  { icon: Gift, label: 'Premiação', path: '/rewards' },
-  { icon: HelpCircle, label: 'Suporte', path: '/support' },
+  { icon: Gift, label: 'Prêmios', path: '/rewards' },
 ];
 
 export function BottomNav() {
