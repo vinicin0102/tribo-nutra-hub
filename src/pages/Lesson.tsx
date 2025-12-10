@@ -1,11 +1,11 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useLesson, useLessons, useModules, Lesson as LessonType } from '@/hooks/useCourses';
-import { ArrowLeft, ArrowRight, ExternalLink, Clock, ChevronDown, ChevronUp, List } from 'lucide-react';
+import { ArrowLeft, ArrowRight, ExternalLink, Clock, ChevronDown, ChevronUp, List, CheckCircle2, Circle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
-
+import { useLessonProgress } from '@/hooks/useLessonProgress';
 function VideoPlayer({ code }: { code: string }) {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -116,15 +116,20 @@ function LessonSidebar({
   currentLessonId, 
   moduleId,
   isOpen,
-  onToggle
+  onToggle,
+  isCompleted,
+  completedCount
 }: { 
   lessons: LessonType[]; 
   currentLessonId: string;
   moduleId: string;
   isOpen: boolean;
   onToggle: () => void;
+  isCompleted: (lessonId: string) => boolean;
+  completedCount: number;
 }) {
   const navigate = useNavigate();
+  const progressPercent = lessons.length > 0 ? Math.round((completedCount / lessons.length) * 100) : 0;
 
   return (
     <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] overflow-hidden">
@@ -135,43 +140,64 @@ function LessonSidebar({
         <span className="font-medium text-white flex items-center gap-2">
           <List className="w-4 h-4" />
           Aulas do módulo
+          <span className="text-xs text-gray-400 font-normal">
+            ({completedCount}/{lessons.length})
+          </span>
         </span>
-        {isOpen ? (
-          <ChevronUp className="w-5 h-5 text-gray-400" />
-        ) : (
-          <ChevronDown className="w-5 h-5 text-gray-400" />
-        )}
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-primary font-medium">{progressPercent}%</span>
+          {isOpen ? (
+            <ChevronUp className="w-5 h-5 text-gray-400" />
+          ) : (
+            <ChevronDown className="w-5 h-5 text-gray-400" />
+          )}
+        </div>
       </button>
+      
+      {/* Progress bar */}
+      <div className="h-1 bg-[#2a2a2a]">
+        <div 
+          className="h-full bg-primary transition-all duration-300"
+          style={{ width: `${progressPercent}%` }}
+        />
+      </div>
       
       {isOpen && (
         <div className="border-t border-[#2a2a2a] max-h-64 overflow-y-auto">
-          {lessons.map((lesson, index) => (
-            <button
-              key={lesson.id}
-              onClick={() => navigate(`/courses/${moduleId}/${lesson.id}`)}
-              className={cn(
-                'w-full flex items-center gap-3 p-3 text-left transition-colors',
-                lesson.id === currentLessonId
-                  ? 'bg-primary/20 border-l-2 border-primary'
-                  : 'hover:bg-[#222]'
-              )}
-            >
-              <span className={cn(
-                'w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium',
-                lesson.id === currentLessonId
-                  ? 'bg-primary text-white'
-                  : 'bg-[#2a2a2a] text-gray-400'
-              )}>
-                {index + 1}
-              </span>
-              <span className={cn(
-                'text-sm truncate flex-1',
-                lesson.id === currentLessonId ? 'text-white font-medium' : 'text-gray-300'
-              )}>
-                {lesson.title}
-              </span>
-            </button>
-          ))}
+          {lessons.map((lesson, index) => {
+            const completed = isCompleted(lesson.id);
+            return (
+              <button
+                key={lesson.id}
+                onClick={() => navigate(`/courses/${moduleId}/${lesson.id}`)}
+                className={cn(
+                  'w-full flex items-center gap-3 p-3 text-left transition-colors',
+                  lesson.id === currentLessonId
+                    ? 'bg-primary/20 border-l-2 border-primary'
+                    : 'hover:bg-[#222]'
+                )}
+              >
+                {completed ? (
+                  <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0" />
+                ) : (
+                  <span className={cn(
+                    'w-5 h-5 rounded-full flex items-center justify-center text-xs font-medium border',
+                    lesson.id === currentLessonId
+                      ? 'border-primary text-primary'
+                      : 'border-gray-600 text-gray-400'
+                  )}>
+                    {index + 1}
+                  </span>
+                )}
+                <span className={cn(
+                  'text-sm truncate flex-1',
+                  completed ? 'text-green-400' : lesson.id === currentLessonId ? 'text-white font-medium' : 'text-gray-300'
+                )}>
+                  {lesson.title}
+                </span>
+              </button>
+            );
+          })}
         </div>
       )}
     </div>
@@ -185,7 +211,7 @@ export default function Lesson() {
   const { data: lessons, isLoading: lessonsLoading } = useLessons(moduleId);
   const { data: modules } = useModules();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-
+  const { isCompleted, toggleComplete, completedLessons } = useLessonProgress();
   const currentModule = modules?.find(m => m.id === moduleId);
   const currentIndex = lessons?.findIndex(l => l.id === lessonId) ?? -1;
   const prevLesson = currentIndex > 0 ? lessons?.[currentIndex - 1] : null;
@@ -249,6 +275,28 @@ export default function Lesson() {
 
         {/* Lesson Info */}
         <div className="mt-6 space-y-4">
+          {/* Mark as complete button */}
+          <Button
+            onClick={() => toggleComplete(lessonId || '')}
+            variant={isCompleted(lessonId || '') ? "secondary" : "default"}
+            className={cn(
+              "w-full",
+              isCompleted(lessonId || '') && "bg-green-600/20 text-green-400 hover:bg-green-600/30 border-green-600/50"
+            )}
+          >
+            {isCompleted(lessonId || '') ? (
+              <>
+                <CheckCircle2 className="w-5 h-5 mr-2" />
+                Concluída
+              </>
+            ) : (
+              <>
+                <Circle className="w-5 h-5 mr-2" />
+                Marcar como concluída
+              </>
+            )}
+          </Button>
+
           <div className="flex items-center gap-4 text-sm text-gray-400">
             {lesson.duration_minutes > 0 && (
               <span className="flex items-center gap-1">
@@ -308,6 +356,8 @@ export default function Lesson() {
               moduleId={moduleId || ''}
               isOpen={sidebarOpen}
               onToggle={() => setSidebarOpen(!sidebarOpen)}
+              isCompleted={isCompleted}
+              completedCount={lessons.filter(l => completedLessons.includes(l.id)).length}
             />
           )}
 
