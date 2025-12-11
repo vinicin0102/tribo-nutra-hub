@@ -1,24 +1,28 @@
--- Verificar se a tabela modules existe antes de criar a foreign key
+-- Criar tabela para módulos desbloqueados manualmente
+CREATE TABLE IF NOT EXISTS public.unlocked_modules (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  module_id UUID NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+  UNIQUE(user_id, module_id)
+);
+
+-- Adicionar foreign key para modules (se a tabela existir)
 DO $$
 BEGIN
-  -- Criar tabela para módulos desbloqueados manualmente
-  CREATE TABLE IF NOT EXISTS public.unlocked_modules (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
-    module_id UUID NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
-    UNIQUE(user_id, module_id)
-  );
-
-  -- Adicionar foreign key apenas se a tabela modules existir
-  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'modules') THEN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.tables 
+    WHERE table_schema = 'public' 
+    AND table_name = 'modules'
+  ) THEN
     -- Remover constraint se já existir
     IF EXISTS (
       SELECT 1 FROM information_schema.table_constraints 
       WHERE constraint_schema = 'public' 
       AND constraint_name = 'unlocked_modules_module_id_fkey'
     ) THEN
-      ALTER TABLE public.unlocked_modules DROP CONSTRAINT unlocked_modules_module_id_fkey;
+      ALTER TABLE public.unlocked_modules 
+      DROP CONSTRAINT unlocked_modules_module_id_fkey;
     END IF;
     
     -- Adicionar foreign key
@@ -31,10 +35,9 @@ END $$;
 -- Habilitar RLS
 ALTER TABLE public.unlocked_modules ENABLE ROW LEVEL SECURITY;
 
--- Políticas RLS (com DROP IF EXISTS para evitar erros se já existirem)
+-- Remover políticas antigas se existirem
 DO $$
 BEGIN
-  -- Remover políticas se já existirem
   DROP POLICY IF EXISTS "Users can view own unlocked modules" ON public.unlocked_modules;
   DROP POLICY IF EXISTS "Admins can view all unlocked modules" ON public.unlocked_modules;
   DROP POLICY IF EXISTS "Users can unlock modules for themselves" ON public.unlocked_modules;
@@ -43,6 +46,7 @@ BEGIN
   DROP POLICY IF EXISTS "Admins can remove any unlocked modules" ON public.unlocked_modules;
 END $$;
 
+-- Criar políticas RLS
 CREATE POLICY "Users can view own unlocked modules" 
   ON public.unlocked_modules 
   FOR SELECT 
