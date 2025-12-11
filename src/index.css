@@ -253,6 +253,16 @@
   background: hsl(var(--muted-foreground) / 0.5);
 }
 
+/* Hide scrollbar utility */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
 /* Mobile Optimizations */
 @media (max-width: 768px) {
   /* Melhorar performance em mobile */
