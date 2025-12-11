@@ -19,9 +19,10 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Pencil, Trash2, ChevronDown, ChevronRight, BookOpen, Play, X, Link as LinkIcon } from 'lucide-react';
+import { Plus, Pencil, Trash2, ChevronDown, ChevronRight, BookOpen, Play, X, Link as LinkIcon, Lock, Image as ImageIcon } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
+import { CoverUpload } from '@/components/courses/CoverUpload';
 
 function ModuleForm({ 
   module, 
@@ -36,14 +37,31 @@ function ModuleForm({
   const [description, setDescription] = useState(module?.description || '');
   const [orderIndex, setOrderIndex] = useState(module?.order_index || 0);
   const [isPublished, setIsPublished] = useState(module?.is_published || false);
+  const [coverUrl, setCoverUrl] = useState(module?.cover_url || '');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit({ title, description, order_index: orderIndex, is_published: isPublished });
+    onSubmit({ 
+      title, 
+      description, 
+      order_index: orderIndex, 
+      is_published: isPublished,
+      cover_url: coverUrl || null
+    });
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
+      <div>
+        <Label>Capa do Módulo</Label>
+        <CoverUpload
+          currentUrl={coverUrl}
+          onUpload={(url) => setCoverUrl(url)}
+          onRemove={() => setCoverUrl('')}
+          folder="modules"
+          aspectRatio="16:9"
+        />
+      </div>
       <div>
         <Label htmlFor="title">Título do Módulo</Label>
         <Input
@@ -114,6 +132,8 @@ function LessonForm({
   const [orderIndex, setOrderIndex] = useState(lesson?.order_index || 0);
   const [durationMinutes, setDurationMinutes] = useState(lesson?.duration_minutes || 0);
   const [isPublished, setIsPublished] = useState(lesson?.is_published || false);
+  const [isLocked, setIsLocked] = useState(lesson?.is_locked || false);
+  const [coverUrl, setCoverUrl] = useState(lesson?.cover_url || '');
   const [externalLinks, setExternalLinks] = useState<ExternalLink[]>(lesson?.external_links || []);
   const [newLinkTitle, setNewLinkTitle] = useState('');
   const [newLinkUrl, setNewLinkUrl] = useState('');
@@ -140,12 +160,24 @@ function LessonForm({
       order_index: orderIndex, 
       duration_minutes: durationMinutes,
       is_published: isPublished,
+      is_locked: isLocked,
+      cover_url: coverUrl || null,
       external_links: externalLinks
     });
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
+      <div>
+        <Label>Thumbnail da Aula</Label>
+        <CoverUpload
+          currentUrl={coverUrl}
+          onUpload={(url) => setCoverUrl(url)}
+          onRemove={() => setCoverUrl('')}
+          folder="lessons"
+          aspectRatio="16:9"
+        />
+      </div>
       <div>
         <Label htmlFor="module">Módulo</Label>
         <Select value={moduleId} onValueChange={setModuleId} required>
@@ -189,7 +221,7 @@ function LessonForm({
           rows={4}
           className="font-mono text-xs"
         />
-        <p className="text-xs text-gray-500 mt-1">Cole o código de embed completo ou apenas o ID do vídeo</p>
+        <p className="text-xs text-muted-foreground mt-1">Cole o código de embed completo ou apenas o ID do vídeo</p>
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div>
@@ -218,13 +250,13 @@ function LessonForm({
       <div className="space-y-2">
         <Label>Links Externos</Label>
         {externalLinks.map((link, index) => (
-          <div key={index} className="flex items-center gap-2 bg-[#1a1a1a] p-2 rounded-lg">
-            <LinkIcon className="w-4 h-4 text-gray-400 shrink-0" />
+          <div key={index} className="flex items-center gap-2 bg-muted p-2 rounded-lg">
+            <LinkIcon className="w-4 h-4 text-muted-foreground shrink-0" />
             <span className="text-sm truncate flex-1">{link.title}</span>
             <button
               type="button"
               onClick={() => removeLink(index)}
-              className="text-red-400 hover:text-red-300"
+              className="text-destructive hover:text-destructive/80"
             >
               <X className="w-4 h-4" />
             </button>
@@ -249,14 +281,37 @@ function LessonForm({
         </div>
       </div>
 
-      <div className="flex items-center gap-2">
-        <Switch
-          id="published"
-          checked={isPublished}
-          onCheckedChange={setIsPublished}
-        />
-        <Label htmlFor="published">Publicado</Label>
+      {/* Toggles */}
+      <div className="space-y-3 pt-2 border-t border-border">
+        <div className="flex items-center justify-between">
+          <Label htmlFor="published" className="flex items-center gap-2">
+            <Play className="w-4 h-4" />
+            Publicado
+          </Label>
+          <Switch
+            id="published"
+            checked={isPublished}
+            onCheckedChange={setIsPublished}
+          />
+        </div>
+        <div className="flex items-center justify-between">
+          <Label htmlFor="locked" className="flex items-center gap-2">
+            <Lock className="w-4 h-4 text-destructive" />
+            Aula Bloqueada
+          </Label>
+          <Switch
+            id="locked"
+            checked={isLocked}
+            onCheckedChange={setIsLocked}
+          />
+        </div>
+        {isLocked && (
+          <p className="text-xs text-muted-foreground bg-destructive/10 p-2 rounded">
+            Aulas bloqueadas aparecem em preto e branco com um cadeado para os alunos.
+          </p>
+        )}
       </div>
+
       <div className="flex gap-2 pt-2">
         <Button type="button" variant="outline" onClick={onCancel} className="flex-1">
           Cancelar
@@ -352,7 +407,7 @@ export function ContentManagement() {
     return (
       <div className="space-y-4">
         {[1, 2, 3].map(i => (
-          <Skeleton key={i} className="h-20 w-full bg-[#2a2a2a]" />
+          <Skeleton key={i} className="h-20 w-full bg-muted" />
         ))}
       </div>
     );
@@ -362,7 +417,7 @@ export function ContentManagement() {
     <div className="space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between gap-4 flex-wrap">
-        <h2 className="text-lg font-semibold text-white">Gerenciar Conteúdo</h2>
+        <h2 className="text-lg font-semibold text-foreground">Gerenciar Conteúdo</h2>
         <div className="flex gap-2">
           <Dialog open={moduleDialogOpen} onOpenChange={setModuleDialogOpen}>
             <DialogTrigger asChild>
@@ -375,7 +430,7 @@ export function ContentManagement() {
                 Módulo
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="max-w-lg">
               <DialogHeader>
                 <DialogTitle>{editingModule ? 'Editar Módulo' : 'Novo Módulo'}</DialogTitle>
               </DialogHeader>
@@ -426,32 +481,44 @@ export function ContentManagement() {
 
       {/* Modules List */}
       {!modules || modules.length === 0 ? (
-        <Card className="bg-[#1a1a1a] border-[#2a2a2a]">
+        <Card className="bg-card border-border">
           <CardContent className="py-8 text-center">
-            <BookOpen className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-            <p className="text-gray-400">Nenhum módulo criado ainda</p>
-            <p className="text-gray-500 text-sm mt-1">Crie seu primeiro módulo para começar</p>
+            <BookOpen className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+            <p className="text-muted-foreground">Nenhum módulo criado ainda</p>
+            <p className="text-muted-foreground/70 text-sm mt-1">Crie seu primeiro módulo para começar</p>
           </CardContent>
         </Card>
       ) : (
         <div className="space-y-3">
           {modules.map(module => (
-            <Card key={module.id} className="bg-[#1a1a1a] border-[#2a2a2a] overflow-hidden">
+            <Card key={module.id} className="bg-card border-border overflow-hidden">
               <CardHeader className="p-3">
                 <div className="flex items-center gap-3">
                   <button
                     onClick={() => toggleModule(module.id)}
-                    className="p-1 hover:bg-[#2a2a2a] rounded"
+                    className="p-1 hover:bg-muted rounded"
                   >
                     {expandedModules.has(module.id) ? (
-                      <ChevronDown className="w-5 h-5 text-gray-400" />
+                      <ChevronDown className="w-5 h-5 text-muted-foreground" />
                     ) : (
-                      <ChevronRight className="w-5 h-5 text-gray-400" />
+                      <ChevronRight className="w-5 h-5 text-muted-foreground" />
                     )}
                   </button>
+                  
+                  {/* Module Thumbnail */}
+                  <div className="w-16 h-10 rounded overflow-hidden shrink-0 bg-muted">
+                    {module.cover_url ? (
+                      <img src={module.cover_url} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <ImageIcon className="w-4 h-4 text-muted-foreground" />
+                      </div>
+                    )}
+                  </div>
+                  
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <CardTitle className="text-sm font-medium text-white truncate">
+                      <CardTitle className="text-sm font-medium text-foreground truncate">
                         {module.title}
                       </CardTitle>
                       {!module.is_published && (
@@ -460,7 +527,7 @@ export function ContentManagement() {
                         </span>
                       )}
                     </div>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-muted-foreground">
                       {module.lessons?.length || 0} aula(s) • Ordem: {module.order_index}
                     </p>
                   </div>
@@ -491,7 +558,7 @@ export function ContentManagement() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8 text-red-400 hover:text-red-300"
+                      className="h-8 w-8 text-destructive hover:text-destructive/80"
                       onClick={() => handleDeleteModule(module.id)}
                     >
                       <Trash2 className="w-4 h-4" />
@@ -503,19 +570,50 @@ export function ContentManagement() {
               {expandedModules.has(module.id) && (
                 <CardContent className="pt-0 pb-3">
                   {module.lessons && module.lessons.length > 0 ? (
-                    <div className="space-y-1 ml-8 border-l border-[#2a2a2a] pl-4">
+                    <div className="space-y-1 ml-8 border-l border-border pl-4">
                       {module.lessons.map((lesson, index) => (
                         <div
                           key={lesson.id}
-                          className="flex items-center gap-2 py-2 px-3 bg-[#222] rounded-lg"
+                          className={cn(
+                            "flex items-center gap-2 py-2 px-3 rounded-lg",
+                            lesson.is_locked 
+                              ? "bg-destructive/10 border border-destructive/30" 
+                              : "bg-muted"
+                          )}
                         >
-                          <div className="w-6 h-6 rounded-full bg-[#2a2a2a] flex items-center justify-center text-xs text-gray-400">
+                          {/* Lesson Thumbnail */}
+                          <div className={cn(
+                            "w-14 h-9 rounded overflow-hidden shrink-0 bg-background relative",
+                            lesson.is_locked && "grayscale"
+                          )}>
+                            {lesson.cover_url ? (
+                              <img src={lesson.cover_url} alt="" className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center">
+                                <Play className="w-3 h-3 text-muted-foreground" />
+                              </div>
+                            )}
+                            {lesson.is_locked && (
+                              <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+                                <Lock className="w-3 h-3 text-white" />
+                              </div>
+                            )}
+                          </div>
+                          
+                          <div className="w-6 h-6 rounded-full bg-background flex items-center justify-center text-xs text-muted-foreground shrink-0">
                             {index + 1}
                           </div>
-                          <Play className="w-4 h-4 text-primary shrink-0" />
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm text-white truncate">{lesson.title}</p>
-                            <p className="text-xs text-gray-500">
+                            <div className="flex items-center gap-2">
+                              <p className="text-sm text-foreground truncate">{lesson.title}</p>
+                              {lesson.is_locked && (
+                                <span className="flex items-center gap-1 text-xs bg-destructive/20 text-destructive px-1.5 py-0.5 rounded">
+                                  <Lock className="w-3 h-3" />
+                                  Bloqueada
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs text-muted-foreground">
                               {lesson.duration_minutes || 0} min
                               {!lesson.is_published && ' • Rascunho'}
                             </p>
@@ -535,7 +633,7 @@ export function ContentManagement() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-7 w-7 text-red-400 hover:text-red-300"
+                              className="h-7 w-7 text-destructive hover:text-destructive/80"
                               onClick={() => handleDeleteLesson(lesson.id)}
                             >
                               <Trash2 className="w-3 h-3" />
@@ -545,7 +643,7 @@ export function ContentManagement() {
                       ))}
                     </div>
                   ) : (
-                    <p className="text-sm text-gray-500 ml-8 py-2">
+                    <p className="text-sm text-muted-foreground ml-8 py-2">
                       Nenhuma aula neste módulo
                     </p>
                   )}

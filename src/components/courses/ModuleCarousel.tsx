@@ -1,206 +1,127 @@
-import { useNavigate } from 'react-router-dom';
+import { useRef, useState } from 'react';
+import { ChevronLeft, ChevronRight, Lock, CheckCircle, Play, Image as ImageIcon } from 'lucide-react';
 import { Module, Lesson } from '@/hooks/useCourses';
 import { useLessonProgress } from '@/hooks/useLessonProgress';
-import { BookOpen, Lock, Play, CheckCircle2, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useRef, useState } from 'react';
 
 interface ModuleCardProps {
-  module: Module & { lessons?: Lesson[] };
+  module: Module;
+  index: number;
   progress: number;
-  completedCount: number;
-  totalLessons: number;
-  isLocked?: boolean;
   onClick: () => void;
 }
 
-function ModuleCard({ module, progress, completedCount, totalLessons, isLocked, onClick }: ModuleCardProps) {
+function ModuleCard({ module, index, progress, onClick }: ModuleCardProps) {
+  const isCompleted = progress === 100;
+  const lessonCount = module.lessons?.filter(l => l.is_published)?.length || 0;
+  
   return (
     <button
       onClick={onClick}
-      disabled={isLocked}
       className={cn(
-        "flex-shrink-0 w-[260px] sm:w-[280px] md:w-[300px] rounded-xl border overflow-hidden transition-all duration-300",
-        isLocked 
-          ? "bg-[#1a1a1a] border-[#2a2a2a] opacity-60 grayscale cursor-not-allowed"
-          : "bg-gradient-to-br from-[#1a1a1a] to-[#222] border-[#2a2a2a] hover:border-primary/50 hover:shadow-lg hover:shadow-primary/10 cursor-pointer"
+        "flex-shrink-0 w-[280px] md:w-[320px] rounded-2xl overflow-hidden transition-all duration-300",
+        "border border-border bg-card",
+        "hover:border-primary/50 hover:shadow-lg hover:shadow-primary/10 cursor-pointer",
+        isCompleted && "border-green-500/50"
       )}
     >
-      {/* Cover image / placeholder */}
-      <div className="relative h-32 sm:h-36 md:h-40 bg-gradient-to-br from-primary/20 to-orange-500/10 flex items-center justify-center">
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-        
-        {isLocked ? (
-          <div className="relative z-10 w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-[#2a2a2a] flex items-center justify-center">
-            <Lock className="w-5 h-5 sm:w-6 sm:h-6 text-gray-500" />
-          </div>
-        ) : progress === 100 ? (
-          <div className="relative z-10 w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-green-500/20 flex items-center justify-center">
-            <CheckCircle2 className="w-6 h-6 sm:w-7 sm:h-7 text-green-500" />
-          </div>
+      <div className="relative h-36 md:h-40 overflow-hidden">
+        {module.cover_url ? (
+          <img src={module.cover_url} alt={module.title} className="w-full h-full object-cover" />
         ) : (
-          <div className="relative z-10 w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-primary/90 flex items-center justify-center shadow-lg">
-            <Play className="w-5 h-5 sm:w-6 sm:h-6 text-white ml-0.5" />
+          <div className="w-full h-full bg-gradient-to-br from-primary/20 to-orange-500/10 flex items-center justify-center">
+            <ImageIcon className="w-12 h-12 text-muted-foreground/50" />
           </div>
         )}
-        
-        {/* Module order badge */}
-        <div className="absolute top-2 sm:top-3 left-2 sm:left-3 bg-black/60 rounded-lg px-2 py-1">
-          <span className="text-xs text-white font-medium">Módulo {module.order_index + 1}</span>
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+        <div className="absolute top-3 right-3">
+          {isCompleted ? (
+            <div className="p-2 rounded-full bg-green-500/80 backdrop-blur-sm">
+              <CheckCircle className="w-4 h-4 text-white" />
+            </div>
+          ) : progress > 0 ? (
+            <div className="p-2 rounded-full bg-primary/80 backdrop-blur-sm">
+              <Play className="w-4 h-4 text-white" />
+            </div>
+          ) : null}
         </div>
-        
-        {/* Progress badge */}
-        {!isLocked && progress > 0 && (
-          <div className="absolute top-2 sm:top-3 right-2 sm:right-3 bg-primary/90 rounded-lg px-2 py-1">
-            <span className="text-xs text-white font-bold">{progress}%</span>
-          </div>
-        )}
+        <div className="absolute top-3 left-3 px-3 py-1 rounded-full bg-black/60 backdrop-blur-sm">
+          <span className="text-xs font-medium text-white">Módulo {index + 1}</span>
+        </div>
       </div>
-      
-      {/* Content */}
-      <div className="p-3 sm:p-4">
-        <h3 className={cn(
-          "font-bold text-sm sm:text-base line-clamp-2 mb-1 sm:mb-2 transition-colors",
-          isLocked ? "text-gray-500" : "text-white"
-        )}>
-          {module.title}
-        </h3>
-        
-        {module.description && (
-          <p className="text-xs text-gray-400 line-clamp-2 mb-2 sm:mb-3">
-            {module.description}
-          </p>
-        )}
-        
-        <div className="flex items-center justify-between text-xs">
-          <span className={cn(
-            "flex items-center gap-1",
-            isLocked ? "text-gray-600" : "text-gray-400"
-          )}>
-            <BookOpen className="w-3.5 h-3.5" />
-            {totalLessons} aula{totalLessons !== 1 ? 's' : ''}
-          </span>
-          
-          {!isLocked && (
-            <span className={cn(
-              "font-medium",
-              progress === 100 ? "text-green-500" : "text-primary"
-            )}>
-              {completedCount}/{totalLessons}
-            </span>
+      <div className="p-4 space-y-3">
+        <div>
+          <h3 className="font-semibold text-foreground text-left line-clamp-1">{module.title}</h3>
+          {module.description && (
+            <p className="text-sm text-muted-foreground text-left line-clamp-2 mt-1">{module.description}</p>
           )}
         </div>
-        
-        {/* Progress bar */}
-        {!isLocked && (
-          <div className="mt-2 sm:mt-3 h-1.5 bg-[#2a2a2a] rounded-full overflow-hidden">
-            <div 
-              className={cn(
-                "h-full rounded-full transition-all duration-300",
-                progress === 100 ? "bg-green-500" : "bg-gradient-to-r from-primary to-orange-500"
-              )}
-              style={{ width: `${progress}%` }}
-            />
+        <div className="space-y-1">
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-muted-foreground">{lessonCount} aula(s)</span>
+            <span className={cn("font-medium", isCompleted ? "text-green-500" : progress > 0 ? "text-primary" : "text-muted-foreground")}>
+              {progress}%
+            </span>
           </div>
-        )}
+          <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+            <div className={cn("h-full transition-all duration-500 rounded-full", isCompleted ? "bg-green-500" : "bg-primary")} style={{ width: `${progress}%` }} />
+          </div>
+        </div>
       </div>
     </button>
   );
 }
 
 interface ModuleCarouselProps {
-  modules: (Module & { lessons?: Lesson[] })[];
-  onModuleClick: (moduleId: string) => void;
+  modules: Module[];
+  onModuleSelect: (module: Module) => void;
 }
 
-export function ModuleCarousel({ modules, onModuleClick }: ModuleCarouselProps) {
+export function ModuleCarousel({ modules, onModuleSelect }: ModuleCarouselProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
-  const { completedLessons } = useLessonProgress();
   const [showLeftArrow, setShowLeftArrow] = useState(false);
   const [showRightArrow, setShowRightArrow] = useState(true);
+  const { completedLessons } = useLessonProgress();
+  const publishedModules = modules.filter(m => m.is_published);
 
   const handleScroll = () => {
     if (!scrollRef.current) return;
     const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
-    setShowLeftArrow(scrollLeft > 10);
+    setShowLeftArrow(scrollLeft > 0);
     setShowRightArrow(scrollLeft < scrollWidth - clientWidth - 10);
   };
 
   const scroll = (direction: 'left' | 'right') => {
     if (!scrollRef.current) return;
-    const scrollAmount = 300;
-    scrollRef.current.scrollBy({
-      left: direction === 'left' ? -scrollAmount : scrollAmount,
-      behavior: 'smooth'
-    });
+    scrollRef.current.scrollBy({ left: direction === 'left' ? -340 : 340, behavior: 'smooth' });
   };
 
-  const publishedModules = modules.filter(m => m.is_published);
+  const getModuleProgress = (module: Module) => {
+    const lessons = module.lessons?.filter(l => l.is_published) || [];
+    if (lessons.length === 0) return 0;
+    const completed = lessons.filter(l => completedLessons.includes(l.id)).length;
+    return Math.round((completed / lessons.length) * 100);
+  };
 
   if (publishedModules.length === 0) return null;
 
   return (
-    <div className="space-y-3 sm:space-y-4">
-      <div className="flex items-center justify-between px-1">
-        <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
-          <BookOpen className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
-          Módulos
-        </h2>
-        
-        {/* Navigation arrows - only show on larger screens */}
-        <div className="hidden sm:flex items-center gap-2">
-          <button
-            onClick={() => scroll('left')}
-            className={cn(
-              "p-2 rounded-lg transition-colors",
-              showLeftArrow 
-                ? "bg-[#2a2a2a] hover:bg-[#333] text-white" 
-                : "bg-[#1a1a1a] text-gray-600 cursor-not-allowed"
-            )}
-            disabled={!showLeftArrow}
-          >
-            <ChevronRight className="w-4 h-4 rotate-180" />
+    <div className="space-y-4">
+      <div className="flex items-center justify-between px-4 md:px-6">
+        <h2 className="text-xl font-bold text-foreground">Módulos do Curso</h2>
+        <div className="hidden md:flex gap-2">
+          <button onClick={() => scroll('left')} className={cn("p-2 rounded-full border border-border bg-card transition-all", showLeftArrow ? "hover:bg-muted cursor-pointer" : "opacity-50 cursor-not-allowed")} disabled={!showLeftArrow}>
+            <ChevronLeft className="w-5 h-5" />
           </button>
-          <button
-            onClick={() => scroll('right')}
-            className={cn(
-              "p-2 rounded-lg transition-colors",
-              showRightArrow 
-                ? "bg-[#2a2a2a] hover:bg-[#333] text-white" 
-                : "bg-[#1a1a1a] text-gray-600 cursor-not-allowed"
-            )}
-            disabled={!showRightArrow}
-          >
-            <ChevronRight className="w-4 h-4" />
+          <button onClick={() => scroll('right')} className={cn("p-2 rounded-full border border-border bg-card transition-all", showRightArrow ? "hover:bg-muted cursor-pointer" : "opacity-50 cursor-not-allowed")} disabled={!showRightArrow}>
+            <ChevronRight className="w-5 h-5" />
           </button>
         </div>
       </div>
-      
-      {/* Carousel */}
-      <div 
-        ref={scrollRef}
-        onScroll={handleScroll}
-        className="flex gap-3 sm:gap-4 overflow-x-auto pb-4 scrollbar-hide scroll-smooth -mx-4 px-4"
-        style={{ scrollSnapType: 'x mandatory' }}
-      >
-        {publishedModules.map((module) => {
-          const lessons = module.lessons?.filter(l => l.is_published) || [];
-          const totalLessons = lessons.length;
-          const completedCount = lessons.filter(l => completedLessons.includes(l.id)).length;
-          const progress = totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0;
-          
-          return (
-            <div key={module.id} style={{ scrollSnapAlign: 'start' }}>
-              <ModuleCard
-                module={module}
-                progress={progress}
-                completedCount={completedCount}
-                totalLessons={totalLessons}
-                onClick={() => onModuleClick(module.id)}
-              />
-            </div>
-          );
-        })}
+      <div ref={scrollRef} onScroll={handleScroll} className="flex gap-4 overflow-x-auto pb-4 px-4 md:px-6 scrollbar-hide">
+        {publishedModules.map((module, index) => (
+          <ModuleCard key={module.id} module={module} index={index} progress={getModuleProgress(module)} onClick={() => onModuleSelect(module)} />
+        ))}
       </div>
     </div>
   );

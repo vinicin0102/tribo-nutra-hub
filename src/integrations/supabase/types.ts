@@ -149,11 +149,13 @@ export type Database = {
       }
       lessons: {
         Row: {
+          cover_url: string | null
           created_at: string | null
           description: string | null
           duration_minutes: number | null
           external_links: Json | null
           id: string
+          is_locked: boolean | null
           is_published: boolean | null
           module_id: string
           order_index: number
@@ -162,11 +164,13 @@ export type Database = {
           vturb_code: string | null
         }
         Insert: {
+          cover_url?: string | null
           created_at?: string | null
           description?: string | null
           duration_minutes?: number | null
           external_links?: Json | null
           id?: string
+          is_locked?: boolean | null
           is_published?: boolean | null
           module_id: string
           order_index?: number
@@ -175,11 +179,13 @@ export type Database = {
           vturb_code?: string | null
         }
         Update: {
+          cover_url?: string | null
           created_at?: string | null
           description?: string | null
           duration_minutes?: number | null
           external_links?: Json | null
           id?: string
+          is_locked?: boolean | null
           is_published?: boolean | null
           module_id?: string
           order_index?: number
@@ -228,6 +234,7 @@ export type Database = {
       }
       modules: {
         Row: {
+          cover_url: string | null
           created_at: string | null
           description: string | null
           id: string
@@ -237,6 +244,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          cover_url?: string | null
           created_at?: string | null
           description?: string | null
           id?: string
@@ -246,6 +254,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          cover_url?: string | null
           created_at?: string | null
           description?: string | null
           id?: string

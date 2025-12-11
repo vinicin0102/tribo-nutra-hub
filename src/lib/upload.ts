@@ -1,12 +1,14 @@
 import { supabase } from '@/integrations/supabase/client';
-import { processAvatarImage, processPostImage } from './imageProcessing';
+import { processAvatarImage, processPostImage, processCoverImage } from './imageProcessing';
+
+export type UploadFolder = 'avatars' | 'posts' | 'modules' | 'lessons';
 
 /**
  * Upload de imagem para o Supabase Storage
  */
 export async function uploadImage(
   file: File,
-  folder: 'avatars' | 'posts',
+  folder: UploadFolder,
   userId: string
 ): Promise<string> {
   try {
@@ -26,6 +28,9 @@ export async function uploadImage(
     if (folder === 'avatars') {
       // Processar avatar: formato quadrado, 512x512, alta qualidade
       processedFile = await processAvatarImage(file);
+    } else if (folder === 'modules' || folder === 'lessons') {
+      // Processar capa: 16:9, max 1920x1080
+      processedFile = await processCoverImage(file);
     } else {
       // Processar post: manter proporção, redimensionar se necessário
       processedFile = await processPostImage(file);

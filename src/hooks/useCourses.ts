@@ -18,6 +18,8 @@ export interface Lesson {
   order_index: number;
   is_published: boolean;
   duration_minutes: number;
+  cover_url: string | null;
+  is_locked: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -28,6 +30,7 @@ export interface Module {
   description: string | null;
   order_index: number;
   is_published: boolean;
+  cover_url: string | null;
   created_at: string;
   updated_at: string;
   lessons?: Lesson[];
