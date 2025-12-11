@@ -234,16 +234,18 @@ function LessonForm({
         />
       </div>
       <div>
-        <Label htmlFor="vturb">Código Vturb</Label>
+        <Label htmlFor="vturb">Código do Vídeo</Label>
         <Textarea
           id="vturb"
           value={vturbCode}
           onChange={e => setVturbCode(e.target.value)}
-          placeholder="Cole o código de embed do Vturb aqui..."
+          placeholder="Cole o código embed do vídeo (Panda Video, Vturb, Voomly, etc.)"
           rows={4}
           className="font-mono text-xs"
         />
-        <p className="text-xs text-muted-foreground mt-1">Cole o código de embed completo ou apenas o ID do vídeo</p>
+        <p className="text-xs text-muted-foreground mt-1">
+          Suporta: Panda Video, Vturb, Voomly ou qualquer iframe. Cole o código completo do embed.
+        </p>
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div>

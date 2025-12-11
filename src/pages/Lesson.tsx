@@ -18,14 +18,54 @@ function VideoPlayer({ code }: { code: string }) {
     // Normalizar aspas curvas para aspas retas
     const normalizedCode = code
       .replace(/"/g, '"')
-      .replace(/"/g, '"');
+      .replace(/"/g, '"')
+      .replace(/'/g, "'")
+      .replace(/'/g, "'");
 
     // Detectar tipo de player
+    const isPandaVideo = normalizedCode.includes('pandavideo.com') || normalizedCode.includes('panda-');
     const isVturb = normalizedCode.includes('vturb-smartplayer') || normalizedCode.includes('converteai.net');
     const isVoomly = normalizedCode.includes('voomly.com') || normalizedCode.includes('voomly-embed');
     const isIframe = normalizedCode.includes('<iframe');
 
-    if (isVturb) {
+    if (isPandaVideo) {
+      // Panda Video - extrair e criar iframe com todos os atributos
+      const iframeMatch = normalizedCode.match(/<iframe[^>]*>/i);
+      
+      if (iframeMatch) {
+        // Extrair src do iframe
+        const srcMatch = normalizedCode.match(/src="([^"]+)"/i) || normalizedCode.match(/src='([^']+)'/i);
+        // Extrair id do iframe
+        const idMatch = normalizedCode.match(/id="([^"]+)"/i) || normalizedCode.match(/id='([^']+)'/i);
+        // Extrair allow
+        const allowMatch = normalizedCode.match(/allow="([^"]+)"/i) || normalizedCode.match(/allow='([^']+)'/i);
+        
+        const iframe = document.createElement('iframe');
+        
+        if (srcMatch) {
+          iframe.src = srcMatch[1];
+        }
+        
+        if (idMatch) {
+          iframe.id = idMatch[1];
+        }
+        
+        if (allowMatch) {
+          iframe.setAttribute('allow', allowMatch[1]);
+        } else {
+          iframe.setAttribute('allow', 'accelerometer;gyroscope;autoplay;encrypted-media;picture-in-picture');
+        }
+        
+        iframe.setAttribute('allowfullscreen', 'true');
+        iframe.style.cssText = 'width: 100%; height: 100%; border: none;';
+        iframe.setAttribute('fetchpriority', 'high');
+        
+        containerRef.current.appendChild(iframe);
+      } else {
+        // Fallback: inserir código HTML diretamente
+        containerRef.current.innerHTML = normalizedCode;
+      }
+    } else if (isVturb) {
       // Vturb player
       const scriptMatch = normalizedCode.match(/s\.src="([^"]+)"/);
       const playerIdMatch = normalizedCode.match(/id="([^"]+)"/);
@@ -63,14 +103,14 @@ function VideoPlayer({ code }: { code: string }) {
         containerRef.current.appendChild(iframe);
       } else {
         // Fallback: inserir código HTML diretamente
-        containerRef.current.innerHTML = code;
+        containerRef.current.innerHTML = normalizedCode;
       }
     } else if (isIframe) {
-      // Iframe genérico
-      containerRef.current.innerHTML = code;
+      // Iframe genérico - inserir código HTML diretamente
+      containerRef.current.innerHTML = normalizedCode;
     } else {
       // Fallback: tentar inserir código diretamente
-      containerRef.current.innerHTML = code;
+      containerRef.current.innerHTML = normalizedCode;
     }
   }, [code]);
 
