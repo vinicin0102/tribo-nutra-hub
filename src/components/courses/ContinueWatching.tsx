@@ -1,10 +1,11 @@
 import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Play, Clock, ChevronLeft, ChevronRight, Image as ImageIcon } from 'lucide-react';
+import { Play, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useModulesWithLessons, Lesson, Module } from '@/hooks/useCourses';
 import { useLessonProgress } from '@/hooks/useLessonProgress';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
 
 export function ContinueWatching() {
   const navigate = useNavigate();
@@ -13,30 +14,62 @@ export function ContinueWatching() {
   const { data: modules, isLoading } = useModulesWithLessons();
   const { completedLessons } = useLessonProgress();
 
+  // Get watch progress from localStorage
+  const getWatchProgress = (lessonId: string) => {
+    try {
+      const progress = localStorage.getItem(`lesson_progress_${lessonId}`);
+      if (progress) {
+        return JSON.parse(progress);
+      }
+    } catch (e) {
+      console.error('Error reading progress:', e);
+    }
+    return null;
+  };
+
+  // Calculate progress percentage and time
+  const getLessonProgress = (lesson: Lesson) => {
+    const progress = getWatchProgress(lesson.id);
+    if (!progress || !lesson.duration_minutes) {
+      return { percentage: 0, currentMinutes: 0 };
+    }
+    
+    const currentSeconds = progress.currentTime || 0;
+    const totalSeconds = lesson.duration_minutes * 60;
+    const percentage = totalSeconds > 0 ? Math.round((currentSeconds / totalSeconds) * 100) : 0;
+    const currentMinutes = Math.floor(currentSeconds / 60);
+    
+    return { percentage, currentMinutes };
+  };
+
   if (isLoading || !modules) return null;
 
-  const incompleteLessons: { lesson: Lesson; module: Module }[] = [];
+  const incompleteLessons: { lesson: Lesson; module: Module; progress: { percentage: number; currentMinutes: number } }[] = [];
   modules.filter(m => m.is_published).forEach(module => {
     module.lessons?.filter(l => l.is_published && !l.is_locked && !completedLessons.includes(l.id)).forEach(lesson => {
-      incompleteLessons.push({ lesson, module });
+      const progress = getLessonProgress(lesson);
+      // Only show lessons with some progress
+      if (progress.percentage > 0) {
+        incompleteLessons.push({ lesson, module, progress });
+      }
     });
   });
+
+  // Sort by progress (most recent first)
+  incompleteLessons.sort((a, b) => b.progress.percentage - a.progress.percentage);
 
   const lessonsToShow = incompleteLessons.slice(0, 5);
   if (lessonsToShow.length === 0) return null;
 
   const scroll = (direction: 'left' | 'right') => {
     if (!scrollRef.current) return;
-    const cardWidth = window.innerWidth < 768 ? 300 : 380;
+    const cardWidth = window.innerWidth < 768 ? 280 : 360;
     const newIndex = direction === 'left' 
       ? Math.max(0, currentIndex - 1)
       : Math.min(lessonsToShow.length - 1, currentIndex + 1);
     setCurrentIndex(newIndex);
     scrollRef.current.scrollTo({ left: newIndex * cardWidth, behavior: 'smooth' });
   };
-
-  // Calculate progress for each lesson (placeholder - 0% for incomplete)
-  const getLessonProgress = () => 0;
 
   return (
     <div className="space-y-4">
@@ -81,7 +114,7 @@ export function ContinueWatching() {
         ref={scrollRef}
         className="flex gap-4 overflow-x-auto pb-4 px-4 md:px-6 scrollbar-hide scroll-smooth"
       >
-        {lessonsToShow.map(({ lesson, module }) => (
+        {lessonsToShow.map(({ lesson, module, progress }) => (
           <div 
             key={lesson.id} 
             className={cn(
@@ -90,54 +123,38 @@ export function ContinueWatching() {
               "hover:border-primary/50 transition-all"
             )}
           >
-            {/* Thumbnail */}
-            <div className="relative aspect-video overflow-hidden">
-              {lesson.cover_url ? (
-                <img 
-                  src={lesson.cover_url} 
-                  alt={lesson.title} 
-                  className="w-full h-full object-cover" 
-                />
-              ) : (
-                <div className="w-full h-full bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center">
-                  <ImageIcon className="w-10 h-10 text-muted-foreground/50" />
-                </div>
-              )}
-              
-              {/* Duration badge */}
-              <div className="absolute bottom-2 right-2 flex items-center gap-1 px-2 py-1 rounded bg-black/70 text-white text-xs">
-                <Clock className="w-3 h-3" />
-                {lesson.duration_minutes || 0} min
-              </div>
-            </div>
-            
-            {/* Content */}
+            {/* Content - no thumbnail */}
             <div className="p-4 space-y-3">
               {/* Module name */}
               <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">
                 {module.title}
               </p>
               
-              {/* Module description */}
-              {module.description && (
-                <p className="text-sm text-muted-foreground line-clamp-1">
-                  {module.description}
-                </p>
-              )}
-              
-              {/* Lesson title - orange/yellow */}
-              <h3 className="font-bold text-primary line-clamp-2">
+              {/* Lesson title */}
+              <h3 className="font-bold text-foreground line-clamp-2 text-base">
                 {lesson.title}
               </h3>
               
-              {/* Progress and Continue button */}
+              {/* Progress bar */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-muted-foreground">Progresso</span>
+                  <span className="font-semibold text-foreground">{progress.percentage}%</span>
+                </div>
+                <Progress value={progress.percentage} className="h-2" />
+              </div>
+              
+              {/* Time info and Continue button */}
               <div className="flex items-center justify-between pt-2">
-                <span className="text-sm font-bold text-muted-foreground">
-                  {getLessonProgress()}%
-                </span>
+                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <Clock className="w-3 h-3" />
+                  <span>
+                    {progress.currentMinutes > 0 ? `${progress.currentMinutes} min` : '0 min'} / {lesson.duration_minutes || 0} min
+                  </span>
+                </div>
                 
                 <Button 
-                  onClick={() => navigate(`/lesson/${lesson.id}`)}
+                  onClick={() => navigate(`/courses/${module.id}/${lesson.id}`)}
                   size="sm"
                   className="gap-2"
                 >
