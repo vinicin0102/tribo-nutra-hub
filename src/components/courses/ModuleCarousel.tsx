@@ -1,71 +1,66 @@
 import { useRef, useState } from 'react';
-import { ChevronLeft, ChevronRight, Lock, CheckCircle, Play, Image as ImageIcon } from 'lucide-react';
-import { Module, Lesson } from '@/hooks/useCourses';
+import { ChevronLeft, ChevronRight, Lock, Image as ImageIcon } from 'lucide-react';
+import { Module } from '@/hooks/useCourses';
 import { useLessonProgress } from '@/hooks/useLessonProgress';
 import { cn } from '@/lib/utils';
 
 interface ModuleCardProps {
   module: Module;
-  index: number;
   progress: number;
+  isLocked?: boolean;
   onClick: () => void;
 }
 
-function ModuleCard({ module, index, progress, onClick }: ModuleCardProps) {
-  const isCompleted = progress === 100;
-  const lessonCount = module.lessons?.filter(l => l.is_published)?.length || 0;
-  
+function ModuleCard({ module, progress, isLocked = false, onClick }: ModuleCardProps) {
   return (
     <button
       onClick={onClick}
       className={cn(
-        "flex-shrink-0 w-[280px] md:w-[320px] rounded-2xl overflow-hidden transition-all duration-300",
-        "border border-border bg-card",
-        "hover:border-primary/50 hover:shadow-lg hover:shadow-primary/10 cursor-pointer",
-        isCompleted && "border-green-500/50"
+        "flex-shrink-0 w-[160px] md:w-[200px] rounded-2xl overflow-hidden transition-all duration-300 relative",
+        "bg-card text-left",
+        isLocked 
+          ? "grayscale cursor-not-allowed border-2 border-border" 
+          : "cursor-pointer border-2 border-primary/60 shadow-[0_0_20px_rgba(251,146,60,0.3),inset_0_0_20px_rgba(251,146,60,0.05)]"
       )}
+      disabled={isLocked}
     >
-      <div className="relative h-36 md:h-40 overflow-hidden">
+      {/* Card image - vertical phone-like aspect ratio */}
+      <div className="relative aspect-[9/16] overflow-hidden">
         {module.cover_url ? (
-          <img src={module.cover_url} alt={module.title} className="w-full h-full object-cover" />
+          <img 
+            src={module.cover_url} 
+            alt={module.title} 
+            className={cn(
+              "w-full h-full object-cover",
+              isLocked && "grayscale"
+            )} 
+          />
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-primary/20 to-orange-500/10 flex items-center justify-center">
             <ImageIcon className="w-12 h-12 text-muted-foreground/50" />
           </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-        <div className="absolute top-3 right-3">
-          {isCompleted ? (
-            <div className="p-2 rounded-full bg-green-500/80 backdrop-blur-sm">
-              <CheckCircle className="w-4 h-4 text-white" />
-            </div>
-          ) : progress > 0 ? (
-            <div className="p-2 rounded-full bg-primary/80 backdrop-blur-sm">
-              <Play className="w-4 h-4 text-white" />
-            </div>
-          ) : null}
+        
+        {/* Gradient overlay for text readability */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+        
+        {/* Progress badge - top left */}
+        <div className="absolute top-3 left-3 px-3 py-1.5 rounded-md bg-black/70 backdrop-blur-sm">
+          <span className="text-xs font-bold text-white">{progress} %</span>
         </div>
-        <div className="absolute top-3 left-3 px-3 py-1 rounded-full bg-black/60 backdrop-blur-sm">
-          <span className="text-xs font-medium text-white">Módulo {index + 1}</span>
-        </div>
-      </div>
-      <div className="p-4 space-y-3">
-        <div>
-          <h3 className="font-semibold text-foreground text-left line-clamp-1">{module.title}</h3>
-          {module.description && (
-            <p className="text-sm text-muted-foreground text-left line-clamp-2 mt-1">{module.description}</p>
-          )}
-        </div>
-        <div className="space-y-1">
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-muted-foreground">{lessonCount} aula(s)</span>
-            <span className={cn("font-medium", isCompleted ? "text-green-500" : progress > 0 ? "text-primary" : "text-muted-foreground")}>
-              {progress}%
-            </span>
+        
+        {/* Lock icon - top right (only for locked modules) */}
+        {isLocked && (
+          <div className="absolute top-3 right-3 p-2 rounded-full bg-black/70 backdrop-blur-sm">
+            <Lock className="w-4 h-4 text-white" />
           </div>
-          <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-            <div className={cn("h-full transition-all duration-500 rounded-full", isCompleted ? "bg-green-500" : "bg-primary")} style={{ width: `${progress}%` }} />
-          </div>
+        )}
+        
+        {/* Module title - bottom */}
+        <div className="absolute bottom-0 left-0 right-0 p-3">
+          <h3 className="font-bold text-white text-sm leading-tight line-clamp-2 uppercase tracking-wide">
+            {module.title}
+          </h3>
         </div>
       </div>
     </button>
@@ -79,21 +74,18 @@ interface ModuleCarouselProps {
 
 export function ModuleCarousel({ modules, onModuleSelect }: ModuleCarouselProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [showLeftArrow, setShowLeftArrow] = useState(false);
-  const [showRightArrow, setShowRightArrow] = useState(true);
+  const [currentIndex, setCurrentIndex] = useState(0);
   const { completedLessons } = useLessonProgress();
   const publishedModules = modules.filter(m => m.is_published);
 
-  const handleScroll = () => {
-    if (!scrollRef.current) return;
-    const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
-    setShowLeftArrow(scrollLeft > 0);
-    setShowRightArrow(scrollLeft < scrollWidth - clientWidth - 10);
-  };
-
   const scroll = (direction: 'left' | 'right') => {
     if (!scrollRef.current) return;
-    scrollRef.current.scrollBy({ left: direction === 'left' ? -340 : 340, behavior: 'smooth' });
+    const cardWidth = window.innerWidth < 768 ? 176 : 216; // card width + gap
+    const newIndex = direction === 'left' 
+      ? Math.max(0, currentIndex - 1)
+      : Math.min(publishedModules.length - 1, currentIndex + 1);
+    setCurrentIndex(newIndex);
+    scrollRef.current.scrollTo({ left: newIndex * cardWidth, behavior: 'smooth' });
   };
 
   const getModuleProgress = (module: Module) => {
@@ -103,24 +95,88 @@ export function ModuleCarousel({ modules, onModuleSelect }: ModuleCarouselProps)
     return Math.round((completed / lessons.length) * 100);
   };
 
+  const isModuleLocked = (module: Module, index: number) => {
+    // First module is always unlocked
+    if (index === 0) return false;
+    // Check if previous module is completed
+    const prevModule = publishedModules[index - 1];
+    const prevProgress = getModuleProgress(prevModule);
+    return prevProgress < 100;
+  };
+
   if (publishedModules.length === 0) return null;
 
   return (
     <div className="space-y-4">
+      {/* Section title with orange bar */}
       <div className="flex items-center justify-between px-4 md:px-6">
-        <h2 className="text-xl font-bold text-foreground">Módulos do Curso</h2>
-        <div className="hidden md:flex gap-2">
-          <button onClick={() => scroll('left')} className={cn("p-2 rounded-full border border-border bg-card transition-all", showLeftArrow ? "hover:bg-muted cursor-pointer" : "opacity-50 cursor-not-allowed")} disabled={!showLeftArrow}>
+        <div className="flex items-center gap-3">
+          <div className="w-1 h-6 bg-primary rounded-full" />
+          <h2 className="text-xl font-bold text-foreground">Módulos do Curso</h2>
+        </div>
+        
+        {/* Navigation arrows - square orange style */}
+        <div className="flex gap-2">
+          <button 
+            onClick={() => scroll('left')} 
+            className={cn(
+              "w-10 h-10 rounded-lg flex items-center justify-center transition-all",
+              currentIndex > 0 
+                ? "bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer" 
+                : "bg-muted text-muted-foreground cursor-not-allowed"
+            )} 
+            disabled={currentIndex === 0}
+          >
             <ChevronLeft className="w-5 h-5" />
           </button>
-          <button onClick={() => scroll('right')} className={cn("p-2 rounded-full border border-border bg-card transition-all", showRightArrow ? "hover:bg-muted cursor-pointer" : "opacity-50 cursor-not-allowed")} disabled={!showRightArrow}>
+          <button 
+            onClick={() => scroll('right')} 
+            className={cn(
+              "w-10 h-10 rounded-lg flex items-center justify-center transition-all",
+              currentIndex < publishedModules.length - 1 
+                ? "bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer" 
+                : "bg-muted text-muted-foreground cursor-not-allowed"
+            )} 
+            disabled={currentIndex >= publishedModules.length - 1}
+          >
             <ChevronRight className="w-5 h-5" />
           </button>
         </div>
       </div>
-      <div ref={scrollRef} onScroll={handleScroll} className="flex gap-4 overflow-x-auto pb-4 px-4 md:px-6 scrollbar-hide">
+      
+      {/* Cards carousel */}
+      <div 
+        ref={scrollRef} 
+        className="flex gap-4 overflow-x-auto pb-4 px-4 md:px-6 scrollbar-hide scroll-smooth"
+      >
         {publishedModules.map((module, index) => (
-          <ModuleCard key={module.id} module={module} index={index} progress={getModuleProgress(module)} onClick={() => onModuleSelect(module)} />
+          <ModuleCard 
+            key={module.id} 
+            module={module} 
+            progress={getModuleProgress(module)} 
+            isLocked={isModuleLocked(module, index)}
+            onClick={() => !isModuleLocked(module, index) && onModuleSelect(module)} 
+          />
+        ))}
+      </div>
+      
+      {/* Pagination dots */}
+      <div className="flex justify-center gap-2 px-4">
+        {publishedModules.map((_, index) => (
+          <button
+            key={index}
+            onClick={() => {
+              setCurrentIndex(index);
+              if (scrollRef.current) {
+                const cardWidth = window.innerWidth < 768 ? 176 : 216;
+                scrollRef.current.scrollTo({ left: index * cardWidth, behavior: 'smooth' });
+              }
+            }}
+            className={cn(
+              "w-2 h-2 rounded-full transition-all",
+              index === currentIndex ? "bg-primary w-6" : "bg-muted-foreground/30"
+            )}
+          />
         ))}
       </div>
     </div>
