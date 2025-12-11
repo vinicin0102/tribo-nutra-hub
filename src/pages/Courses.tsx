@@ -54,14 +54,14 @@ export default function Courses() {
               {/* Hero Banner */}
               <HeroBanner />
               
-              {/* Continue Watching */}
-              <ContinueWatching />
-              
               {/* Modules Carousel */}
               <ModuleCarousel 
                 modules={publishedModules}
                 onModuleSelect={(module) => setSelectedModuleId(module.id)}
               />
+              
+              {/* Continue Watching */}
+              <ContinueWatching />
             </div>
           )}
         </div>
