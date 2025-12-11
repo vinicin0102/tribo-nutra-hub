@@ -155,7 +155,6 @@ export type Database = {
           duration_minutes: number | null
           external_links: Json | null
           id: string
-          is_locked: boolean | null
           is_published: boolean | null
           module_id: string
           order_index: number
@@ -170,7 +169,6 @@ export type Database = {
           duration_minutes?: number | null
           external_links?: Json | null
           id?: string
-          is_locked?: boolean | null
           is_published?: boolean | null
           module_id: string
           order_index?: number
@@ -185,7 +183,6 @@ export type Database = {
           duration_minutes?: number | null
           external_links?: Json | null
           id?: string
-          is_locked?: boolean | null
           is_published?: boolean | null
           module_id?: string
           order_index?: number
@@ -238,6 +235,7 @@ export type Database = {
           created_at: string | null
           description: string | null
           id: string
+          is_locked: boolean | null
           is_published: boolean | null
           order_index: number
           title: string
@@ -248,6 +246,7 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           id?: string
+          is_locked?: boolean | null
           is_published?: boolean | null
           order_index?: number
           title: string
@@ -258,6 +257,7 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           id?: string
+          is_locked?: boolean | null
           is_published?: boolean | null
           order_index?: number
           title?: string
@@ -616,6 +616,27 @@ export type Database = {
           message?: string
           status?: string | null
           subject?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      unlocked_modules: {
+        Row: {
+          created_at: string | null
+          id: string
+          module_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          module_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          module_id?: string
           user_id?: string
         }
         Relationships: []

@@ -102,14 +102,13 @@ export function ModuleCarousel({ modules, onModuleSelect }: ModuleCarouselProps)
   const isModuleLocked = (module: Module, index: number) => {
     // Admins can always access all modules
     if (isAdmin) return false;
-    // Check if module is manually unlocked
-    if (isUnlocked(module.id)) return false;
-    // First module is always unlocked
-    if (index === 0) return false;
-    // Check if previous module is completed
-    const prevModule = publishedModules[index - 1];
-    const prevProgress = getModuleProgress(prevModule);
-    return prevProgress < 100;
+    // Check if module is explicitly locked in database
+    if (module.is_locked) {
+      // Check if module is manually unlocked for this user
+      if (isUnlocked(module.id)) return false;
+      return true;
+    }
+    return false;
   };
 
   if (publishedModules.length === 0) return null;
