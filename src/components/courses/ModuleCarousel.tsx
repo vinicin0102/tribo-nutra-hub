@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight, Lock, Image as ImageIcon } from 'lucide-react';
 import { Module } from '@/hooks/useCourses';
 import { useLessonProgress } from '@/hooks/useLessonProgress';
+import { useIsAdmin } from '@/hooks/useAdmin';
 import { cn } from '@/lib/utils';
 
 interface ModuleCardProps {
@@ -76,6 +77,7 @@ export function ModuleCarousel({ modules, onModuleSelect }: ModuleCarouselProps)
   const scrollRef = useRef<HTMLDivElement>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const { completedLessons } = useLessonProgress();
+  const isAdmin = useIsAdmin();
   const publishedModules = modules.filter(m => m.is_published);
 
   const scroll = (direction: 'left' | 'right') => {
@@ -96,6 +98,8 @@ export function ModuleCarousel({ modules, onModuleSelect }: ModuleCarouselProps)
   };
 
   const isModuleLocked = (module: Module, index: number) => {
+    // Admins can always access all modules
+    if (isAdmin) return false;
     // First module is always unlocked
     if (index === 0) return false;
     // Check if previous module is completed
@@ -149,15 +153,18 @@ export function ModuleCarousel({ modules, onModuleSelect }: ModuleCarouselProps)
         ref={scrollRef} 
         className="flex gap-4 overflow-x-auto pb-4 px-4 md:px-6 scrollbar-hide scroll-smooth"
       >
-        {publishedModules.map((module, index) => (
-          <ModuleCard 
-            key={module.id} 
-            module={module} 
-            progress={getModuleProgress(module)} 
-            isLocked={isModuleLocked(module, index)}
-            onClick={() => !isModuleLocked(module, index) && onModuleSelect(module)} 
-          />
-        ))}
+        {publishedModules.map((module, index) => {
+          const locked = isModuleLocked(module, index);
+          return (
+            <ModuleCard 
+              key={module.id} 
+              module={module} 
+              progress={getModuleProgress(module)} 
+              isLocked={locked}
+              onClick={() => !locked && onModuleSelect(module)} 
+            />
+          );
+        })}
       </div>
       
       {/* Pagination dots */}
