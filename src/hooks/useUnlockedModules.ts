@@ -3,6 +3,13 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
+interface UnlockedModule {
+  id: string;
+  user_id: string;
+  module_id: string;
+  created_at: string;
+}
+
 export function useUnlockedModules() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -12,36 +19,17 @@ export function useUnlockedModules() {
     queryFn: async () => {
       if (!user) return [];
       
-      // Try to get from database first, fallback to localStorage
-      try {
-        const { data, error } = await supabase
-          .from('unlocked_modules')
-          .select('module_id')
-          .eq('user_id', user.id);
+      const { data, error } = await supabase
+        .from('unlocked_modules' as any)
+        .select('module_id')
+        .eq('user_id', user.id);
 
-        if (error && error.code !== 'PGRST116') { // PGRST116 = table doesn't exist
-          throw error;
-        }
-
-        if (data) {
-          return data.map((u: { module_id: string }) => u.module_id);
-        }
-      } catch (e) {
-        // Table doesn't exist, use localStorage
-        console.log('Using localStorage for unlocked modules');
+      if (error) {
+        console.error('Error fetching unlocked modules:', error);
+        return [];
       }
 
-      // Fallback to localStorage
-      try {
-        const stored = localStorage.getItem(`unlocked_modules_${user.id}`);
-        if (stored) {
-          return JSON.parse(stored);
-        }
-      } catch (e) {
-        console.error('Error reading unlocked modules from localStorage:', e);
-      }
-
-      return [];
+      return (data as any[] || []).map((u: { module_id: string }) => u.module_id);
     },
     enabled: !!user,
   });
@@ -50,31 +38,14 @@ export function useUnlockedModules() {
     mutationFn: async (moduleId: string) => {
       if (!user) throw new Error('Usuário não autenticado');
 
-      // Try to save to database first
-      try {
-        const { error } = await supabase
-          .from('unlocked_modules')
-          .insert({
-            user_id: user.id,
-            module_id: moduleId,
-          });
+      const { error } = await supabase
+        .from('unlocked_modules' as any)
+        .insert({
+          user_id: user.id,
+          module_id: moduleId,
+        } as any);
 
-        if (error && error.code !== 'PGRST116') {
-          throw error;
-        }
-      } catch (e) {
-        // Table doesn't exist, use localStorage
-        try {
-          const stored = localStorage.getItem(`unlocked_modules_${user.id}`);
-          const current = stored ? JSON.parse(stored) : [];
-          if (!current.includes(moduleId)) {
-            const updated = [...current, moduleId];
-            localStorage.setItem(`unlocked_modules_${user.id}`, JSON.stringify(updated));
-          }
-        } catch (localError) {
-          console.error('Error saving to localStorage:', localError);
-        }
-      }
+      if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['unlocked-modules'] });
@@ -89,28 +60,13 @@ export function useUnlockedModules() {
     mutationFn: async (moduleId: string) => {
       if (!user) throw new Error('Usuário não autenticado');
 
-      // Try to delete from database first
-      try {
-        const { error } = await supabase
-          .from('unlocked_modules')
-          .delete()
-          .eq('user_id', user.id)
-          .eq('module_id', moduleId);
+      const { error } = await supabase
+        .from('unlocked_modules' as any)
+        .delete()
+        .eq('user_id', user.id)
+        .eq('module_id', moduleId);
 
-        if (error && error.code !== 'PGRST116') {
-          throw error;
-        }
-      } catch (e) {
-        // Table doesn't exist, use localStorage
-        try {
-          const stored = localStorage.getItem(`unlocked_modules_${user.id}`);
-          const current = stored ? JSON.parse(stored) : [];
-          const updated = current.filter((id: string) => id !== moduleId);
-          localStorage.setItem(`unlocked_modules_${user.id}`, JSON.stringify(updated));
-        } catch (localError) {
-          console.error('Error saving to localStorage:', localError);
-        }
-      }
+      if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['unlocked-modules'] });
@@ -131,4 +87,3 @@ export function useUnlockedModules() {
     lockModule: lockModule.mutate,
   };
 }
-

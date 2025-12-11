@@ -20,7 +20,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Pencil, Trash2, ChevronDown, ChevronRight, BookOpen, Play, X, Link as LinkIcon, Lock, Image as ImageIcon } from 'lucide-react';
+import { Plus, Pencil, Trash2, ChevronDown, ChevronRight, BookOpen, Play, X, Link as LinkIcon, Lock, Unlock, Image as ImageIcon } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { CoverUpload } from '@/components/courses/CoverUpload';
@@ -38,6 +38,7 @@ function ModuleForm({
   const [description, setDescription] = useState(module?.description || '');
   const [orderIndex, setOrderIndex] = useState(module?.order_index || 0);
   const [isPublished, setIsPublished] = useState(module?.is_published || false);
+  const [isLocked, setIsLocked] = useState(module?.is_locked || false);
   const [coverUrl, setCoverUrl] = useState(module?.cover_url || '');
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -47,6 +48,7 @@ function ModuleForm({
       description, 
       order_index: orderIndex, 
       is_published: isPublished,
+      is_locked: isLocked,
       cover_url: coverUrl || null
     });
   };
@@ -93,13 +95,34 @@ function ModuleForm({
           min={0}
         />
       </div>
-      <div className="flex items-center gap-2">
-        <Switch
-          id="published"
-          checked={isPublished}
-          onCheckedChange={setIsPublished}
-        />
-        <Label htmlFor="published">Publicado</Label>
+      <div className="space-y-3 pt-2 border-t border-border">
+        <div className="flex items-center justify-between">
+          <Label htmlFor="published" className="flex items-center gap-2">
+            <Play className="w-4 h-4" />
+            Publicado
+          </Label>
+          <Switch
+            id="published"
+            checked={isPublished}
+            onCheckedChange={setIsPublished}
+          />
+        </div>
+        <div className="flex items-center justify-between">
+          <Label htmlFor="locked" className="flex items-center gap-2">
+            <Lock className="w-4 h-4 text-destructive" />
+            Módulo Bloqueado
+          </Label>
+          <Switch
+            id="locked"
+            checked={isLocked}
+            onCheckedChange={setIsLocked}
+          />
+        </div>
+        {isLocked && (
+          <p className="text-xs text-muted-foreground bg-destructive/10 p-2 rounded">
+            Módulos bloqueados aparecem em preto e branco com um cadeado para os alunos.
+          </p>
+        )}
       </div>
       <div className="flex gap-2 pt-2">
         <Button type="button" variant="outline" onClick={onCancel} className="flex-1">
@@ -133,7 +156,6 @@ function LessonForm({
   const [orderIndex, setOrderIndex] = useState(lesson?.order_index || 0);
   const [durationMinutes, setDurationMinutes] = useState(lesson?.duration_minutes || 0);
   const [isPublished, setIsPublished] = useState(lesson?.is_published || false);
-  const [isLocked, setIsLocked] = useState(lesson?.is_locked || false);
   const [coverUrl, setCoverUrl] = useState(lesson?.cover_url || '');
   const [externalLinks, setExternalLinks] = useState<ExternalLink[]>(lesson?.external_links || []);
   const [newLinkTitle, setNewLinkTitle] = useState('');
@@ -161,7 +183,6 @@ function LessonForm({
       order_index: orderIndex, 
       duration_minutes: durationMinutes,
       is_published: isPublished,
-      is_locked: isLocked,
       cover_url: coverUrl || null,
       external_links: externalLinks
     });
@@ -295,22 +316,6 @@ function LessonForm({
             onCheckedChange={setIsPublished}
           />
         </div>
-        <div className="flex items-center justify-between">
-          <Label htmlFor="locked" className="flex items-center gap-2">
-            <Lock className="w-4 h-4 text-destructive" />
-            Aula Bloqueada
-          </Label>
-          <Switch
-            id="locked"
-            checked={isLocked}
-            onCheckedChange={setIsLocked}
-          />
-        </div>
-        {isLocked && (
-          <p className="text-xs text-muted-foreground bg-destructive/10 p-2 rounded">
-            Aulas bloqueadas aparecem em preto e branco com um cadeado para os alunos.
-          </p>
-        )}
       </div>
 
       <div className="flex gap-2 pt-2">
@@ -493,7 +498,10 @@ export function ContentManagement() {
       ) : (
         <div className="space-y-3">
           {modules.map(module => (
-            <Card key={module.id} className="bg-card border-border overflow-hidden">
+            <Card key={module.id} className={cn(
+              "bg-card border-border overflow-hidden",
+              module.is_locked && "border-destructive/30"
+            )}>
               <CardHeader className="p-3">
                 <div className="flex items-center gap-3">
                   <button
@@ -508,7 +516,10 @@ export function ContentManagement() {
                   </button>
                   
                   {/* Module Thumbnail */}
-                  <div className="w-16 h-10 rounded overflow-hidden shrink-0 bg-muted">
+                  <div className={cn(
+                    "w-16 h-10 rounded overflow-hidden shrink-0 bg-muted",
+                    module.is_locked && "grayscale"
+                  )}>
                     {module.cover_url ? (
                       <img src={module.cover_url} alt="" className="w-full h-full object-cover" />
                     ) : (
@@ -523,6 +534,12 @@ export function ContentManagement() {
                       <CardTitle className="text-sm font-medium text-foreground truncate">
                         {module.title}
                       </CardTitle>
+                      {module.is_locked && (
+                        <span className="flex items-center gap-1 text-xs bg-destructive/20 text-destructive px-2 py-0.5 rounded">
+                          <Lock className="w-3 h-3" />
+                          Bloqueado
+                        </span>
+                      )}
                       {!module.is_published && (
                         <span className="text-xs bg-yellow-500/20 text-yellow-500 px-2 py-0.5 rounded">
                           Rascunho
@@ -546,26 +563,6 @@ export function ContentManagement() {
                       title="Adicionar aula"
                     >
                       <Plus className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className={cn(
-                        "h-8 w-8",
-                        isUnlocked(module.id) 
-                          ? "text-green-500 hover:text-green-600" 
-                          : "text-muted-foreground hover:text-foreground"
-                      )}
-                      onClick={() => {
-                        if (isUnlocked(module.id)) {
-                          lockModule(module.id);
-                        } else {
-                          unlockModule(module.id);
-                        }
-                      }}
-                      title={isUnlocked(module.id) ? "Bloquear módulo" : "Desbloquear módulo"}
-                    >
-                      <Lock className={cn("w-4 h-4", isUnlocked(module.id) && "fill-current")} />
                     </Button>
                     <Button
                       variant="ghost"
@@ -599,28 +596,15 @@ export function ContentManagement() {
                       {module.lessons.map((lesson, index) => (
                         <div
                           key={lesson.id}
-                          className={cn(
-                            "flex items-center gap-2 py-2 px-3 rounded-lg",
-                            lesson.is_locked 
-                              ? "bg-destructive/10 border border-destructive/30" 
-                              : "bg-muted"
-                          )}
+                          className="flex items-center gap-2 py-2 px-3 rounded-lg bg-muted"
                         >
                           {/* Lesson Thumbnail */}
-                          <div className={cn(
-                            "w-14 h-9 rounded overflow-hidden shrink-0 bg-background relative",
-                            lesson.is_locked && "grayscale"
-                          )}>
+                          <div className="w-14 h-9 rounded overflow-hidden shrink-0 bg-background relative">
                             {lesson.cover_url ? (
                               <img src={lesson.cover_url} alt="" className="w-full h-full object-cover" />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center">
                                 <Play className="w-3 h-3 text-muted-foreground" />
-                              </div>
-                            )}
-                            {lesson.is_locked && (
-                              <div className="absolute inset-0 flex items-center justify-center bg-black/40">
-                                <Lock className="w-3 h-3 text-white" />
                               </div>
                             )}
                           </div>
@@ -629,15 +613,7 @@ export function ContentManagement() {
                             {index + 1}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <p className="text-sm text-foreground truncate">{lesson.title}</p>
-                              {lesson.is_locked && (
-                                <span className="flex items-center gap-1 text-xs bg-destructive/20 text-destructive px-1.5 py-0.5 rounded">
-                                  <Lock className="w-3 h-3" />
-                                  Bloqueada
-                                </span>
-                              )}
-                            </div>
+                            <p className="text-sm text-foreground truncate">{lesson.title}</p>
                             <p className="text-xs text-muted-foreground">
                               {lesson.duration_minutes || 0} min
                               {!lesson.is_published && ' • Rascunho'}

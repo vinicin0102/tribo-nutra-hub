@@ -1,9 +1,8 @@
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Play, CheckCircle, Clock, Lock, Image as ImageIcon } from 'lucide-react';
+import { ArrowLeft, Play, CheckCircle, Clock, Image as ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Module, Lesson } from '@/hooks/useCourses';
 import { useLessonProgress } from '@/hooks/useLessonProgress';
-import { useIsAdmin } from '@/hooks/useAdmin';
 import { cn } from '@/lib/utils';
 
 interface ModuleLessonsProps {
@@ -14,13 +13,11 @@ interface ModuleLessonsProps {
 export function ModuleLessons({ module, onBack }: ModuleLessonsProps) {
   const navigate = useNavigate();
   const { completedLessons } = useLessonProgress();
-  const isAdmin = useIsAdmin();
   const publishedLessons = module.lessons?.filter(l => l.is_published) || [];
   const completedCount = publishedLessons.filter(l => completedLessons.includes(l.id)).length;
   const progress = publishedLessons.length > 0 ? Math.round((completedCount / publishedLessons.length) * 100) : 0;
 
   const handleLessonClick = (lesson: Lesson) => {
-    if (lesson.is_locked && !isAdmin) return;
     navigate(`/lesson/${lesson.id}`);
   };
 
@@ -59,22 +56,19 @@ export function ModuleLessons({ module, onBack }: ModuleLessonsProps) {
             <div className="space-y-2">
               {publishedLessons.map((lesson, index) => {
                 const isCompleted = completedLessons.includes(lesson.id);
-                const isLocked = lesson.is_locked && !isAdmin;
                 return (
-                  <button key={lesson.id} onClick={() => handleLessonClick(lesson)} disabled={isLocked} className={cn("w-full flex items-center gap-4 p-3 md:p-4 rounded-xl border transition-all", isLocked ? "bg-muted/30 border-muted cursor-not-allowed" : "bg-card border-border hover:border-primary/50 cursor-pointer", isCompleted && !isLocked && "border-green-500/30 bg-green-500/5")}>
-                    <div className={cn("w-20 h-12 md:w-28 md:h-16 rounded-lg overflow-hidden shrink-0 relative", isLocked && "grayscale")}>
+                  <button key={lesson.id} onClick={() => handleLessonClick(lesson)} className={cn("w-full flex items-center gap-4 p-3 md:p-4 rounded-xl border transition-all bg-card border-border hover:border-primary/50 cursor-pointer", isCompleted && "border-green-500/30 bg-green-500/5")}>
+                    <div className="w-20 h-12 md:w-28 md:h-16 rounded-lg overflow-hidden shrink-0 relative">
                       {lesson.cover_url ? <img src={lesson.cover_url} alt={lesson.title} className="w-full h-full object-cover" /> : <div className="w-full h-full bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center"><ImageIcon className="w-5 h-5 text-muted-foreground" /></div>}
-                      {isLocked && <div className="absolute inset-0 flex items-center justify-center bg-black/60"><Lock className="w-5 h-5 text-white" /></div>}
                     </div>
                     <div className="flex-1 min-w-0 text-left">
                       <div className="flex items-center gap-2">
                         <span className={cn("text-xs px-2 py-0.5 rounded-full", isCompleted ? "bg-green-500/20 text-green-500" : "bg-muted text-muted-foreground")}>{index + 1}</span>
-                        {isLocked && <span className="flex items-center gap-1 text-xs bg-destructive/20 text-destructive px-2 py-0.5 rounded-full"><Lock className="w-3 h-3" />Bloqueada</span>}
                       </div>
-                      <h3 className={cn("font-medium truncate mt-1", isLocked ? "text-muted-foreground" : "text-foreground")}>{lesson.title}</h3>
+                      <h3 className="font-medium truncate mt-1 text-foreground">{lesson.title}</h3>
                       <span className="flex items-center gap-1 text-xs text-muted-foreground mt-1"><Clock className="w-3 h-3" />{lesson.duration_minutes || 0} min</span>
                     </div>
-                    <div className="shrink-0">{isCompleted ? <CheckCircle className="w-6 h-6 text-green-500" /> : isLocked ? <Lock className="w-5 h-5 text-muted-foreground" /> : <Play className="w-5 h-5 text-primary" />}</div>
+                    <div className="shrink-0">{isCompleted ? <CheckCircle className="w-6 h-6 text-green-500" /> : <Play className="w-5 h-5 text-primary" />}</div>
                   </button>
                 );
               })}

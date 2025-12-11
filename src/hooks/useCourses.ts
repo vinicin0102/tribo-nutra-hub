@@ -19,7 +19,6 @@ export interface Lesson {
   is_published: boolean;
   duration_minutes: number;
   cover_url: string | null;
-  is_locked: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -30,6 +29,7 @@ export interface Module {
   description: string | null;
   order_index: number;
   is_published: boolean;
+  is_locked: boolean;
   cover_url: string | null;
   created_at: string;
   updated_at: string;
