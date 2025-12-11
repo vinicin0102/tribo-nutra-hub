@@ -8,8 +8,6 @@ import { useNavigate } from 'react-router-dom';
 import { useCreatePaymentPreference, useUserSubscription, useCancelSubscription, useReactivateSubscription } from '@/hooks/usePayments';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { useState } from 'react';
-import { cn } from '@/lib/utils';
 
 const benefits = [
   'Acesso ao Chat da Comunidade',
@@ -24,51 +22,11 @@ const benefits = [
 const paymentFeatures = [
   { icon: Shield, text: 'Pagamento 100% seguro' },
   { icon: CreditCard, text: 'Cartão, Pix ou Boleto' },
-  { icon: Clock, text: 'Cancele quando quiser' },
+  { icon: Clock, text: 'Acesso vitalício' },
 ];
 
-const plans = [
-  { 
-    id: '12m' as const, 
-    label: 'Anual', 
-    price: 19.90, 
-    originalPrice: 67, 
-    savings: '70% OFF',
-    period: '/mês',
-    popular: true,
-    description: 'Cobrado R$ 238,80 a cada 12 meses'
-  },
-  { 
-    id: '6m' as const, 
-    label: 'Semestral', 
-    price: 29.90, 
-    originalPrice: 67, 
-    savings: '55% OFF',
-    period: '/mês',
-    popular: false,
-    description: 'Cobrado R$ 179,40 a cada 6 meses'
-  },
-  { 
-    id: '3m' as const, 
-    label: 'Trimestral', 
-    price: 49, 
-    originalPrice: 67, 
-    savings: '27% OFF',
-    period: '/mês',
-    popular: false,
-    description: 'Cobrado R$ 147 a cada 3 meses'
-  },
-  { 
-    id: '1m' as const, 
-    label: 'Mensal', 
-    price: 67, 
-    originalPrice: null, 
-    savings: null,
-    period: '/mês',
-    popular: false,
-    description: 'Cobrado mensalmente'
-  },
-];
+// Plano único de R$ 497
+const PLAN_PRICE = 497;
 
 export default function Upgrade() {
   const navigate = useNavigate();
@@ -76,10 +34,9 @@ export default function Upgrade() {
   const { data: subscription, isLoading: loadingSub } = useUserSubscription();
   const cancelSubscription = useCancelSubscription();
   const reactivateSubscription = useReactivateSubscription();
-  const [selectedPlan, setSelectedPlan] = useState<'1m' | '3m' | '6m' | '12m'>('12m');
 
   const handleUpgrade = () => {
-    createPayment.mutate({ planType: 'diamond', duration: selectedPlan });
+    createPayment.mutate({ planType: 'diamond', duration: '1m' });
   };
 
   const handleCancel = () => {
@@ -180,8 +137,6 @@ export default function Upgrade() {
     );
   }
 
-  const selectedPlanData = plans.find(p => p.id === selectedPlan)!;
-
   return (
     <MainLayout>
       <div className="max-w-2xl mx-auto px-4 pb-20 pt-4">
@@ -198,66 +153,21 @@ export default function Upgrade() {
           </p>
         </div>
 
-        {/* Plan Selection */}
-        <div className="grid gap-3 mb-6">
-          {plans.map((plan) => (
-            <Card
-              key={plan.id}
-              onClick={() => setSelectedPlan(plan.id)}
-              className={cn(
-                "border cursor-pointer transition-all",
-                selectedPlan === plan.id
-                  ? "border-cyan-500 bg-cyan-500/10"
-                  : "border-[#2a2a2a] bg-[#1a1a1a] hover:border-[#3a3a3a]"
-              )}
-            >
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className={cn(
-                      "w-5 h-5 rounded-full border-2 flex items-center justify-center",
-                      selectedPlan === plan.id
-                        ? "border-cyan-500 bg-cyan-500"
-                        : "border-gray-500"
-                    )}>
-                      {selectedPlan === plan.id && (
-                        <Check className="h-3 w-3 text-white" />
-                      )}
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-white font-semibold">{plan.label}</span>
-                        {plan.popular && (
-                          <Badge className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white text-xs">
-                            <Zap className="h-3 w-3 mr-1" />
-                            Mais popular
-                          </Badge>
-                        )}
-                        {plan.savings && (
-                          <Badge variant="outline" className="border-green-500 text-green-500 text-xs">
-                            {plan.savings}
-                          </Badge>
-                        )}
-                      </div>
-                      <p className="text-xs text-gray-400 mt-1">{plan.description}</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    {plan.originalPrice && (
-                      <span className="text-sm text-gray-500 line-through mr-2">
-                        R$ {plan.originalPrice}
-                      </span>
-                    )}
-                    <span className="text-xl font-bold text-white">
-                      R$ {plan.price.toFixed(2).replace('.', ',')}
-                    </span>
-                    <span className="text-gray-400 text-sm">{plan.period}</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        {/* Price Card */}
+        <Card className="border-2 border-cyan-500 bg-cyan-500/10 mb-6">
+          <CardContent className="p-6 text-center">
+            <Badge className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white text-sm mb-4">
+              <Zap className="h-4 w-4 mr-1" />
+              Acesso Completo
+            </Badge>
+            <div className="mb-4">
+              <span className="text-5xl font-bold text-white">
+                R$ {PLAN_PRICE}
+              </span>
+            </div>
+            <p className="text-gray-400">Pagamento único • Acesso vitalício</p>
+          </CardContent>
+        </Card>
 
         {/* Benefits Card */}
         <Card className="border border-[#2a2a2a] bg-[#1a1a1a] overflow-hidden mb-6">
@@ -294,7 +204,7 @@ export default function Upgrade() {
             <Gem className="h-5 w-5 mr-2" />
             {createPayment.isPending 
               ? 'Processando...' 
-              : `Assinar por R$ ${selectedPlanData.price.toFixed(2).replace('.', ',')}${selectedPlanData.period}`
+              : `Assinar por R$ ${PLAN_PRICE}`
             }
           </Button>
           <Button

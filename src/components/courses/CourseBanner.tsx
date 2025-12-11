@@ -1,43 +1,28 @@
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
 import { ExternalLink, Image as ImageIcon } from 'lucide-react';
+import { useState, useEffect } from 'react';
+
+interface Banner {
+  image_url?: string;
+  title?: string;
+  description?: string;
+  link_url?: string;
+}
 
 export function CourseBanner() {
-  const { data: banner, isLoading } = useQuery({
-    queryKey: ['course-banner'],
-    queryFn: async () => {
-      // Tentar buscar banner do banco de dados
-      try {
-        const { data, error } = await supabase
-          .from('course_banners')
-          .select('*')
-          .eq('is_active', true)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
+  const [banner, setBanner] = useState<Banner | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-        if (error && error.code !== 'PGRST116') { // PGRST116 = table doesn't exist
-          throw error;
-        }
-
-        if (data) {
-          return data;
-        }
-      } catch (e) {
-        // Tabela não existe, usar localStorage
-        const stored = localStorage.getItem('course_banner');
-        if (stored) {
-          return JSON.parse(stored);
-        }
-      }
-
-      return null;
-    },
-  });
+  useEffect(() => {
+    // Usar localStorage para banner
+    const stored = localStorage.getItem('course_banner');
+    if (stored) {
+      setBanner(JSON.parse(stored));
+    }
+    setIsLoading(false);
+  }, []);
 
   const BannerContent = () => {
     if (!banner) {
-      // Placeholder quando não há banner
       return (
         <div className="relative overflow-hidden rounded-2xl border border-dashed border-border/50 aspect-[3/1] min-h-[120px] sm:min-h-[160px] bg-muted/30 flex items-center justify-center">
           <div className="text-center">
@@ -65,7 +50,6 @@ export function CourseBanner() {
           <div className="w-full h-full bg-gradient-to-r from-primary/20 to-orange-500/20" />
         )}
         
-        {/* Overlay para texto se houver */}
         {(banner.title || banner.description) && (
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex items-end">
             <div className="p-4 sm:p-6 w-full">
@@ -104,7 +88,6 @@ export function CourseBanner() {
   }
 
   if (banner && banner.link_url && !banner.title && !banner.description) {
-    // Se só tem link e não tem texto, o banner inteiro é clicável
     return (
       <a
         href={banner.link_url}

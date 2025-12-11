@@ -69,32 +69,19 @@ serve(async (req) => {
 
     const stripeSecretKey = Deno.env.get('STRIPE_SECRET_KEY');
     
-    // Selecionar o Price ID baseado na duração
-    let stripePriceId: string | undefined;
-    if (duration === '12m') {
-      stripePriceId = Deno.env.get('STRIPE_PRICE_ID_ANNUAL');
-    } else if (duration === '6m') {
-      stripePriceId = Deno.env.get('STRIPE_PRICE_ID_6M');
-    } else if (duration === '3m') {
-      stripePriceId = Deno.env.get('STRIPE_PRICE_ID_3M');
-    } else {
-      stripePriceId = Deno.env.get('STRIPE_PRICE_ID');
-    }
+    // Plano único de R$ 497
+    const stripePriceId = 'price_1SdHne2NNbV7W7ZNZXGodsOo';
     
-    if (!stripeSecretKey || !stripePriceId) {
-      const missingVars = [];
-      if (!stripeSecretKey) missingVars.push('STRIPE_SECRET_KEY');
-      if (!stripePriceId) missingVars.push('STRIPE_PRICE_ID');
-      
+    if (!stripeSecretKey) {
       return new Response(JSON.stringify({ 
-        error: `Variáveis de ambiente faltando: ${missingVars.join(', ')}`
+        error: 'STRIPE_SECRET_KEY não configurada'
       }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    console.log('Criando checkout com price_id:', stripePriceId, 'para duração:', duration || '1m');
+    console.log('Criando checkout com price_id:', stripePriceId);
 
     const origin = req.headers.get('origin') || 'https://sociedade-nutra.lovable.app';
     
