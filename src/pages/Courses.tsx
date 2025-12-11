@@ -60,7 +60,7 @@ export default function Courses() {
               {/* Modules Carousel */}
               <ModuleCarousel 
                 modules={publishedModules}
-                onModuleClick={(moduleId) => setSelectedModuleId(moduleId)}
+                onModuleSelect={(module) => setSelectedModuleId(module.id)}
               />
             </div>
           )}
