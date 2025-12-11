@@ -678,6 +678,7 @@ export type Database = {
           success: boolean
         }[]
       }
+      unban_user_admin: { Args: { p_user_id: string }; Returns: Json }
       unmute_user_admin: { Args: { p_user_id: string }; Returns: Json }
       update_user_points_admin: {
         Args: { p_points: number; p_user_id: string }

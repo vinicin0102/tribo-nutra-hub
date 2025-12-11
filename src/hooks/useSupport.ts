@@ -66,17 +66,33 @@ export function useBanUser() {
 export function useUnbanUser() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
-  const isAdmin = user?.email === ADMIN_EMAIL;
+  const { data: profile } = useProfile();
+  const profileData = profile as { role?: string } | undefined;
+  const isAdmin = user?.email === ADMIN_EMAIL || profileData?.role === 'admin' || profileData?.role === 'support';
 
   return useMutation({
     mutationFn: async (userId: string) => {
-      if (!isAdmin) throw new Error('Sem permissão. Apenas admin@gmail.com pode executar esta ação.');
+      if (!isAdmin) throw new Error('Sem permissão. Apenas admins podem executar esta ação.');
 
-      const { error } = await (supabase.from('profiles') as any)
-        .update({ is_banned: false })
-        .eq('user_id', userId);
+      console.log('Desbanindo usuário via RPC:', { userId });
 
-      if (error) throw error;
+      const { data: rpcData, error: rpcError } = await (supabase.rpc as any)(
+        'unban_user_admin',
+        { p_user_id: userId }
+      );
+
+      console.log('Resposta RPC unban_user_admin:', { rpcData, rpcError });
+
+      if (rpcError) {
+        console.error('Erro RPC:', rpcError);
+        throw new Error(rpcError.message || 'Erro ao desbanir usuário');
+      }
+
+      if (rpcData && typeof rpcData === 'object' && rpcData.success === false) {
+        throw new Error(rpcData.error || 'Erro ao desbanir usuário');
+      }
+
+      return rpcData;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['support-users'] });
