@@ -25,6 +25,7 @@ import PaymentSuccess from "./pages/PaymentSuccess";
 import PaymentFailure from "./pages/PaymentFailure";
 import Courses from "./pages/Courses";
 import Lesson from "./pages/Lesson";
+import LessonRedirect from "./pages/LessonRedirect";
 import { DiamondRoute } from "./components/subscription/DiamondRoute";
 
 const queryClient = new QueryClient({
@@ -194,6 +195,7 @@ function AppRoutes() {
       <Route path="/rewards" element={<ProtectedRoute><Rewards /></ProtectedRoute>} />
       <Route path="/courses" element={<ProtectedRoute><Courses /></ProtectedRoute>} />
       <Route path="/courses/:moduleId/:lessonId" element={<ProtectedRoute><Lesson /></ProtectedRoute>} />
+      <Route path="/lesson/:lessonId" element={<ProtectedRoute><LessonRedirect /></ProtectedRoute>} />
       <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
       <Route path="/support" element={<ProtectedRoute><Support /></ProtectedRoute>} />
       <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
