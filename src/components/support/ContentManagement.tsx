@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   useModulesWithLessons, 
   useCreateModule, 
@@ -20,7 +20,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Pencil, Trash2, ChevronDown, ChevronRight, BookOpen, Play, X, Link as LinkIcon, Lock, Unlock, Image as ImageIcon } from 'lucide-react';
+import { Plus, Pencil, Trash2, ChevronDown, ChevronRight, BookOpen, Play, X, Link as LinkIcon, Lock, Unlock, Image as ImageIcon, Image } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { CoverUpload } from '@/components/courses/CoverUpload';
@@ -345,9 +345,56 @@ export function ContentManagement() {
   const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set());
   const [moduleDialogOpen, setModuleDialogOpen] = useState(false);
   const [lessonDialogOpen, setLessonDialogOpen] = useState(false);
+  const [bannerDialogOpen, setBannerDialogOpen] = useState(false);
   const [editingModule, setEditingModule] = useState<Module | null>(null);
   const [editingLesson, setEditingLesson] = useState<Lesson | null>(null);
   const [selectedModuleId, setSelectedModuleId] = useState<string | undefined>();
+  const [bannerImageUrl, setBannerImageUrl] = useState('');
+  const [bannerTitle, setBannerTitle] = useState('');
+  const [bannerDescription, setBannerDescription] = useState('');
+  const [bannerLinkUrl, setBannerLinkUrl] = useState('');
+
+  // Carregar banner existente
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('course_banner');
+      if (stored) {
+        const banner = JSON.parse(stored);
+        setBannerImageUrl(banner.image_url || '');
+        setBannerTitle(banner.title || '');
+        setBannerDescription(banner.description || '');
+        setBannerLinkUrl(banner.link_url || '');
+      }
+    } catch (e) {
+      console.error('Error loading banner:', e);
+    }
+  }, []);
+
+  const handleSaveBanner = () => {
+    const banner = {
+      image_url: bannerImageUrl || null,
+      title: bannerTitle || null,
+      description: bannerDescription || null,
+      link_url: bannerLinkUrl || null,
+      is_active: true,
+      created_at: new Date().toISOString(),
+    };
+    localStorage.setItem('course_banner', JSON.stringify(banner));
+    setBannerDialogOpen(false);
+    // Recarregar página para atualizar o banner
+    window.location.reload();
+  };
+
+  const handleDeleteBanner = () => {
+    if (confirm('Tem certeza que deseja remover o banner?')) {
+      localStorage.removeItem('course_banner');
+      setBannerImageUrl('');
+      setBannerTitle('');
+      setBannerDescription('');
+      setBannerLinkUrl('');
+      window.location.reload();
+    }
+  };
 
   const toggleModule = (moduleId: string) => {
     setExpandedModules(prev => {
@@ -483,6 +530,221 @@ export function ContentManagement() {
                   setSelectedModuleId(undefined);
                 }}
               />
+            </DialogContent>
+          </Dialog>
+
+          <Dialog open={bannerDialogOpen} onOpenChange={setBannerDialogOpen}>
+            <DialogTrigger asChild>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => {
+                  try {
+                    const stored = localStorage.getItem('course_banner');
+                    if (stored) {
+                      const banner = JSON.parse(stored);
+                      setBannerImageUrl(banner.image_url || '');
+                      setBannerTitle(banner.title || '');
+                      setBannerDescription(banner.description || '');
+                      setBannerLinkUrl(banner.link_url || '');
+                    }
+                  } catch (e) {
+                    console.error('Error loading banner:', e);
+                  }
+                }}
+              >
+                <Image className="w-4 h-4 mr-2" />
+                Banner
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-lg">
+              <DialogHeader>
+                <DialogTitle>Gerenciar Banner da Área de Membros</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
+                <div>
+                  <Label>Imagem do Banner</Label>
+                  <CoverUpload
+                    currentUrl={bannerImageUrl}
+                    onUpload={(url) => setBannerImageUrl(url)}
+                    onRemove={() => setBannerImageUrl('')}
+                    folder="banners"
+                    aspectRatio="16:9"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Recomendado: 1200x400px ou proporção 3:1
+                  </p>
+                </div>
+                <div>
+                  <Label htmlFor="banner-title">Título (Opcional)</Label>
+                  <Input
+                    id="banner-title"
+                    value={bannerTitle}
+                    onChange={e => setBannerTitle(e.target.value)}
+                    placeholder="Ex: Novo curso disponível!"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="banner-description">Descrição (Opcional)</Label>
+                  <Textarea
+                    id="banner-description"
+                    value={bannerDescription}
+                    onChange={e => setBannerDescription(e.target.value)}
+                    placeholder="Descrição do banner..."
+                    rows={3}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="banner-link">Link (Opcional)</Label>
+                  <Input
+                    id="banner-link"
+                    value={bannerLinkUrl}
+                    onChange={e => setBannerLinkUrl(e.target.value)}
+                    placeholder="https://..."
+                    type="url"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    URL para onde o banner deve redirecionar ao ser clicado
+                  </p>
+                </div>
+                <div className="flex gap-2 pt-2">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => setBannerDialogOpen(false)} 
+                    className="flex-1"
+                  >
+                    Cancelar
+                  </Button>
+                  {bannerImageUrl && (
+                    <Button 
+                      type="button" 
+                      variant="destructive" 
+                      onClick={handleDeleteBanner} 
+                      className="flex-1"
+                    >
+                      Remover
+                    </Button>
+                  )}
+                  <Button 
+                    type="button" 
+                    onClick={handleSaveBanner} 
+                    className="flex-1"
+                  >
+                    Salvar Banner
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          <Dialog open={bannerDialogOpen} onOpenChange={setBannerDialogOpen}>
+            <DialogTrigger asChild>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => {
+                  try {
+                    const stored = localStorage.getItem('course_banner');
+                    if (stored) {
+                      const banner = JSON.parse(stored);
+                      setBannerImageUrl(banner.image_url || '');
+                      setBannerTitle(banner.title || '');
+                      setBannerDescription(banner.description || '');
+                      setBannerLinkUrl(banner.link_url || '');
+                    } else {
+                      setBannerImageUrl('');
+                      setBannerTitle('');
+                      setBannerDescription('');
+                      setBannerLinkUrl('');
+                    }
+                  } catch (e) {
+                    console.error('Error loading banner:', e);
+                  }
+                }}
+              >
+                <Image className="w-4 h-4 mr-2" />
+                Banner
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-lg">
+              <DialogHeader>
+                <DialogTitle>Gerenciar Banner da Área de Membros</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
+                <div>
+                  <Label>Imagem do Banner</Label>
+                  <CoverUpload
+                    currentUrl={bannerImageUrl}
+                    onUpload={(url) => setBannerImageUrl(url)}
+                    onRemove={() => setBannerImageUrl('')}
+                    folder="banners"
+                    aspectRatio="16:9"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Recomendado: 1200x400px ou proporção 3:1
+                  </p>
+                </div>
+                <div>
+                  <Label htmlFor="banner-title">Título (Opcional)</Label>
+                  <Input
+                    id="banner-title"
+                    value={bannerTitle}
+                    onChange={e => setBannerTitle(e.target.value)}
+                    placeholder="Ex: Novo curso disponível!"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="banner-description">Descrição (Opcional)</Label>
+                  <Textarea
+                    id="banner-description"
+                    value={bannerDescription}
+                    onChange={e => setBannerDescription(e.target.value)}
+                    placeholder="Descrição do banner..."
+                    rows={3}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="banner-link">Link (Opcional)</Label>
+                  <Input
+                    id="banner-link"
+                    value={bannerLinkUrl}
+                    onChange={e => setBannerLinkUrl(e.target.value)}
+                    placeholder="https://..."
+                    type="url"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    URL para onde o banner deve redirecionar ao ser clicado
+                  </p>
+                </div>
+                <div className="flex gap-2 pt-2">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => setBannerDialogOpen(false)} 
+                    className="flex-1"
+                  >
+                    Cancelar
+                  </Button>
+                  {bannerImageUrl && (
+                    <Button 
+                      type="button" 
+                      variant="destructive" 
+                      onClick={handleDeleteBanner} 
+                      className="flex-1"
+                    >
+                      Remover
+                    </Button>
+                  )}
+                  <Button 
+                    type="button" 
+                    onClick={handleSaveBanner} 
+                    className="flex-1"
+                  >
+                    Salvar Banner
+                  </Button>
+                </div>
+              </div>
             </DialogContent>
           </Dialog>
         </div>

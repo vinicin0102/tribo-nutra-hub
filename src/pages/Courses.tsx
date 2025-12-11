@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { useModulesWithLessons } from '@/hooks/useCourses';
 import { HeroBanner } from '@/components/courses/HeroBanner';
+import { CourseBanner } from '@/components/courses/CourseBanner';
 import { ContinueWatching } from '@/components/courses/ContinueWatching';
 import { ModuleCarousel } from '@/components/courses/ModuleCarousel';
 import { ModuleLessons } from '@/components/courses/ModuleLessons';
@@ -53,6 +54,9 @@ export default function Courses() {
             <div className="space-y-6 sm:space-y-8">
               {/* Hero Banner */}
               <HeroBanner />
+              
+              {/* Course Banner */}
+              <CourseBanner />
               
               {/* Modules Carousel */}
               <ModuleCarousel 
