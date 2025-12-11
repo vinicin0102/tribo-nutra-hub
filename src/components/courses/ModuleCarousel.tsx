@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight, Lock, Image as ImageIcon } from 'lucide-reac
 import { Module } from '@/hooks/useCourses';
 import { useLessonProgress } from '@/hooks/useLessonProgress';
 import { useIsAdmin } from '@/hooks/useAdmin';
+import { useUnlockedModules } from '@/hooks/useUnlockedModules';
 import { cn } from '@/lib/utils';
 
 interface ModuleCardProps {
@@ -78,6 +79,7 @@ export function ModuleCarousel({ modules, onModuleSelect }: ModuleCarouselProps)
   const [currentIndex, setCurrentIndex] = useState(0);
   const { completedLessons } = useLessonProgress();
   const isAdmin = useIsAdmin();
+  const { isUnlocked } = useUnlockedModules();
   const publishedModules = modules.filter(m => m.is_published);
 
   const scroll = (direction: 'left' | 'right') => {
@@ -100,6 +102,8 @@ export function ModuleCarousel({ modules, onModuleSelect }: ModuleCarouselProps)
   const isModuleLocked = (module: Module, index: number) => {
     // Admins can always access all modules
     if (isAdmin) return false;
+    // Check if module is manually unlocked
+    if (isUnlocked(module.id)) return false;
     // First module is always unlocked
     if (index === 0) return false;
     // Check if previous module is completed

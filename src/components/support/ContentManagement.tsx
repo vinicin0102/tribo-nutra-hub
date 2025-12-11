@@ -11,6 +11,7 @@ import {
   Lesson,
   ExternalLink
 } from '@/hooks/useCourses';
+import { useUnlockedModules } from '@/hooks/useUnlockedModules';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -332,6 +333,7 @@ export function ContentManagement() {
   const createLesson = useCreateLesson();
   const updateLesson = useUpdateLesson();
   const deleteLesson = useDeleteLesson();
+  const { isUnlocked, unlockModule, lockModule } = useUnlockedModules();
 
   const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set());
   const [moduleDialogOpen, setModuleDialogOpen] = useState(false);
@@ -541,8 +543,29 @@ export function ContentManagement() {
                         setEditingLesson(null);
                         setLessonDialogOpen(true);
                       }}
+                      title="Adicionar aula"
                     >
                       <Plus className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className={cn(
+                        "h-8 w-8",
+                        isUnlocked(module.id) 
+                          ? "text-green-500 hover:text-green-600" 
+                          : "text-muted-foreground hover:text-foreground"
+                      )}
+                      onClick={() => {
+                        if (isUnlocked(module.id)) {
+                          lockModule(module.id);
+                        } else {
+                          unlockModule(module.id);
+                        }
+                      }}
+                      title={isUnlocked(module.id) ? "Bloquear módulo" : "Desbloquear módulo"}
+                    >
+                      <Lock className={cn("w-4 h-4", isUnlocked(module.id) && "fill-current")} />
                     </Button>
                     <Button
                       variant="ghost"
@@ -552,6 +575,7 @@ export function ContentManagement() {
                         setEditingModule(module);
                         setModuleDialogOpen(true);
                       }}
+                      title="Editar módulo"
                     >
                       <Pencil className="w-4 h-4" />
                     </Button>
@@ -560,6 +584,7 @@ export function ContentManagement() {
                       size="icon"
                       className="h-8 w-8 text-destructive hover:text-destructive/80"
                       onClick={() => handleDeleteModule(module.id)}
+                      title="Excluir módulo"
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>
