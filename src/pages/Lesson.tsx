@@ -6,6 +6,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { useLessonProgress } from '@/hooks/useLessonProgress';
+import { ModuleCompletionCelebration } from '@/components/courses/ModuleCompletionCelebration';
 function VideoPlayer({ code }: { code: string }) {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -251,11 +252,33 @@ export default function Lesson() {
   const { data: lessons, isLoading: lessonsLoading } = useLessons(moduleId);
   const { data: modules } = useModules();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [showCelebration, setShowCelebration] = useState(false);
   const { isCompleted, toggleComplete, completedLessons } = useLessonProgress();
   const currentModule = modules?.find(m => m.id === moduleId);
   const currentIndex = lessons?.findIndex(l => l.id === lessonId) ?? -1;
   const prevLesson = currentIndex > 0 ? lessons?.[currentIndex - 1] : null;
   const nextLesson = currentIndex < (lessons?.length ?? 0) - 1 ? lessons?.[currentIndex + 1] : null;
+
+  // Verificar se o módulo foi completado
+  useEffect(() => {
+    if (!moduleId || !lessons || lessons.length === 0) return;
+
+    const publishedLessons = lessons.filter(l => l.is_published);
+    if (publishedLessons.length === 0) return;
+
+    const allCompleted = publishedLessons.every(l => completedLessons.includes(l.id));
+    
+    if (allCompleted) {
+      // Verificar se já mostramos a celebração para este módulo
+      const celebrationKey = `module_completed_${moduleId}`;
+      const alreadyShown = localStorage.getItem(celebrationKey);
+      
+      if (!alreadyShown && currentModule) {
+        setShowCelebration(true);
+        localStorage.setItem(celebrationKey, 'true');
+      }
+    }
+  }, [completedLessons, lessons, moduleId, currentModule]);
 
   if (lessonLoading || lessonsLoading) {
     return (
@@ -284,8 +307,14 @@ export default function Lesson() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a]">
-      <div className="container max-w-4xl mx-auto px-4 py-6 pb-24">
+    <>
+      <ModuleCompletionCelebration
+        moduleTitle={currentModule?.title || 'Módulo'}
+        isOpen={showCelebration}
+        onClose={() => setShowCelebration(false)}
+      />
+      <div className="min-h-screen bg-[#0a0a0a]">
+        <div className="container max-w-4xl mx-auto px-4 py-6 pb-24">
         {/* Header */}
         <div className="flex items-center gap-3 mb-6">
           <Button
@@ -424,5 +453,6 @@ export default function Lesson() {
         </div>
       </div>
     </div>
+    </>
   );
 }
