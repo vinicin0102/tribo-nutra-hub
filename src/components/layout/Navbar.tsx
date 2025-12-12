@@ -13,7 +13,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/useProfile';
 import { useIsAdmin } from '@/hooks/useAdmin';
 import { useHasDiamondAccess } from '@/hooks/useSubscription';
-import { useNavigate } from 'react-router-dom';
 
 export function Navbar() {
   const navigate = useNavigate();
