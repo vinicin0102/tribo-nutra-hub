@@ -891,6 +891,32 @@ export function ContentManagement() {
           <div className="flex items-center justify-between gap-4 flex-wrap">
             <h2 className="text-lg font-semibold text-foreground">Módulos e Aulas</h2>
         <div className="flex gap-2">
+          <Dialog open={courseDialogOpen} onOpenChange={setCourseDialogOpen}>
+            <DialogTrigger asChild>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setEditingCourse(null)}
+              >
+                <GraduationCap className="w-4 h-4 mr-2" />
+                Curso
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-lg">
+              <DialogHeader>
+                <DialogTitle>{editingCourse ? 'Editar Curso' : 'Novo Curso'}</DialogTitle>
+              </DialogHeader>
+              <CourseForm
+                course={editingCourse || undefined}
+                onSubmit={editingCourse ? handleUpdateCourse : handleCreateCourse}
+                onCancel={() => {
+                  setCourseDialogOpen(false);
+                  setEditingCourse(null);
+                }}
+              />
+            </DialogContent>
+          </Dialog>
+
           <Dialog open={moduleDialogOpen} onOpenChange={setModuleDialogOpen}>
             <DialogTrigger asChild>
               <Button 
