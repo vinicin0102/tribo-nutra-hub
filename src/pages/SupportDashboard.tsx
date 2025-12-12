@@ -10,6 +10,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { SupportChat } from '@/components/support/SupportChat';
 import { UserManagement } from '@/components/support/UserManagement';
 import { RewardManagement } from '@/components/support/RewardManagement';
+import { RewardEditManagement } from '@/components/support/RewardEditManagement';
 import { ContentManagement } from '@/components/support/ContentManagement';
 import { BadgeManagement } from '@/components/support/BadgeManagement';
 import { cn } from '@/lib/utils';
@@ -107,7 +108,7 @@ export default function SupportDashboard() {
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
           <TabsList className={cn(
             "bg-[#1a1a1a] border border-[#2a2a2a] w-full grid",
-            canAccessAdminPanel ? "grid-cols-5" : "grid-cols-4"
+            canAccessAdminPanel ? "grid-cols-6" : "grid-cols-5"
           )}>
             <TabsTrigger value="chat" className="data-[state=active]:bg-primary text-xs">
               <MessageSquare className="h-4 w-4 sm:mr-2" />
@@ -116,6 +117,10 @@ export default function SupportDashboard() {
             <TabsTrigger value="rewards" className="data-[state=active]:bg-primary text-xs">
               <Gift className="h-4 w-4 sm:mr-2" />
               <span className="hidden sm:inline">Resgates</span>
+            </TabsTrigger>
+            <TabsTrigger value="rewards-edit" className="data-[state=active]:bg-primary text-xs">
+              <Gift className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Prêmios</span>
             </TabsTrigger>
             <TabsTrigger value="badges" className="data-[state=active]:bg-primary text-xs">
               <Trophy className="h-4 w-4 sm:mr-2" />
@@ -139,6 +144,10 @@ export default function SupportDashboard() {
 
           <TabsContent value="rewards" className="space-y-4">
             <RewardManagement />
+          </TabsContent>
+
+          <TabsContent value="rewards-edit" className="space-y-4">
+            <RewardEditManagement />
           </TabsContent>
 
           <TabsContent value="badges" className="space-y-4">
