@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Gift, Coins, Package, CheckCircle } from 'lucide-react';
+import { Gift, Coins, Package, CheckCircle, Info, MessageSquare } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -130,6 +130,38 @@ export default function Rewards() {
           </TabsList>
 
           <TabsContent value="rewards" className="space-y-4">
+            {/* Aviso sobre saques */}
+            <Card className="border border-blue-500/50 bg-gradient-to-r from-blue-600/20 to-blue-500/10">
+              <CardContent className="p-4">
+                <div className="flex items-start gap-3">
+                  <div className="flex-shrink-0 mt-0.5">
+                    <div className="bg-blue-500/20 rounded-full p-2">
+                      <Info className="h-5 w-5 text-blue-400" />
+                    </div>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-white mb-1 flex items-center gap-2">
+                      <MessageSquare className="h-4 w-4 text-blue-400" />
+                      Saques nas Plataformas
+                    </h3>
+                    <p className="text-sm text-gray-200 leading-relaxed">
+                      Fez um saque nas plataformas? Envie o print do saque para o{' '}
+                      <span className="font-semibold text-blue-400">suporte</span>. 
+                      Após análise, o valor do saque será{' '}
+                      <span className="font-semibold text-primary">convertido em pontos</span> na comunidade!
+                    </p>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="mt-3 text-blue-400 hover:text-blue-300 hover:bg-blue-500/10"
+                      onClick={() => navigate('/support')}
+                    >
+                      Ir para Suporte
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
             {rewardsLoading ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {[1, 2, 3, 4].map((i) => (
