@@ -15,11 +15,14 @@ export default function Feed() {
   return (
     <MainLayout>
       <div className="max-w-4xl mx-auto px-4 pb-20">
-        {/* Header NutraHub */}
+        {/* Header INÍCIO */}
         <div className="flex items-start justify-between mb-6 pt-6">
           <div className="flex-1">
-            <h1 className="text-3xl font-bold text-white mb-1">NutraHub</h1>
-            <p className="text-gray-400 text-sm">
+            <h1 className="text-3xl font-bold text-white mb-2">INÍCIO</h1>
+            <p className="text-gray-300 text-sm leading-relaxed mb-2">
+              Faça publicações dos seus resultados para conquistar pontos e trocar por prêmios, além de incentivar outros alunos!
+            </p>
+            <p className="text-gray-400 text-xs">
               Comunidade • {posts?.length || 0} {posts?.length === 1 ? 'publicação' : 'publicações'}
             </p>
           </div>
