@@ -96,16 +96,10 @@ export function Navbar() {
                 Suporte
               </DropdownMenuItem>
               {!hasDiamondAccess && (
-                <>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem 
-                    onClick={() => navigate('/upgrade')}
-                    className="mx-2 my-1 rounded-lg bg-gradient-to-r from-cyan-500/20 to-blue-500/20 text-cyan-400 focus:text-cyan-300 focus:bg-gradient-to-r focus:from-cyan-500/30 focus:to-blue-500/30 border border-cyan-500/50"
-                  >
-                    <Gem className="mr-2 h-4 w-4 text-cyan-400" />
-                    <span className="font-semibold">💎 Seja Diamond</span>
-                  </DropdownMenuItem>
-                </>
+                <DropdownMenuItem onClick={() => navigate('/upgrade')}>
+                  <Gem className="mr-2 h-4 w-4" />
+                  Se torne Diamond 💎
+                </DropdownMenuItem>
               )}
               {isAdmin && (
                 <>
