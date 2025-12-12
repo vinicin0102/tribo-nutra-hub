@@ -247,17 +247,6 @@ function LessonForm({
           Suporta: Panda Video, Vturb, Voomly ou qualquer iframe. Cole o código completo do embed.
         </p>
       </div>
-      <div>
-        <Label>Material em PDF (Opcional)</Label>
-        <PDFUpload
-          currentUrl={pdfUrl}
-          onUpload={(url) => setPdfUrl(url)}
-          onRemove={() => setPdfUrl('')}
-        />
-        <p className="text-xs text-muted-foreground mt-1">
-          Se a aula for apenas um documento PDF, você pode fazer upload aqui. O PDF aparecerá no lugar do vídeo.
-        </p>
-      </div>
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label htmlFor="order">Ordem</Label>
