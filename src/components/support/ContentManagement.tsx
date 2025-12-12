@@ -1239,7 +1239,7 @@ export function ContentManagement() {
           </SortableContext>
         </DndContext>
       )}
-      </div>
+    </div>
     )}
     </div>
   );
