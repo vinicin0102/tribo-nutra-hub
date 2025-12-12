@@ -212,17 +212,17 @@ function LessonSidebar({
                 key={lesson.id}
                 onClick={() => navigate(`/courses/${moduleId}/${lesson.id}`)}
                 className={cn(
-                  'w-full flex items-center gap-3 p-3 text-left transition-colors',
+                  'w-full flex items-center gap-2 sm:gap-3 p-2 sm:p-3 text-left transition-colors',
                   lesson.id === currentLessonId
                     ? 'bg-primary/20 border-l-2 border-primary'
                     : 'hover:bg-[#222]'
                 )}
               >
                 {completed ? (
-                  <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 text-green-500 shrink-0" />
+                  <CheckCircle2 className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-green-500 shrink-0" />
                 ) : (
                   <span className={cn(
-                    'w-4 h-4 sm:w-5 sm:h-5 rounded-full flex items-center justify-center text-[10px] sm:text-xs font-medium border shrink-0',
+                    'w-3.5 h-3.5 sm:w-5 sm:h-5 rounded-full flex items-center justify-center text-[9px] sm:text-xs font-medium border shrink-0',
                     lesson.id === currentLessonId
                       ? 'border-primary text-primary'
                       : 'border-gray-600 text-gray-400'
@@ -231,7 +231,7 @@ function LessonSidebar({
                   </span>
                 )}
                 <span className={cn(
-                  'text-sm truncate flex-1',
+                  'text-xs sm:text-sm truncate flex-1',
                   completed ? 'text-green-400' : lesson.id === currentLessonId ? 'text-white font-medium' : 'text-gray-300'
                 )}>
                   {lesson.title}
