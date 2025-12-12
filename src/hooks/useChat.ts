@@ -118,9 +118,12 @@ export function useSendMessage() {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: ['chat_messages'] });
-      queryClient.invalidateQueries({ queryKey: ['profile'] });
+      
+      // Forçar atualização imediata do perfil
+      await queryClient.refetchQueries({ queryKey: ['profile'] });
+      
       // Mostrar notificação imediata
       toast.success('Pontos Ganhos!', {
         description: '+1 ponto por participar do chat!',

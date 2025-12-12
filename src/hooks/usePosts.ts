@@ -178,9 +178,12 @@ export function useCreatePost() {
       }
       return data;
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: ['posts'] });
-      queryClient.invalidateQueries({ queryKey: ['profile'] });
+      
+      // Forçar atualização imediata do perfil
+      await queryClient.refetchQueries({ queryKey: ['profile'] });
+      
       // Mostrar notificação imediata
       toast.success('Pontos Ganhos!', {
         description: '+5 pontos por criar uma publicação!',
@@ -223,11 +226,13 @@ export function useLikePost() {
         return { liked: true };
       }
     },
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       queryClient.invalidateQueries({ queryKey: ['posts'] });
       queryClient.invalidateQueries({ queryKey: ['likes'] });
       queryClient.invalidateQueries({ queryKey: ['user_likes'] });
-      queryClient.invalidateQueries({ queryKey: ['profile'] });
+      
+      // Forçar atualização imediata do perfil
+      await queryClient.refetchQueries({ queryKey: ['profile'] });
       
       // Mostrar notificação apenas quando curtir (não quando descurtir)
       if (data.liked) {
@@ -363,10 +368,13 @@ export function useCreateComment() {
       if (error) throw error;
       return data;
     },
-    onSuccess: (_, variables) => {
+    onSuccess: async (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['comments', variables.postId] });
       queryClient.invalidateQueries({ queryKey: ['posts'] });
-      queryClient.invalidateQueries({ queryKey: ['profile'] });
+      
+      // Forçar atualização imediata do perfil
+      await queryClient.refetchQueries({ queryKey: ['profile'] });
+      
       // Mostrar notificação imediata
       toast.success('Pontos Ganhos!', {
         description: '+1 ponto por comentar!',

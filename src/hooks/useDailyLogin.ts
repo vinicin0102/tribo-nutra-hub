@@ -37,14 +37,14 @@ export function useDailyLogin() {
         localStorage.setItem(lastCheckKey, 'true');
         setHasCheckedToday(true);
 
-        // Invalidar perfil para atualizar pontos imediatamente
-        queryClient.invalidateQueries({ queryKey: ['profile'] });
-        
         // Verificar resultado da função
         if (data) {
           const result = data as any;
           
           if (result.points_earned && result.points_earned > 0) {
+            // Forçar atualização imediata do perfil
+            await queryClient.refetchQueries({ queryKey: ['profile'] });
+            
             // Mostrar notificação apenas se ganhou pontos
             toast.success(`🎉 +${result.points_earned} pontos por login diário!`, {
               description: 'Continue voltando todos os dias!'
@@ -52,7 +52,12 @@ export function useDailyLogin() {
           } else if (result.already_logged) {
             // Já ganhou pontos hoje, não mostrar notificação
             console.log('Login já registrado hoje');
+            // Mesmo assim, atualizar o perfil
+            await queryClient.refetchQueries({ queryKey: ['profile'] });
           }
+        } else {
+          // Se não retornou dados, ainda assim atualizar
+          await queryClient.refetchQueries({ queryKey: ['profile'] });
         }
       } catch (error) {
         console.error('Erro ao registrar login diário:', error);
@@ -65,5 +70,5 @@ export function useDailyLogin() {
     }, 2000);
 
     return () => clearTimeout(timer);
-  }, [user, hasCheckedToday]);
+  }, [user, hasCheckedToday, queryClient]);
 }
