@@ -769,7 +769,7 @@ export function ContentManagement() {
     <div className="space-y-6">
       {/* Seção de Cursos */}
       <div className="space-y-4">
-      <div className="flex items-center justify-between gap-4 flex-wrap">
+        <div className="flex items-center justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-2">
             <GraduationCap className="w-5 h-5 text-primary" />
             <h2 className="text-lg font-semibold text-foreground">Cursos</h2>
@@ -890,356 +890,234 @@ export function ContentManagement() {
         <div className="space-y-4">
           <div className="flex items-center justify-between gap-4 flex-wrap">
             <h2 className="text-lg font-semibold text-foreground">Módulos e Aulas</h2>
-        <div className="flex gap-2">
-          <Dialog open={courseDialogOpen} onOpenChange={setCourseDialogOpen}>
-            <DialogTrigger asChild>
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => setEditingCourse(null)}
-              >
-                <GraduationCap className="w-4 h-4 mr-2" />
-                Curso
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-lg">
-              <DialogHeader>
-                <DialogTitle>{editingCourse ? 'Editar Curso' : 'Novo Curso'}</DialogTitle>
-              </DialogHeader>
-              <CourseForm
-                course={editingCourse || undefined}
-                onSubmit={editingCourse ? handleUpdateCourse : handleCreateCourse}
-                onCancel={() => {
-                  setCourseDialogOpen(false);
-                  setEditingCourse(null);
-                }}
-              />
-            </DialogContent>
-          </Dialog>
-
-          <Dialog open={moduleDialogOpen} onOpenChange={setModuleDialogOpen}>
-            <DialogTrigger asChild>
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => setEditingModule(null)}
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Módulo
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-lg">
-              <DialogHeader>
-                <DialogTitle>{editingModule ? 'Editar Módulo' : 'Novo Módulo'}</DialogTitle>
-              </DialogHeader>
-              <ModuleForm
-                module={editingModule || undefined}
-                courses={courses || []}
-                onSubmit={editingModule ? handleUpdateModule : handleCreateModule}
-                onCancel={() => {
-                  setModuleDialogOpen(false);
-                  setEditingModule(null);
-                }}
-              />
-            </DialogContent>
-          </Dialog>
-
-          <Dialog open={lessonDialogOpen} onOpenChange={setLessonDialogOpen}>
-            <DialogTrigger asChild>
-              <Button 
-                size="sm"
-                onClick={() => {
-                  setEditingLesson(null);
-                  setSelectedModuleId(undefined);
-                }}
-                disabled={!filteredModules || filteredModules.length === 0}
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Aula
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-lg">
-              <DialogHeader>
-                <DialogTitle>{editingLesson ? 'Editar Aula' : 'Nova Aula'}</DialogTitle>
-              </DialogHeader>
-              <LessonForm
-                lesson={editingLesson || undefined}
-                modules={filteredModules || []}
-                defaultModuleId={selectedModuleId}
-                onSubmit={editingLesson ? handleUpdateLesson : handleCreateLesson}
-                onCancel={() => {
-                  setLessonDialogOpen(false);
-                  setEditingLesson(null);
-                  setSelectedModuleId(undefined);
-                }}
-              />
-            </DialogContent>
-          </Dialog>
-
-          <Dialog open={bannerDialogOpen} onOpenChange={setBannerDialogOpen}>
-            <DialogTrigger asChild>
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => {
-                  // Os dados já são carregados automaticamente via useEffect quando currentBanner muda
-                }}
-              >
-                <Image className="w-4 h-4 mr-2" />
-                Banner
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-lg">
-              <DialogHeader>
-                <DialogTitle>Gerenciar Banner da Área de Membros</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
-                <div>
-                  <Label>Imagem do Banner</Label>
-                  <CoverUpload
-                    currentUrl={bannerImageUrl}
-                    onUpload={(url) => setBannerImageUrl(url)}
-                    onRemove={() => setBannerImageUrl('')}
-                    folder="banners"
-                    aspectRatio="16:9"
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Recomendado: 1200x400px ou proporção 3:1
-                  </p>
-                      </div>
-                <div>
-                  <Label htmlFor="banner-title">Título (Opcional)</Label>
-                  <Input
-                    id="banner-title"
-                    value={bannerTitle}
-                    onChange={e => setBannerTitle(e.target.value)}
-                    placeholder="Ex: Novo curso disponível!"
-                  />
-                  </div>
-                <div>
-                  <Label htmlFor="banner-description">Descrição (Opcional)</Label>
-                  <Textarea
-                    id="banner-description"
-                    value={bannerDescription}
-                    onChange={e => setBannerDescription(e.target.value)}
-                    placeholder="Descrição do banner..."
-                    rows={3}
-                  />
-                    </div>
-                <div>
-                  <Label htmlFor="banner-link">Link (Opcional)</Label>
-                  <Input
-                    id="banner-link"
-                    value={bannerLinkUrl}
-                    onChange={e => setBannerLinkUrl(e.target.value)}
-                    placeholder="https://..."
-                    type="url"
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    URL para onde o banner deve redirecionar ao ser clicado
-                    </p>
-                  </div>
-                <div className="flex gap-2 pt-2">
-                    <Button
-                    type="button" 
-                    variant="outline" 
-                    onClick={() => setBannerDialogOpen(false)} 
-                    className="flex-1"
-                  >
-                    Cancelar
-                    </Button>
-                  {bannerImageUrl && (
-                    <Button
-                      type="button" 
-                      variant="destructive" 
-                      onClick={handleDeleteBanner} 
-                      className="flex-1"
-                    >
-                      Remover
-                    </Button>
-                  )}
-                    <Button
-                    type="button" 
-                    onClick={handleSaveBanner} 
-                    className="flex-1"
-                  >
-                    Salvar Banner
-                    </Button>
-                  </div>
-                </div>
-            </DialogContent>
-          </Dialog>
-
-          <Dialog open={bannerDialogOpen} onOpenChange={setBannerDialogOpen}>
-            <DialogTrigger asChild>
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => {
-                  // Os dados já são carregados automaticamente via useEffect quando currentBanner muda
-                }}
-              >
-                <Image className="w-4 h-4 mr-2" />
-                Banner
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-lg">
-              <DialogHeader>
-                <DialogTitle>Gerenciar Banner da Área de Membros</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
-                <div>
-                  <Label>Imagem do Banner</Label>
-                  <CoverUpload
-                    currentUrl={bannerImageUrl}
-                    onUpload={(url) => setBannerImageUrl(url)}
-                    onRemove={() => setBannerImageUrl('')}
-                    folder="banners"
-                    aspectRatio="16:9"
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Recomendado: 1200x400px ou proporção 3:1
-                  </p>
-                              </div>
-                <div>
-                  <Label htmlFor="banner-title">Título (Opcional)</Label>
-                  <Input
-                    id="banner-title"
-                    value={bannerTitle}
-                    onChange={e => setBannerTitle(e.target.value)}
-                    placeholder="Ex: Novo curso disponível!"
-                  />
-                              </div>
-                <div>
-                  <Label htmlFor="banner-description">Descrição (Opcional)</Label>
-                  <Textarea
-                    id="banner-description"
-                    value={bannerDescription}
-                    onChange={e => setBannerDescription(e.target.value)}
-                    placeholder="Descrição do banner..."
-                    rows={3}
-                  />
-                          </div>
-                <div>
-                  <Label htmlFor="banner-link">Link (Opcional)</Label>
-                  <Input
-                    id="banner-link"
-                    value={bannerLinkUrl}
-                    onChange={e => setBannerLinkUrl(e.target.value)}
-                    placeholder="https://..."
-                    type="url"
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    URL para onde o banner deve redirecionar ao ser clicado
-                            </p>
-                          </div>
-                <div className="flex gap-2 pt-2">
-                            <Button
-                    type="button" 
-                    variant="outline" 
-                    onClick={() => setBannerDialogOpen(false)} 
-                    className="flex-1"
-                  >
-                    Cancelar
-                            </Button>
-                  {bannerImageUrl && (
-                            <Button
-                      type="button" 
-                      variant="destructive" 
-                      onClick={handleDeleteBanner} 
-                      className="flex-1"
-                    >
-                      Remover
-                    </Button>
-                  )}
+            <div className="flex gap-2">
+              <Dialog open={moduleDialogOpen} onOpenChange={setModuleDialogOpen}>
+                <DialogTrigger asChild>
                   <Button 
-                    type="button" 
-                    onClick={handleSaveBanner} 
-                    className="flex-1"
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => setEditingModule(null)}
                   >
-                    Salvar Banner
-                            </Button>
-                          </div>
-                        </div>
-            </DialogContent>
-          </Dialog>
-        </div>
-
-        {/* Modules List */}
-        {!filteredModules || filteredModules.length === 0 ? (
-          <Card className="bg-card border-border">
-            <CardContent className="py-8 text-center">
-              <BookOpen className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground">Nenhum módulo criado ainda neste curso</p>
-              <p className="text-muted-foreground/70 text-sm mt-1">Crie seu primeiro módulo para começar</p>
-            </CardContent>
-          </Card>
-        ) : (
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
-          >
-          <SortableContext
-            items={[
-              ...filteredModules.map(m => m.id),
-              ...Object.values(lessonsByModule).flat().map(l => l.id)
-            ]}
-            strategy={verticalListSortingStrategy}
-          >
-            <div className="space-y-3">
-              {filteredModules.map(module => (
-                <div key={module.id}>
-                  <SortableModuleItem
-                    module={module}
-                    isExpanded={expandedModules.has(module.id)}
-                    onToggle={() => toggleModule(module.id)}
-                    onAddLesson={() => {
-                      setSelectedModuleId(module.id);
-                      setEditingLesson(null);
-                      setLessonDialogOpen(true);
+                    <Plus className="w-4 h-4 mr-2" />
+                    Módulo
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-lg">
+                  <DialogHeader>
+                    <DialogTitle>{editingModule ? 'Editar Módulo' : 'Novo Módulo'}</DialogTitle>
+                  </DialogHeader>
+                  <ModuleForm
+                    module={editingModule || undefined}
+                    courses={courses || []}
+                    onSubmit={editingModule ? handleUpdateModule : handleCreateModule}
+                    onCancel={() => {
+                      setModuleDialogOpen(false);
+                      setEditingModule(null);
                     }}
-                    onEdit={() => {
-                      setEditingModule(module);
-                      setModuleDialogOpen(true);
-                    }}
-                    onDelete={() => handleDeleteModule(module.id)}
                   />
+                </DialogContent>
+              </Dialog>
 
-                  {/* Aulas dentro de cada módulo */}
-                  {expandedModules.has(module.id) && (
-                    <Card className="mt-2 ml-4 border-border">
-                      <CardContent className="pt-3 pb-3">
-                        {lessonsByModule[module.id] && lessonsByModule[module.id].length > 0 ? (
-                          <div className="space-y-1 ml-8 border-l border-border pl-4">
-                            {lessonsByModule[module.id].map((lesson, index) => (
-                              <SortableLessonItem
-                                key={lesson.id}
-                                lesson={lesson}
-                                index={index}
-                                onEdit={() => {
-                                  setEditingLesson(lesson);
-                                  setLessonDialogOpen(true);
-                                }}
-                                onDelete={() => handleDeleteLesson(lesson.id)}
-                              />
-                      ))}
-                          </div>
-                        ) : (
-                          <p className="text-sm text-muted-foreground ml-8 py-2">
-                            Nenhuma aula neste módulo
-                          </p>
-                        )}
-                      </CardContent>
-                    </Card>
-                  )}
-                </div>
-              ))}
+              <Dialog open={lessonDialogOpen} onOpenChange={setLessonDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button 
+                    size="sm"
+                    onClick={() => {
+                      setEditingLesson(null);
+                      setSelectedModuleId(undefined);
+                    }}
+                    disabled={!filteredModules || filteredModules.length === 0}
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Aula
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-lg">
+                  <DialogHeader>
+                    <DialogTitle>{editingLesson ? 'Editar Aula' : 'Nova Aula'}</DialogTitle>
+                  </DialogHeader>
+                  <LessonForm
+                    lesson={editingLesson || undefined}
+                    modules={filteredModules || []}
+                    defaultModuleId={selectedModuleId}
+                    onSubmit={editingLesson ? handleUpdateLesson : handleCreateLesson}
+                    onCancel={() => {
+                      setLessonDialogOpen(false);
+                      setEditingLesson(null);
+                      setSelectedModuleId(undefined);
+                    }}
+                  />
+                </DialogContent>
+              </Dialog>
+
+              <Dialog open={bannerDialogOpen} onOpenChange={setBannerDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                  >
+                    <Image className="w-4 h-4 mr-2" />
+                    Banner
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-lg">
+                  <DialogHeader>
+                    <DialogTitle>Gerenciar Banner da Área de Membros</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
+                    <div>
+                      <Label>Imagem do Banner</Label>
+                      <CoverUpload
+                        currentUrl={bannerImageUrl}
+                        onUpload={(url) => setBannerImageUrl(url)}
+                        onRemove={() => setBannerImageUrl('')}
+                        folder="banners"
+                        aspectRatio="16:9"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Recomendado: 1200x400px ou proporção 3:1
+                      </p>
+                    </div>
+                    <div>
+                      <Label htmlFor="banner-title">Título (Opcional)</Label>
+                      <Input
+                        id="banner-title"
+                        value={bannerTitle}
+                        onChange={e => setBannerTitle(e.target.value)}
+                        placeholder="Ex: Novo curso disponível!"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="banner-description">Descrição (Opcional)</Label>
+                      <Textarea
+                        id="banner-description"
+                        value={bannerDescription}
+                        onChange={e => setBannerDescription(e.target.value)}
+                        placeholder="Descrição do banner..."
+                        rows={3}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="banner-link">Link (Opcional)</Label>
+                      <Input
+                        id="banner-link"
+                        value={bannerLinkUrl}
+                        onChange={e => setBannerLinkUrl(e.target.value)}
+                        placeholder="https://..."
+                        type="url"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        URL para onde o banner deve redirecionar ao ser clicado
+                      </p>
+                    </div>
+                    <div className="flex gap-2 pt-2">
+                      <Button
+                        type="button" 
+                        variant="outline" 
+                        onClick={() => setBannerDialogOpen(false)} 
+                        className="flex-1"
+                      >
+                        Cancelar
+                      </Button>
+                      {bannerImageUrl && (
+                        <Button
+                          type="button" 
+                          variant="destructive" 
+                          onClick={handleDeleteBanner} 
+                          className="flex-1"
+                        >
+                          Remover
+                        </Button>
+                      )}
+                      <Button 
+                        type="button" 
+                        onClick={handleSaveBanner} 
+                        className="flex-1"
+                      >
+                        Salvar Banner
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </div>
-          </SortableContext>
-        </DndContext>
-        )}
-      </div>
+          </div>
+
+          {/* Modules List */}
+          {!filteredModules || filteredModules.length === 0 ? (
+            <Card className="bg-card border-border">
+              <CardContent className="py-8 text-center">
+                <BookOpen className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground">Nenhum módulo criado ainda neste curso</p>
+                <p className="text-muted-foreground/70 text-sm mt-1">Crie seu primeiro módulo para começar</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext
+                items={[
+                  ...filteredModules.map(m => m.id),
+                  ...Object.values(lessonsByModule).flat().map(l => l.id)
+                ]}
+                strategy={verticalListSortingStrategy}
+              >
+                <div className="space-y-3">
+                  {filteredModules.map(module => (
+                    <div key={module.id}>
+                      <SortableModuleItem
+                        module={module}
+                        isExpanded={expandedModules.has(module.id)}
+                        onToggle={() => toggleModule(module.id)}
+                        onAddLesson={() => {
+                          setSelectedModuleId(module.id);
+                          setEditingLesson(null);
+                          setLessonDialogOpen(true);
+                        }}
+                        onEdit={() => {
+                          setEditingModule(module);
+                          setModuleDialogOpen(true);
+                        }}
+                        onDelete={() => handleDeleteModule(module.id)}
+                      />
+
+                      {/* Aulas dentro de cada módulo */}
+                      {expandedModules.has(module.id) && (
+                        <Card className="mt-2 ml-4 border-border">
+                          <CardContent className="pt-3 pb-3">
+                            {lessonsByModule[module.id] && lessonsByModule[module.id].length > 0 ? (
+                              <div className="space-y-1 ml-8 border-l border-border pl-4">
+                                {lessonsByModule[module.id].map((lesson, index) => (
+                                  <SortableLessonItem
+                                    key={lesson.id}
+                                    lesson={lesson}
+                                    index={index}
+                                    onEdit={() => {
+                                      setEditingLesson(lesson);
+                                      setLessonDialogOpen(true);
+                                    }}
+                                    onDelete={() => handleDeleteLesson(lesson.id)}
+                                  />
+                                ))}
+                              </div>
+                            ) : (
+                              <p className="text-sm text-muted-foreground ml-8 py-2">
+                                Nenhuma aula neste módulo
+                              </p>
+                            )}
+                          </CardContent>
+                        </Card>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
+          )}
+        </div>
       )}
     </div>
   );

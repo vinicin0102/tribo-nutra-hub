@@ -8,38 +8,21 @@ export function useCreateReward() {
 
   return useMutation({
     mutationFn: async (data: Omit<Reward, 'id' | 'created_at'>) => {
-      // Garantir que points_required seja usado (pode ser que o banco use points_cost)
-      const rewardData: any = {
+      const rewardData = {
         name: data.name,
         description: data.description || null,
         image_url: data.image_url || null,
         points_required: data.points_required,
-        stock: data.stock || null,
         is_active: data.is_active !== false,
       };
 
-      // Tentar usar points_cost também se o banco tiver esse campo
       const { data: reward, error } = await supabase
         .from('rewards')
-        .insert({
-          ...rewardData,
-          points_cost: data.points_required, // Alias para compatibilidade
-        })
+        .insert(rewardData)
         .select()
         .single();
 
-      if (error) {
-        // Se falhar, tentar sem points_cost
-        const { data: reward2, error: error2 } = await supabase
-          .from('rewards')
-          .insert(rewardData)
-          .select()
-          .single();
-
-        if (error2) throw error2;
-        return reward2;
-      }
-
+      if (error) throw error;
       return reward;
     },
     onSuccess: () => {
@@ -57,16 +40,12 @@ export function useUpdateReward() {
 
   return useMutation({
     mutationFn: async ({ id, ...data }: Partial<Reward> & { id: string }) => {
-      const updateData: any = {};
+      const updateData: Record<string, unknown> = {};
       
       if (data.name !== undefined) updateData.name = data.name;
       if (data.description !== undefined) updateData.description = data.description;
       if (data.image_url !== undefined) updateData.image_url = data.image_url;
-      if (data.points_required !== undefined) {
-        updateData.points_required = data.points_required;
-        updateData.points_cost = data.points_required; // Alias para compatibilidade
-      }
-      if (data.stock !== undefined) updateData.stock = data.stock;
+      if (data.points_required !== undefined) updateData.points_required = data.points_required;
       if (data.is_active !== undefined) updateData.is_active = data.is_active;
 
       const { data: reward, error } = await supabase
