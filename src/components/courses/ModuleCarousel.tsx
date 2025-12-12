@@ -1,10 +1,13 @@
 import { useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Lock, Image as ImageIcon } from 'lucide-react';
 import { Module } from '@/hooks/useCourses';
 import { useLessonProgress } from '@/hooks/useLessonProgress';
 import { useIsAdmin } from '@/hooks/useAdmin';
 import { useUnlockedModules } from '@/hooks/useUnlockedModules';
+import { useHasDiamondAccess } from '@/hooks/useSubscription';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 interface ModuleCardProps {
   module: Module;
@@ -80,14 +83,18 @@ export function ModuleCarousel({ modules, onModuleSelect }: ModuleCarouselProps)
   const { completedLessons } = useLessonProgress();
   const isAdmin = useIsAdmin();
   const { isUnlocked } = useUnlockedModules();
-  const publishedModules = modules.filter(m => m.is_published);
+  const hasDiamondAccess = useHasDiamondAccess();
+  const navigate = useNavigate();
+  
+  // Mostrar todos os módulos, incluindo não publicados (que aparecerão bloqueados)
+  const allModules = modules;
 
   const scroll = (direction: 'left' | 'right') => {
     if (!scrollRef.current) return;
     const cardWidth = window.innerWidth < 768 ? 176 : 216; // card width + gap
     const newIndex = direction === 'left' 
       ? Math.max(0, currentIndex - 1)
-      : Math.min(publishedModules.length - 1, currentIndex + 1);
+      : Math.min(allModules.length - 1, currentIndex + 1);
     setCurrentIndex(newIndex);
     scrollRef.current.scrollTo({ left: newIndex * cardWidth, behavior: 'smooth' });
   };
@@ -99,19 +106,42 @@ export function ModuleCarousel({ modules, onModuleSelect }: ModuleCarouselProps)
     return Math.round((completed / lessons.length) * 100);
   };
 
-  const isModuleLocked = (module: Module, index: number) => {
-    // Admins can always access all modules
+  const isModuleLocked = (module: Module) => {
+    // Admins podem acessar todos os módulos
     if (isAdmin) return false;
-    // Check if module is explicitly locked in database
+    
+    // Se o módulo não está publicado, está bloqueado
+    if (!module.is_published) return true;
+    
+    // Se o módulo está marcado como locked
     if (module.is_locked) {
-      // Check if module is manually unlocked for this user
-      if (isUnlocked(module.id)) return false;
+      // Verificar se o usuário tem Diamond ou módulo desbloqueado manualmente
+      if (hasDiamondAccess || isUnlocked(module.id)) return false;
       return true;
     }
+    
     return false;
   };
 
-  if (publishedModules.length === 0) return null;
+  const handleModuleClick = (module: Module) => {
+    const locked = isModuleLocked(module);
+    
+    if (locked) {
+      toast.info('Módulo exclusivo para membros Diamond', {
+        description: 'Assine o plano Diamond para desbloquear este conteúdo!',
+        action: {
+          label: 'Assinar agora',
+          onClick: () => navigate('/upgrade')
+        }
+      });
+      navigate('/upgrade');
+      return;
+    }
+    
+    onModuleSelect(module);
+  };
+
+  if (allModules.length === 0) return null;
 
   return (
     <div className="space-y-4">
@@ -140,11 +170,11 @@ export function ModuleCarousel({ modules, onModuleSelect }: ModuleCarouselProps)
             onClick={() => scroll('right')} 
             className={cn(
               "w-10 h-10 rounded-lg flex items-center justify-center transition-all",
-              currentIndex < publishedModules.length - 1 
+              currentIndex < allModules.length - 1 
                 ? "bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer" 
                 : "bg-muted text-muted-foreground cursor-not-allowed"
             )} 
-            disabled={currentIndex >= publishedModules.length - 1}
+            disabled={currentIndex >= allModules.length - 1}
           >
             <ChevronRight className="w-5 h-5" />
           </button>
@@ -156,15 +186,15 @@ export function ModuleCarousel({ modules, onModuleSelect }: ModuleCarouselProps)
         ref={scrollRef} 
         className="flex gap-4 overflow-x-auto pb-4 px-4 md:px-6 scrollbar-hide scroll-smooth"
       >
-        {publishedModules.map((module, index) => {
-          const locked = isModuleLocked(module, index);
+        {allModules.map((module) => {
+          const locked = isModuleLocked(module);
           return (
             <ModuleCard 
               key={module.id} 
               module={module} 
               progress={getModuleProgress(module)} 
               isLocked={locked}
-              onClick={() => !locked && onModuleSelect(module)} 
+              onClick={() => handleModuleClick(module)} 
             />
           );
         })}

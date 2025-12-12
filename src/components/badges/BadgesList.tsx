@@ -1,6 +1,5 @@
 import { useBadges, useUserBadges } from '@/hooks/useRanking';
 import { useProfile } from '@/hooks/useProfile';
-import { MedalIcon, getMedalTypeByName } from './MedalIcon';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Star, Info } from 'lucide-react';
@@ -111,7 +110,6 @@ export function BadgesList() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {badges?.map((badge) => {
                 const isEarned = earnedBadgeIds.has(badge.id);
-                const medalType = getMedalTypeByName(badge.name);
                 const badgeInfo = getBadgeRequirement(badge.name, badge.points_required || 0);
                 const progress = getPointsProgress(userPoints, badge.points_required || 0);
                 const pointsRemaining = Math.max(0, progress.target - progress.current);
@@ -129,15 +127,11 @@ export function BadgesList() {
                     <div className="flex items-start gap-3">
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <div className="cursor-pointer">
-                            <MedalIcon 
-                              type={medalType} 
-                              size={56}
-                              className={cn(
-                                'transition-all flex-shrink-0',
-                                isEarned ? 'scale-110' : 'scale-100 opacity-60'
-                              )}
-                            />
+                          <div className={cn(
+                            "text-4xl cursor-pointer transition-all flex-shrink-0",
+                            isEarned ? 'scale-110' : 'scale-100 opacity-60'
+                          )}>
+                            {badge.icon}
                           </div>
                         </TooltipTrigger>
                         <TooltipContent side="top" className="max-w-[220px] text-center">

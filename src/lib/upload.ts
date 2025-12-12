@@ -1,7 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { processAvatarImage, processPostImage, processCoverImage } from './imageProcessing';
 
-export type UploadFolder = 'avatars' | 'posts' | 'modules' | 'lessons' | 'banners' | 'pdfs' | 'rewards';
+export type UploadFolder = 'avatars' | 'posts' | 'modules' | 'lessons' | 'banners' | 'pdfs' | 'rewards' | 'courses';
 
 /**
  * Upload de imagem para o Supabase Storage
