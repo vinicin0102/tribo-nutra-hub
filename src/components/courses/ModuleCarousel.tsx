@@ -159,13 +159,23 @@ export function ModuleCarousel({ modules, onModuleSelect }: ModuleCarouselProps)
       >
         {publishedModules.map((module, index) => {
           const locked = isModuleLocked(module, index);
+          const handleModuleClick = () => {
+            if (locked) {
+              // Se estiver bloqueado, mostrar oferta Diamond
+              setShowDiamondOffer(true);
+            } else {
+              // Se não estiver bloqueado, selecionar módulo
+              onModuleSelect(module);
+            }
+          };
+          
           return (
             <ModuleCard 
               key={module.id} 
               module={module} 
               progress={getModuleProgress(module)} 
               isLocked={locked}
-              onClick={() => locked ? setShowDiamondOffer(true) : onModuleSelect(module)} 
+              onClick={handleModuleClick} 
             />
           );
         })}

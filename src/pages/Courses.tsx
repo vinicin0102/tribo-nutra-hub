@@ -8,15 +8,29 @@ import { ModuleCarousel } from '@/components/courses/ModuleCarousel';
 import { ModuleLessons } from '@/components/courses/ModuleLessons';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Lock } from 'lucide-react';
+import { useIsAdmin } from '@/hooks/useAdmin';
+import { useUnlockedModules } from '@/hooks/useUnlockedModules';
 
 export default function Courses() {
   const { data: modules, isLoading } = useModulesWithLessons();
   const [selectedModuleId, setSelectedModuleId] = useState<string | null>(null);
+  const isAdmin = useIsAdmin();
+  const { isUnlocked } = useUnlockedModules();
 
   const publishedModules = modules?.filter(m => m.is_published) || [];
   const selectedModule = selectedModuleId 
     ? publishedModules.find(m => m.id === selectedModuleId) 
     : null;
+
+  // Verificar se o módulo selecionado está bloqueado
+  const isSelectedModuleLocked = selectedModule 
+    ? selectedModule.is_locked && !isAdmin && !isUnlocked(selectedModule.id)
+    : false;
+
+  // Se o módulo selecionado estiver bloqueado, limpar a seleção
+  if (isSelectedModuleLocked) {
+    setSelectedModuleId(null);
+  }
 
   return (
     <MainLayout>
