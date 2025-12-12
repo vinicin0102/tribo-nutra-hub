@@ -1,3 +1,6 @@
+-- Garantir que a coluna is_locked existe na tabela modules
+ALTER TABLE public.modules ADD COLUMN IF NOT EXISTS is_locked BOOLEAN DEFAULT false;
+
 -- Função para desbloquear automaticamente todos os módulos quando o usuário assina Diamond
 CREATE OR REPLACE FUNCTION public.auto_unlock_modules_on_diamond()
 RETURNS TRIGGER

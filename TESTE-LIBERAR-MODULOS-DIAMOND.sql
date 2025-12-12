@@ -43,9 +43,15 @@ BEGIN
     v_test_passed := false;
   END IF;
   
-  -- 3. Verificar se existem módulos bloqueados
+  -- 3. Garantir que a coluna is_locked existe
   RAISE NOTICE '';
-  RAISE NOTICE '3. Verificando módulos bloqueados...';
+  RAISE NOTICE '3. Garantindo que a coluna is_locked existe...';
+  ALTER TABLE public.modules ADD COLUMN IF NOT EXISTS is_locked BOOLEAN DEFAULT false;
+  RAISE NOTICE '   ✅ Coluna is_locked verificada/criada';
+  
+  -- 4. Verificar se existem módulos bloqueados
+  RAISE NOTICE '';
+  RAISE NOTICE '4. Verificando módulos bloqueados...';
   SELECT COUNT(*) INTO v_modules_count 
   FROM public.modules 
   WHERE is_locked = true;
@@ -62,9 +68,9 @@ BEGIN
     v_modules_count := 1;
   END IF;
   
-  -- 4. Buscar um usuário de teste (ou criar um temporário)
+  -- 5. Buscar um usuário de teste (ou criar um temporário)
   RAISE NOTICE '';
-  RAISE NOTICE '4. Preparando usuário de teste...';
+  RAISE NOTICE '5. Preparando usuário de teste...';
   
   -- Tentar encontrar um usuário existente que não seja Diamond
   SELECT user_id INTO v_test_user_id
@@ -92,41 +98,41 @@ BEGIN
     
     RAISE NOTICE '   📋 Plano atual: %', COALESCE(v_old_plan, 'NULL');
     
-    -- 5. Limpar módulos desbloqueados anteriores para este teste
+    -- 6. Limpar módulos desbloqueados anteriores para este teste
     RAISE NOTICE '';
-    RAISE NOTICE '5. Limpando desbloqueios anteriores do usuário de teste...';
+    RAISE NOTICE '6. Limpando desbloqueios anteriores do usuário de teste...';
     DELETE FROM public.unlocked_modules WHERE user_id = v_test_user_id;
     RAISE NOTICE '   ✅ Limpeza concluída';
     
-    -- 6. Verificar estado antes do teste
+    -- 7. Verificar estado antes do teste
     RAISE NOTICE '';
-    RAISE NOTICE '6. Estado ANTES do teste:';
+    RAISE NOTICE '7. Estado ANTES do teste:';
     SELECT COUNT(*) INTO v_unlocked_count
     FROM public.unlocked_modules
     WHERE user_id = v_test_user_id;
     RAISE NOTICE '   📊 Módulos desbloqueados: %', v_unlocked_count;
     RAISE NOTICE '   📊 Módulos bloqueados no sistema: %', v_modules_count;
     
-    -- 7. SIMULAR MUDANÇA PARA DIAMOND (isso vai acionar o trigger)
+    -- 8. SIMULAR MUDANÇA PARA DIAMOND (isso vai acionar o trigger)
     RAISE NOTICE '';
-    RAISE NOTICE '7. Simulando mudança de plano para Diamond...';
+    RAISE NOTICE '8. Simulando mudança de plano para Diamond...';
     UPDATE public.profiles
     SET subscription_plan = 'diamond'
     WHERE user_id = v_test_user_id;
     RAISE NOTICE '   ✅ Plano atualizado para Diamond';
     
-    -- 8. Verificar se os módulos foram desbloqueados
+    -- 9. Verificar se os módulos foram desbloqueados
     RAISE NOTICE '';
-    RAISE NOTICE '8. Verificando se os módulos foram desbloqueados...';
+    RAISE NOTICE '9. Verificando se os módulos foram desbloqueados...';
     SELECT COUNT(*) INTO v_unlocked_count
     FROM public.unlocked_modules
     WHERE user_id = v_test_user_id;
     
     RAISE NOTICE '   📊 Módulos desbloqueados APÓS: %', v_unlocked_count;
     
-    -- 9. Validar resultado
+    -- 10. Validar resultado
     RAISE NOTICE '';
-    RAISE NOTICE '9. Validação do teste:';
+    RAISE NOTICE '10. Validação do teste:';
     IF v_unlocked_count >= v_modules_count THEN
       RAISE NOTICE '   ✅ SUCESSO: Todos os módulos bloqueados foram desbloqueados!';
       RAISE NOTICE '   ✅ Esperado: % | Obtido: %', v_modules_count, v_unlocked_count;
@@ -136,9 +142,9 @@ BEGIN
       v_test_passed := false;
     END IF;
     
-    -- 10. Restaurar plano original (se não era Diamond)
+    -- 11. Restaurar plano original (se não era Diamond)
     RAISE NOTICE '';
-    RAISE NOTICE '10. Restaurando plano original...';
+    RAISE NOTICE '11. Restaurando plano original...';
     IF v_old_plan IS NULL OR v_old_plan != 'diamond' THEN
       UPDATE public.profiles
       SET subscription_plan = v_old_plan
@@ -148,10 +154,10 @@ BEGIN
       RAISE NOTICE '   ℹ️  Usuário já era Diamond, mantendo como está';
     END IF;
     
-    -- 11. Limpar módulo de teste se foi criado
+    -- 12. Limpar módulo de teste se foi criado
     IF v_test_module_id IS NOT NULL THEN
       RAISE NOTICE '';
-      RAISE NOTICE '11. Removendo módulo de teste...';
+      RAISE NOTICE '12. Removendo módulo de teste...';
       DELETE FROM public.unlocked_modules WHERE module_id = v_test_module_id;
       DELETE FROM public.modules WHERE id = v_test_module_id;
       RAISE NOTICE '   ✅ Módulo de teste removido';
@@ -159,7 +165,7 @@ BEGIN
     
   END IF;
   
-  -- 12. Resultado final
+  -- 13. Resultado final
   RAISE NOTICE '';
   RAISE NOTICE '========================================';
   IF v_test_passed THEN
