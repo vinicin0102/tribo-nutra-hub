@@ -6,7 +6,6 @@ import { Star, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Progress } from '@/components/ui/progress';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { useEffect, useState } from 'react';
 
 const getBadgeRequirement = (badgeName: string, pointsRequired: number) => {
   switch (badgeName) {
@@ -50,18 +49,22 @@ const getBadgeRequirement = (badgeName: string, pointsRequired: number) => {
 };
 
 const getPointsProgress = (userPoints: number, badgePointsRequired: number) => {
-  if (badgePointsRequired === 0) {
-    return { current: userPoints, target: 0, percentage: 100 };
-  }
   // Garantir que os valores sejam números válidos
   const current = Math.max(0, Number(userPoints) || 0);
   const target = Math.max(1, Number(badgePointsRequired) || 1);
+  
+  // Se o badge não requer pontos (0), considerar como já conquistado
+  if (badgePointsRequired === 0 || badgePointsRequired === null) {
+    return { current: current, target: 0, percentage: 100, isAutoEarned: true };
+  }
+  
   const percentage = Math.min(Math.max(0, (current / target) * 100), 100);
   
   return {
     current,
     target,
-    percentage
+    percentage,
+    isAutoEarned: false
   };
 };
 
@@ -70,15 +73,8 @@ export function BadgesList() {
   const { data: currentProfile } = useProfile();
   const { data: userBadges } = useUserBadges();
   
-  // Estado local para os pontos, atualizado quando o perfil mudar
-  const [userPoints, setUserPoints] = useState(currentProfile?.points ?? 0);
-  
-  // Atualizar pontos quando o perfil mudar
-  useEffect(() => {
-    if (currentProfile?.points !== undefined) {
-      setUserPoints(currentProfile.points);
-    }
-  }, [currentProfile?.points]);
+  // Usar diretamente os pontos do perfil, que são atualizados em tempo real
+  const userPoints = currentProfile?.points ?? 0;
   
   const earnedBadgeIds = new Set(userBadges?.map(ub => ub.badge_id) || []);
 
@@ -128,13 +124,15 @@ export function BadgesList() {
                 const badgeInfo = getBadgeRequirement(badge.name, badge.points_required || 0);
                 const progress = getPointsProgress(userPoints, badge.points_required || 0);
                 const pointsRemaining = Math.max(0, progress.target - progress.current);
+                // Badges com 0 pontos são automaticamente conquistados
+                const isAutoEarned = progress.isAutoEarned || (badge.points_required === 0 || badge.points_required === null);
                 
                 return (
                   <div
                     key={badge.id}
                     className={cn(
                       'rounded-lg border p-4 transition-all flex flex-col gap-3',
-                      isEarned 
+                      (isEarned || isAutoEarned)
                         ? 'border-secondary/50 bg-secondary/5 shadow-lg ring-2 ring-secondary/20' 
                         : 'border-border bg-card'
                     )}
@@ -144,14 +142,14 @@ export function BadgesList() {
                         <TooltipTrigger asChild>
                           <div className={cn(
                             "cursor-pointer text-5xl flex-shrink-0 transition-all",
-                            isEarned ? 'scale-110' : 'scale-100 opacity-60'
+                            (isEarned || isAutoEarned) ? 'scale-110' : 'scale-100 opacity-60'
                           )}>
                             {badge.icon}
                           </div>
                         </TooltipTrigger>
                         <TooltipContent side="top" className="max-w-[220px] text-center">
                           <p className="text-sm font-medium">{badge.name}</p>
-                          {isEarned ? (
+                          {(isEarned || isAutoEarned) ? (
                             <p className="text-xs text-green-500 mt-1">✓ Você já conquistou!</p>
                           ) : (
                             <>
@@ -166,7 +164,7 @@ export function BadgesList() {
                       <div className="flex-1 min-w-0">
                         <h3 className={cn(
                           "font-semibold text-base",
-                          isEarned ? "text-secondary" : "text-foreground"
+                          (isEarned || isAutoEarned) ? "text-secondary" : "text-foreground"
                         )}>
                           {badge.name}
                         </h3>
@@ -181,7 +179,7 @@ export function BadgesList() {
                       </div>
                     </div>
                     
-                    {isEarned ? (
+                    {(isEarned || isAutoEarned) ? (
                       <div className="text-center py-2 bg-green-500/10 rounded-md">
                         <p className="text-sm text-green-600 font-semibold">✓ Conquistada!</p>
                       </div>
