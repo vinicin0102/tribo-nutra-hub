@@ -182,7 +182,7 @@ self.addEventListener('push', (event) => {
   console.log('[SW] Push notification received');
   
   const data = event.data ? event.data.json() : {};
-  const title = data.title || 'Nutra Elite';
+  const title = data.title || 'Comunidade dos Sócios';
   const options = {
     body: data.body || 'Nova notificação',
     icon: '/icons/icon-192x192.png',

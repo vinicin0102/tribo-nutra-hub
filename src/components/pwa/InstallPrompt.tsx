@@ -95,7 +95,7 @@ export function InstallPrompt() {
           </CardHeader>
           <CardContent className="space-y-3">
             <p className="text-gray-300 text-sm">
-              Instale o Nutra Elite no seu iPhone para acesso rápido e melhor experiência!
+              Instale a Comunidade dos Sócios no seu iPhone para acesso rápido e melhor experiência!
             </p>
             <div className="bg-[#2a2a2a] rounded-lg p-4 space-y-3 text-sm">
               <p className="text-white font-semibold flex items-center gap-2">
@@ -164,7 +164,7 @@ export function InstallPrompt() {
           </CardHeader>
           <CardContent className="space-y-3">
             <p className="text-gray-300 text-sm">
-              Instale o Nutra Elite no seu dispositivo Android para:
+              Instale a Comunidade dos Sócios no seu dispositivo Android para:
             </p>
             <ul className="text-gray-300 text-sm space-y-1.5 list-disc list-inside ml-2">
               <li>Acesso rápido direto da tela inicial</li>
@@ -223,7 +223,7 @@ export function InstallPrompt() {
           </CardHeader>
           <CardContent className="space-y-3">
             <p className="text-gray-300 text-sm">
-              Instale o Nutra Elite para acesso rápido e melhor experiência!
+              Instale a Comunidade dos Sócios para acesso rápido e melhor experiência!
             </p>
             <div className="bg-[#2a2a2a] rounded-lg p-4 space-y-3 text-sm">
               <p className="text-white font-semibold flex items-center gap-2">

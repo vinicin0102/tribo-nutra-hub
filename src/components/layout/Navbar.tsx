@@ -40,9 +40,9 @@ export function Navbar() {
           className="flex items-center gap-2 cursor-pointer" 
           onClick={() => navigate('/')}
         >
-          <span className="font-display text-xl font-bold">
-            <span className="text-white">Nutra</span>
-            <span className="text-primary"> Elite</span>
+          <span className="font-display text-lg font-semibold">
+            <span className="text-white">Comunidade dos</span>
+            <span className="text-primary"> Sócios</span>
           </span>
         </div>
 
