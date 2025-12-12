@@ -665,9 +665,12 @@ export default function Support() {
                                       try {
                                         await deleteSupportMessage.mutateAsync(msg.id);
                                         toast.success('Mensagem deletada');
+                                        // Recarregar mensagens para atualizar a interface
                                         if (selectedUserId) {
-                                          loadMessages(selectedUserId);
+                                          await loadMessages(selectedUserId);
                                         }
+                                        // Também recarregar conversas
+                                        await loadConversations();
                                       } catch (error: any) {
                                         toast.error(error?.message || 'Erro ao deletar mensagem');
                                       }

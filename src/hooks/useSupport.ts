@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from './useProfile';
+import { deleteImage } from '@/lib/upload';
 
 const ADMIN_EMAIL = 'admin@gmail.com';
 
@@ -182,6 +183,26 @@ export function useDeleteSupportMessage() {
     mutationFn: async (messageId: string) => {
       if (!isSupport) throw new Error('Sem permissão');
 
+      // Buscar a mensagem antes de deletar para verificar se tem imagem
+      const { data: message, error: fetchError } = await supabase
+        .from('support_chat')
+        .select('image_url')
+        .eq('id', messageId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // Deletar a imagem do storage se existir
+      if (message?.image_url) {
+        try {
+          await deleteImage(message.image_url);
+        } catch (error) {
+          console.error('Erro ao deletar imagem do storage:', error);
+          // Continuar mesmo se falhar ao deletar a imagem
+        }
+      }
+
+      // Deletar a mensagem do banco
       const { error } = await supabase
         .from('support_chat')
         .delete()
