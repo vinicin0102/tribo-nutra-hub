@@ -45,6 +45,21 @@ const getTierBadge = (tier?: string) => {
   }
 };
 
+const getPlanBadge = (plan?: string) => {
+  switch (plan) {
+    case 'diamond':
+      return { emoji: '💎', label: 'Diamond', className: 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white' };
+    case 'premium':
+      return { emoji: '⭐', label: 'Premium', className: 'bg-gradient-to-r from-yellow-500 to-orange-500 text-white' };
+    case 'basic':
+      return { emoji: '🔹', label: 'Basic', className: 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white' };
+    case 'free':
+      return { emoji: '🆓', label: 'Free', className: 'bg-gray-600 text-white' };
+    default:
+      return null;
+  }
+};
+
 export function PostCard({ post }: PostCardProps) {
   const [showComments, setShowComments] = useState(false);
   const likePost = useLikePost();
@@ -92,14 +107,19 @@ export function PostCard({ post }: PostCardProps) {
         </Avatar>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            {(profile as any)?.subscription_plan === 'diamond' && (
-              <Badge className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white border-0 text-[10px] px-1.5 py-0">
-                💎 Diamond
-              </Badge>
-            )}
             <p className="font-semibold text-base leading-tight truncate text-white">
               {profile?.full_name || profile?.username || 'Usuário'}
             </p>
+            {/* Mostrar plano de assinatura se existir */}
+            {getPlanBadge((profile as any)?.subscription_plan) && (
+              <Badge className={cn(
+                "border-0 text-[10px] px-1.5 py-0",
+                getPlanBadge((profile as any)?.subscription_plan)?.className
+              )}>
+                {getPlanBadge((profile as any)?.subscription_plan)?.emoji} {getPlanBadge((profile as any)?.subscription_plan)?.label}
+              </Badge>
+            )}
+            {/* Mostrar badges/conquistas */}
             {post.user_badges && post.user_badges.length > 0 && (
               <PostBadges badges={post.user_badges} maxDisplay={3} />
             )}

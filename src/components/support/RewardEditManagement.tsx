@@ -38,7 +38,7 @@ function RewardForm({
       description: description || null, 
       image_url: imageUrl || null,
       points_required: pointsRequired,
-      stock: stock || null,
+      // stock: stock ?? null, // Temporariamente desabilitado até a migração ser executada
       is_active: isActive
     });
   };
@@ -162,7 +162,7 @@ export function RewardEditManagement() {
         image_url: reward.image_url || null,
         points_required: reward.points_required || reward.points_cost || 0,
         points_cost: reward.points_required || reward.points_cost || 0,
-        stock: reward.stock || null,
+        stock: reward.stock !== undefined ? reward.stock : null, // Seguro mesmo se coluna não existir
         is_active: reward.is_active !== false,
         created_at: reward.created_at,
       })) as Reward[];
@@ -170,7 +170,10 @@ export function RewardEditManagement() {
   });
 
   const handleCreateReward = (data: Partial<Reward>) => {
-    createReward.mutate(data as any, {
+    // Remover points_cost e outros campos que não existem no banco
+    const { points_cost, ...cleanData } = data as any;
+    
+    createReward.mutate(cleanData as any, {
       onSuccess: () => {
         setRewardDialogOpen(false);
         setEditingReward(null);
@@ -180,7 +183,11 @@ export function RewardEditManagement() {
 
   const handleUpdateReward = (data: Partial<Reward>) => {
     if (!editingReward) return;
-    updateReward.mutate({ id: editingReward.id, ...data }, {
+    
+    // Remover points_cost e outros campos que não existem no banco
+    const { points_cost, ...cleanData } = data as any;
+    
+    updateReward.mutate({ id: editingReward.id, ...cleanData }, {
       onSuccess: () => {
         setRewardDialogOpen(false);
         setEditingReward(null);

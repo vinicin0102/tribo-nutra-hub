@@ -8,42 +8,28 @@ export function useCreateReward() {
 
   return useMutation({
     mutationFn: async (data: Omit<Reward, 'id' | 'created_at'>) => {
-      // Garantir que points_required seja usado (pode ser que o banco use points_cost)
+      // Não incluir stock por enquanto - a coluna ainda não existe no banco
+      // TODO: Adicionar stock quando a migração for executada
       const rewardData: any = {
         name: data.name,
         description: data.description || null,
         image_url: data.image_url || null,
         points_required: data.points_required,
-        stock: data.stock || null,
         is_active: data.is_active !== false,
       };
 
-      // Tentar usar points_cost também se o banco tiver esse campo
       const { data: reward, error } = await supabase
         .from('rewards')
-        .insert({
-          ...rewardData,
-          points_cost: data.points_required, // Alias para compatibilidade
-        })
+        .insert(rewardData)
         .select()
         .single();
 
-      if (error) {
-        // Se falhar, tentar sem points_cost
-        const { data: reward2, error: error2 } = await supabase
-          .from('rewards')
-          .insert(rewardData)
-          .select()
-          .single();
-
-        if (error2) throw error2;
-        return reward2;
-      }
-
+      if (error) throw error;
       return reward;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['rewards'] });
+      queryClient.invalidateQueries({ queryKey: ['all_rewards'] });
       toast.success('Prêmio criado com sucesso!');
     },
     onError: (error: any) => {
@@ -57,17 +43,22 @@ export function useUpdateReward() {
 
   return useMutation({
     mutationFn: async ({ id, ...data }: Partial<Reward> & { id: string }) => {
+      // Remover campos que não existem no banco antes de processar
+      const { points_cost, stock, ...cleanData } = data as any;
+      
       const updateData: any = {};
       
-      if (data.name !== undefined) updateData.name = data.name;
-      if (data.description !== undefined) updateData.description = data.description;
-      if (data.image_url !== undefined) updateData.image_url = data.image_url;
-      if (data.points_required !== undefined) {
-        updateData.points_required = data.points_required;
-        updateData.points_cost = data.points_required; // Alias para compatibilidade
+      // Filtrar apenas os campos que existem no banco de dados
+      if (cleanData.name !== undefined) updateData.name = cleanData.name;
+      if (cleanData.description !== undefined) updateData.description = cleanData.description;
+      if (cleanData.image_url !== undefined) updateData.image_url = cleanData.image_url;
+      if (cleanData.points_required !== undefined) {
+        updateData.points_required = cleanData.points_required;
       }
-      if (data.stock !== undefined) updateData.stock = data.stock;
-      if (data.is_active !== undefined) updateData.is_active = data.is_active;
+      // Não incluir points_cost - essa coluna não existe no banco
+      // Não incluir stock por enquanto - a coluna ainda não existe no banco
+      // TODO: Adicionar stock quando a migração for executada
+      if (cleanData.is_active !== undefined) updateData.is_active = cleanData.is_active;
 
       const { data: reward, error } = await supabase
         .from('rewards')
@@ -81,6 +72,7 @@ export function useUpdateReward() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['rewards'] });
+      queryClient.invalidateQueries({ queryKey: ['all_rewards'] });
       queryClient.invalidateQueries({ queryKey: ['redemptions'] });
       toast.success('Prêmio atualizado com sucesso!');
     },
@@ -123,6 +115,7 @@ export function useDeleteReward() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['rewards'] });
+      queryClient.invalidateQueries({ queryKey: ['all_rewards'] });
       queryClient.invalidateQueries({ queryKey: ['redemptions'] });
       toast.success('Prêmio excluído com sucesso!');
     },

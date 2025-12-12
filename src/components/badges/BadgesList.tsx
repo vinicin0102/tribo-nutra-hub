@@ -6,6 +6,7 @@ import { Star, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Progress } from '@/components/ui/progress';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useEffect, useState } from 'react';
 
 const getBadgeRequirement = (badgeName: string, pointsRequired: number) => {
   switch (badgeName) {
@@ -52,10 +53,15 @@ const getPointsProgress = (userPoints: number, badgePointsRequired: number) => {
   if (badgePointsRequired === 0) {
     return { current: userPoints, target: 0, percentage: 100 };
   }
+  // Garantir que os valores sejam números válidos
+  const current = Math.max(0, Number(userPoints) || 0);
+  const target = Math.max(1, Number(badgePointsRequired) || 1);
+  const percentage = Math.min(Math.max(0, (current / target) * 100), 100);
+  
   return {
-    current: userPoints,
-    target: badgePointsRequired,
-    percentage: Math.min((userPoints / badgePointsRequired) * 100, 100)
+    current,
+    target,
+    percentage
   };
 };
 
@@ -64,8 +70,17 @@ export function BadgesList() {
   const { data: currentProfile } = useProfile();
   const { data: userBadges } = useUserBadges();
   
+  // Estado local para os pontos, atualizado quando o perfil mudar
+  const [userPoints, setUserPoints] = useState(currentProfile?.points ?? 0);
+  
+  // Atualizar pontos quando o perfil mudar
+  useEffect(() => {
+    if (currentProfile?.points !== undefined) {
+      setUserPoints(currentProfile.points);
+    }
+  }, [currentProfile?.points]);
+  
   const earnedBadgeIds = new Set(userBadges?.map(ub => ub.badge_id) || []);
-  const userPoints = currentProfile?.points || 0;
 
   return (
     <TooltipProvider>
