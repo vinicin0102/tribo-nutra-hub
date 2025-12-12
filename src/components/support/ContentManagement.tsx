@@ -1175,7 +1175,7 @@ export function ContentManagement() {
             </CardContent>
           </Card>
         ) : (
-        <DndContext
+          <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
           onDragEnd={handleDragEnd}
@@ -1240,7 +1240,7 @@ export function ContentManagement() {
         </DndContext>
         )}
       </div>
-    )}
+      )}
     </div>
   );
 }
