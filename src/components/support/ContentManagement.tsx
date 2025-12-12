@@ -886,7 +886,7 @@ export function ContentManagement() {
       </div>
 
       {/* Seção de Módulos e Aulas */}
-      {selectedCourseId && (
+      {selectedCourseId ? (
         <div className="space-y-4">
           <div className="flex items-center justify-between gap-4 flex-wrap">
             <h2 className="text-lg font-semibold text-foreground">Módulos e Aulas</h2>
@@ -1240,7 +1240,7 @@ export function ContentManagement() {
         </DndContext>
       )}
     </div>
-    )}
+      ) : null}
     </div>
   );
 }
