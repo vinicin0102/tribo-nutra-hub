@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { HelpCircle, Send, ChevronDown, ChevronUp, MessageSquare, ArrowLeft, User, Image as ImageIcon, Mic } from 'lucide-react';
+import { HelpCircle, Send, ChevronDown, ChevronUp, MessageSquare, ArrowLeft, User, Image as ImageIcon, Mic, Trash2 } from 'lucide-react';
 import { AudioPlayer } from '@/components/chat/AudioPlayer';
 import { uploadImage } from '@/lib/upload';
 import { uploadAudio } from '@/lib/audioUpload';
@@ -13,7 +13,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { useIsSupport } from '@/hooks/useSupport';
+import { useIsSupport, useDeleteSupportMessage } from '@/hooks/useSupport';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
@@ -61,6 +61,7 @@ interface SupportMessage {
 export default function Support() {
   const { user } = useAuth();
   const isSupport = useIsSupport();
+  const deleteSupportMessage = useDeleteSupportMessage();
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -627,7 +628,7 @@ export default function Support() {
                         <div
                           key={msg.id}
                           className={cn(
-                            'flex gap-2',
+                            'flex gap-2 group',
                             msg.is_from_support && 'flex-row-reverse'
                           )}
                         >
@@ -640,14 +641,42 @@ export default function Support() {
                               {msg.is_from_support ? 'S' : (msg.profiles?.username?.charAt(0).toUpperCase() || 'U')}
                             </AvatarFallback>
                           </Avatar>
-                          <div
-                            className={cn(
-                              'max-w-[75%] sm:max-w-[70%] rounded-xl sm:rounded-2xl px-3 py-2 sm:px-4 sm:py-2',
-                              msg.is_from_support
-                                ? 'bg-primary text-white rounded-tr-sm'
-                                : 'bg-[#2a2a2a] text-white rounded-tl-sm'
-                            )}
-                          >
+                          <div className="flex flex-col gap-1 max-w-[75%] sm:max-w-[70%]">
+                            <div
+                              className={cn(
+                                'rounded-xl sm:rounded-2xl px-3 py-2 sm:px-4 sm:py-2 relative',
+                                msg.is_from_support
+                                  ? 'bg-primary text-white rounded-tr-sm'
+                                  : 'bg-[#2a2a2a] text-white rounded-tl-sm'
+                              )}
+                            >
+                              {isSupport && (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className={cn(
+                                    "absolute -top-1 -right-1 h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity",
+                                    msg.is_from_support 
+                                      ? "text-white hover:bg-white/20" 
+                                      : "text-gray-400 hover:bg-[#3a3a3a]"
+                                  )}
+                                  onClick={async () => {
+                                    if (confirm('Tem certeza que deseja deletar esta mensagem?')) {
+                                      try {
+                                        await deleteSupportMessage.mutateAsync(msg.id);
+                                        toast.success('Mensagem deletada');
+                                        if (selectedUserId) {
+                                          loadMessages(selectedUserId);
+                                        }
+                                      } catch (error: any) {
+                                        toast.error(error?.message || 'Erro ao deletar mensagem');
+                                      }
+                                    }
+                                  }}
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              )}
                             {!msg.is_from_support && (
                               <p className="text-xs font-semibold mb-1 opacity-70">
                                 {msg.profiles?.username || 'Usuário'}
@@ -681,9 +710,10 @@ export default function Support() {
                             ) : (
                               <p className="text-sm whitespace-pre-wrap">{msg.message}</p>
                             )}
+                            </div>
                             <p className={cn(
-                              'text-[10px] mt-1',
-                              msg.is_from_support ? 'text-white/70' : 'text-gray-400'
+                              'text-[10px] mt-1 px-1',
+                              msg.is_from_support ? 'text-white/70 text-right' : 'text-gray-400'
                             )}>
                               {formatDistanceToNow(new Date(msg.created_at), { addSuffix: true, locale: ptBR })}
                             </p>

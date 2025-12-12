@@ -171,6 +171,30 @@ export function useDeleteChatMessage() {
   });
 }
 
+export function useDeleteSupportMessage() {
+  const queryClient = useQueryClient();
+  const { data: profile } = useProfile();
+  const { user } = useAuth();
+  const profileData = profile as { role?: string } | undefined;
+  const isSupport = profileData?.role === 'support' || profileData?.role === 'admin' || user?.email === ADMIN_EMAIL;
+
+  return useMutation({
+    mutationFn: async (messageId: string) => {
+      if (!isSupport) throw new Error('Sem permissão');
+
+      const { error } = await supabase
+        .from('support_chat')
+        .delete()
+        .eq('id', messageId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['support-chat'] });
+    },
+  });
+}
+
 export function useBanUserTemporary() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
