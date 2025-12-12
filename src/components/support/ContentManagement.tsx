@@ -1240,7 +1240,7 @@ export function ContentManagement() {
         </DndContext>
       )}
     </div>
-      ) : null}
+    ) : null}
     </div>
   );
 }
