@@ -353,3 +353,46 @@
     -webkit-overflow-scrolling: touch;
   }
 }
+
+/* Toast Notifications Styles */
+[data-sonner-toaster] {
+  position: fixed !important;
+  top: 20px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  z-index: 9999 !important;
+  width: 100% !important;
+  max-width: 420px !important;
+  padding: 0 16px !important;
+  pointer-events: none !important;
+}
+
+[data-sonner-toast] {
+  pointer-events: auto !important;
+  margin: 0 auto 8px !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  overflow: visible !important;
+  word-wrap: break-word !important;
+}
+
+[data-sonner-toast] [data-title] {
+  font-weight: 600 !important;
+  font-size: 14px !important;
+  line-height: 1.4 !important;
+  margin-bottom: 4px !important;
+}
+
+[data-sonner-toast] [data-description] {
+  font-size: 13px !important;
+  line-height: 1.4 !important;
+  opacity: 0.9 !important;
+  margin-top: 4px !important;
+}
+
+/* Garantir que o conteúdo não seja cortado */
+[data-sonner-toast] > * {
+  overflow: visible !important;
+  text-overflow: ellipsis !important;
+}
