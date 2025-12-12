@@ -1,6 +1,7 @@
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { getMedalTypeByName } from './MedalIcon';
 import { Medal, Award, Trophy, Crown, Star } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
 interface Badge {
@@ -33,6 +34,14 @@ const medalColors = {
   legend: 'text-yellow-500',
 };
 
+const medalBadgeStyles = {
+  beginner: 'bg-green-500/20 border-green-500/50 text-green-400',
+  active: 'bg-blue-500/20 border-blue-500/50 text-blue-400',
+  engaged: 'bg-orange-500/20 border-orange-500/50 text-orange-400',
+  influencer: 'bg-purple-500/20 border-purple-500/50 text-purple-400',
+  legend: 'bg-yellow-500/20 border-yellow-500/50 text-yellow-400',
+};
+
 export function PostBadges({ badges, maxDisplay = 3 }: PostBadgesProps) {
   if (!badges || badges.length === 0) return null;
 
@@ -46,21 +55,32 @@ export function PostBadges({ badges, maxDisplay = 3 }: PostBadgesProps) {
 
   return (
     <TooltipProvider>
-      <div className="flex items-center gap-0.5">
+      <div className="flex items-center gap-1 flex-wrap">
         {displayBadges.map((badge) => {
           const medalType = getMedalTypeByName(badge.badges.name);
           const Icon = medalIcons[medalType];
-          const colorClass = medalColors[medalType];
+          const badgeStyle = medalBadgeStyles[medalType];
 
           return (
             <Tooltip key={badge.badge_id}>
               <TooltipTrigger asChild>
-                <div className="cursor-pointer">
-                  <Icon className={cn('h-3.5 w-3.5', colorClass)} />
-                </div>
+                <Badge 
+                  className={cn(
+                    "border text-[10px] px-1.5 py-0 flex items-center gap-1 cursor-pointer",
+                    badgeStyle
+                  )}
+                >
+                  <Icon className="h-3 w-3" />
+                  <span>{badge.badges.name}</span>
+                </Badge>
               </TooltipTrigger>
               <TooltipContent side="top" className="text-xs">
                 <p className="font-medium">{badge.badges.name}</p>
+                {badge.badges.points_required && (
+                  <p className="text-muted-foreground text-[10px] mt-0.5">
+                    {badge.badges.points_required} pontos necessários
+                  </p>
+                )}
               </TooltipContent>
             </Tooltip>
           );
@@ -68,12 +88,15 @@ export function PostBadges({ badges, maxDisplay = 3 }: PostBadgesProps) {
         {remainingCount > 0 && (
           <Tooltip>
             <TooltipTrigger asChild>
-              <span className="text-[10px] text-muted-foreground ml-0.5 cursor-pointer">
+              <Badge 
+                variant="outline" 
+                className="text-[10px] px-1.5 py-0 cursor-pointer border-gray-600/50 text-gray-400"
+              >
                 +{remainingCount}
-              </span>
+              </Badge>
             </TooltipTrigger>
             <TooltipContent side="top" className="text-xs">
-              <p>+{remainingCount} conquistas</p>
+              <p>+{remainingCount} conquistas adicionais</p>
             </TooltipContent>
           </Tooltip>
         )}
