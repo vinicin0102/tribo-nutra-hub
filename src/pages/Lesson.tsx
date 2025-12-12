@@ -219,10 +219,10 @@ function LessonSidebar({
                 )}
               >
                 {completed ? (
-                  <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0" />
+                  <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 text-green-500 shrink-0" />
                 ) : (
                   <span className={cn(
-                    'w-5 h-5 rounded-full flex items-center justify-center text-xs font-medium border',
+                    'w-4 h-4 sm:w-5 sm:h-5 rounded-full flex items-center justify-center text-[10px] sm:text-xs font-medium border shrink-0',
                     lesson.id === currentLessonId
                       ? 'border-primary text-primary'
                       : 'border-gray-600 text-gray-400'
