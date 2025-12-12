@@ -148,20 +148,48 @@ export async function uploadPDF(
  */
 export async function deleteImage(url: string): Promise<void> {
   try {
+    if (!url) return;
+
     // Extrair o caminho do arquivo da URL
-    const urlParts = url.split('/storage/v1/object/public/images/');
-    if (urlParts.length !== 2) {
-      return; // URL não é do nosso storage, não precisa deletar
+    // Formatos possíveis:
+    // https://[project].supabase.co/storage/v1/object/public/images/posts/file.jpg
+    // https://[project].supabase.co/storage/v1/object/sign/images/posts/file.jpg
+    let filePath = '';
+
+    // Tentar extrair do formato public
+    const publicMatch = url.match(/\/storage\/v1\/object\/public\/images\/(.+)$/);
+    if (publicMatch) {
+      filePath = publicMatch[1];
+    } else {
+      // Tentar extrair do formato sign
+      const signMatch = url.match(/\/storage\/v1\/object\/sign\/images\/(.+?)(\?|$)/);
+      if (signMatch) {
+        filePath = signMatch[1];
+      } else {
+        // Tentar extrair diretamente após /images/
+        const directMatch = url.match(/\/images\/(.+?)(\?|$)/);
+        if (directMatch) {
+          filePath = directMatch[1];
+        } else {
+          console.warn('Não foi possível extrair o caminho da URL:', url);
+          return;
+        }
+      }
     }
 
-    const filePath = urlParts[1];
+    if (!filePath) {
+      console.warn('Caminho do arquivo vazio para URL:', url);
+      return;
+    }
 
     const { error } = await supabase.storage
       .from('images')
       .remove([filePath]);
 
     if (error) {
-      console.error('Erro ao deletar imagem:', error);
+      console.error('Erro ao deletar imagem do storage:', error);
+    } else {
+      console.log('Imagem deletada com sucesso:', filePath);
     }
   } catch (error) {
     console.error('Erro ao deletar imagem:', error);
