@@ -12,12 +12,15 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/useProfile';
 import { useIsAdmin } from '@/hooks/useAdmin';
+import { useHasDiamondAccess } from '@/hooks/useSubscription';
+import { useNavigate } from 'react-router-dom';
 
 export function Navbar() {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const { data: profile } = useProfile();
   const isAdmin = useIsAdmin();
+  const hasDiamondAccess = useHasDiamondAccess();
 
   const handleSignOut = async () => {
     try {
@@ -60,6 +63,18 @@ export function Navbar() {
                     {profile?.username?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || 'U'}
                   </AvatarFallback>
                 </Avatar>
+                {!hasDiamondAccess && (
+                  <div 
+                    className="absolute -bottom-1 -right-1 bg-gradient-to-r from-cyan-500 to-blue-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full border-2 border-[#1a1a1a] cursor-pointer hover:scale-110 transition-transform shadow-lg"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate('/upgrade');
+                    }}
+                    title="Assine o Plano Diamond"
+                  >
+                    💎
+                  </div>
+                )}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56" align="end" forceMount>

@@ -11,6 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useProfile, useUpdateProfile } from '@/hooks/useProfile';
 import { useAuth } from '@/contexts/AuthContext';
 import { uploadImage, deleteImage } from '@/lib/upload';
+import { useHasDiamondAccess } from '@/hooks/useSubscription';
 import { toast } from 'sonner';
 
 export default function Profile() {
@@ -18,6 +19,7 @@ export default function Profile() {
   const { user, signOut } = useAuth();
   const { data: profile, isLoading } = useProfile();
   const updateProfile = useUpdateProfile();
+  const hasDiamondAccess = useHasDiamondAccess();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [formData, setFormData] = useState({
