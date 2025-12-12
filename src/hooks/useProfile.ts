@@ -47,10 +47,10 @@ export function useProfile() {
           table: 'profiles',
           filter: `user_id=eq.${user.id}`,
         },
-        () => {
-          // Invalidar query quando o perfil for atualizado (pontos mudarem)
-          queryClient.invalidateQueries({ queryKey: ['profile', user.id] });
-          queryClient.invalidateQueries({ queryKey: ['profile'] });
+        async () => {
+          // Forçar atualização imediata quando o perfil for atualizado (pontos mudarem)
+          await queryClient.refetchQueries({ queryKey: ['profile', user.id] });
+          await queryClient.refetchQueries({ queryKey: ['profile'] });
         }
       )
       .subscribe();

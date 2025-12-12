@@ -22,18 +22,18 @@ export function usePointsNotifications() {
           table: 'notifications',
           filter: `user_id=eq.${user.id}`,
         },
-        (payload) => {
+        async (payload) => {
           const notification = payload.new as any;
           
           // Mostrar toast apenas para notificações de pontos
           if (notification.type === 'points' && notification.message) {
+            // Forçar atualização imediata dos pontos
+            await queryClient.refetchQueries({ queryKey: ['profile'] });
+            
             toast.success(notification.title || 'Pontos Ganhos!', {
               description: notification.message,
-              duration: 3000,
+              duration: 4000,
             });
-            
-            // Invalidar queries para atualizar pontos
-            queryClient.invalidateQueries({ queryKey: ['profile'] });
           }
         }
       )
