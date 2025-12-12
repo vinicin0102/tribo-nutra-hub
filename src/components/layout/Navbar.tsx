@@ -12,14 +12,16 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/useProfile';
 import { useIsAdmin } from '@/hooks/useAdmin';
-import { useHasDiamondAccess } from '@/hooks/useSubscription';
 
 export function Navbar() {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const { data: profile } = useProfile();
   const isAdmin = useIsAdmin();
-  const hasDiamondAccess = useHasDiamondAccess();
+  
+  // Verificar se tem acesso Diamond diretamente do perfil
+  const hasDiamondAccess = profile?.subscription_plan === 'diamond' && 
+    (!profile?.subscription_expires_at || new Date(profile.subscription_expires_at) > new Date());
 
   const handleSignOut = async () => {
     try {
