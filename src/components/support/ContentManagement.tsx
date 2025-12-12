@@ -170,7 +170,7 @@ function ModuleForm({
     }
     onSubmit({ 
       title, 
-      description,
+      description, 
       course_id: courseId,
       order_index: orderIndex, 
       is_published: isPublished,
@@ -240,11 +240,11 @@ function ModuleForm({
             <Play className="w-4 h-4" />
             Publicado
           </Label>
-          <Switch
-            id="published"
-            checked={isPublished}
-            onCheckedChange={setIsPublished}
-          />
+        <Switch
+          id="published"
+          checked={isPublished}
+          onCheckedChange={setIsPublished}
+        />
         </div>
         <div className="flex items-center justify-between">
           <Label htmlFor="locked" className="flex items-center gap-2">
@@ -768,8 +768,8 @@ export function ContentManagement() {
   return (
     <div className="space-y-6">
       {/* Seção de Cursos */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between gap-4 flex-wrap">
+    <div className="space-y-4">
+      <div className="flex items-center justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-2">
             <GraduationCap className="w-5 h-5 text-primary" />
             <h2 className="text-lg font-semibold text-foreground">Cursos</h2>
@@ -890,8 +890,8 @@ export function ContentManagement() {
         <div className="space-y-4">
           <div className="flex items-center justify-between gap-4 flex-wrap">
             <h2 className="text-lg font-semibold text-foreground">Módulos e Aulas</h2>
-            <div className="flex gap-2">
-              <Dialog open={moduleDialogOpen} onOpenChange={setModuleDialogOpen}>
+        <div className="flex gap-2">
+          <Dialog open={moduleDialogOpen} onOpenChange={setModuleDialogOpen}>
             <DialogTrigger asChild>
               <Button 
                 variant="outline" 
@@ -980,7 +980,7 @@ export function ContentManagement() {
                   <p className="text-xs text-muted-foreground mt-1">
                     Recomendado: 1200x400px ou proporção 3:1
                   </p>
-                </div>
+                      </div>
                 <div>
                   <Label htmlFor="banner-title">Título (Opcional)</Label>
                   <Input
@@ -989,7 +989,7 @@ export function ContentManagement() {
                     onChange={e => setBannerTitle(e.target.value)}
                     placeholder="Ex: Novo curso disponível!"
                   />
-                </div>
+                  </div>
                 <div>
                   <Label htmlFor="banner-description">Descrição (Opcional)</Label>
                   <Textarea
@@ -999,7 +999,7 @@ export function ContentManagement() {
                     placeholder="Descrição do banner..."
                     rows={3}
                   />
-                </div>
+                    </div>
                 <div>
                   <Label htmlFor="banner-link">Link (Opcional)</Label>
                   <Input
@@ -1011,19 +1011,19 @@ export function ContentManagement() {
                   />
                   <p className="text-xs text-muted-foreground mt-1">
                     URL para onde o banner deve redirecionar ao ser clicado
-                  </p>
-                </div>
+                    </p>
+                  </div>
                 <div className="flex gap-2 pt-2">
-                  <Button 
+                    <Button
                     type="button" 
                     variant="outline" 
                     onClick={() => setBannerDialogOpen(false)} 
                     className="flex-1"
                   >
                     Cancelar
-                  </Button>
+                    </Button>
                   {bannerImageUrl && (
-                    <Button 
+                    <Button
                       type="button" 
                       variant="destructive" 
                       onClick={handleDeleteBanner} 
@@ -1032,15 +1032,15 @@ export function ContentManagement() {
                       Remover
                     </Button>
                   )}
-                  <Button 
+                    <Button
                     type="button" 
                     onClick={handleSaveBanner} 
                     className="flex-1"
                   >
                     Salvar Banner
-                  </Button>
+                    </Button>
+                  </div>
                 </div>
-              </div>
             </DialogContent>
           </Dialog>
 
@@ -1074,7 +1074,7 @@ export function ContentManagement() {
                   <p className="text-xs text-muted-foreground mt-1">
                     Recomendado: 1200x400px ou proporção 3:1
                   </p>
-                </div>
+                              </div>
                 <div>
                   <Label htmlFor="banner-title">Título (Opcional)</Label>
                   <Input
@@ -1083,7 +1083,7 @@ export function ContentManagement() {
                     onChange={e => setBannerTitle(e.target.value)}
                     placeholder="Ex: Novo curso disponível!"
                   />
-                </div>
+                              </div>
                 <div>
                   <Label htmlFor="banner-description">Descrição (Opcional)</Label>
                   <Textarea
@@ -1093,7 +1093,7 @@ export function ContentManagement() {
                     placeholder="Descrição do banner..."
                     rows={3}
                   />
-                </div>
+                          </div>
                 <div>
                   <Label htmlFor="banner-link">Link (Opcional)</Label>
                   <Input
@@ -1105,19 +1105,19 @@ export function ContentManagement() {
                   />
                   <p className="text-xs text-muted-foreground mt-1">
                     URL para onde o banner deve redirecionar ao ser clicado
-                  </p>
-                </div>
+                            </p>
+                          </div>
                 <div className="flex gap-2 pt-2">
-                  <Button 
+                            <Button
                     type="button" 
                     variant="outline" 
                     onClick={() => setBannerDialogOpen(false)} 
                     className="flex-1"
                   >
                     Cancelar
-                  </Button>
+                            </Button>
                   {bannerImageUrl && (
-                    <Button 
+                            <Button
                       type="button" 
                       variant="destructive" 
                       onClick={handleDeleteBanner} 
@@ -1132,9 +1132,9 @@ export function ContentManagement() {
                     className="flex-1"
                   >
                     Salvar Banner
-                  </Button>
-                </div>
-              </div>
+                            </Button>
+                          </div>
+                        </div>
             </DialogContent>
           </Dialog>
         </div>
@@ -1164,7 +1164,7 @@ export function ContentManagement() {
         >
           <SortableContext
             items={[
-              ...modulesList.map(m => m.id),
+              ...filteredModules.map(m => m.id),
               ...Object.values(lessonsByModule).flat().map(l => l.id)
             ]}
             strategy={verticalListSortingStrategy}
@@ -1205,19 +1205,19 @@ export function ContentManagement() {
                                 }}
                                 onDelete={() => handleDeleteLesson(lesson.id)}
                               />
-                            ))}
-                          </div>
-                        ) : (
-                          <p className="text-sm text-muted-foreground ml-8 py-2">
-                            Nenhuma aula neste módulo
-                          </p>
-                        )}
-                      </CardContent>
-                    </Card>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground ml-8 py-2">
+                      Nenhuma aula neste módulo
+                    </p>
+                  )}
+                </CardContent>
+            </Card>
                   )}
                 </div>
-              ))}
-            </div>
+          ))}
+        </div>
           </SortableContext>
         </DndContext>
       )}
