@@ -13,9 +13,11 @@ export default function Courses() {
   const { data: modules, isLoading } = useModulesWithLessons();
   const [selectedModuleId, setSelectedModuleId] = useState<string | null>(null);
 
-  const publishedModules = modules?.filter(m => m.is_published) || [];
+  // Mostrar todos os módulos (publicados e não publicados para preview bloqueado)
+  const allModules = modules || [];
+  const publishedModules = allModules.filter(m => m.is_published);
   const selectedModule = selectedModuleId 
-    ? publishedModules.find(m => m.id === selectedModuleId) 
+    ? allModules.find(m => m.id === selectedModuleId) 
     : null;
 
   return (
@@ -58,9 +60,9 @@ export default function Courses() {
               {/* Course Banner */}
               <CourseBanner />
               
-              {/* Modules Carousel */}
+              {/* Modules Carousel - mostra todos os módulos, bloqueados aparecem em grayscale */}
               <ModuleCarousel 
-                modules={publishedModules}
+                modules={allModules}
                 onModuleSelect={(module) => setSelectedModuleId(module.id)}
               />
               
