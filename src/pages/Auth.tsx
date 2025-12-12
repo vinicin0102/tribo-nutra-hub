@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Eye, EyeOff, Mail, Lock, User } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, User, Calendar, CreditCard } from 'lucide-react';
 
 export default function Auth() {
   const navigate = useNavigate();
@@ -19,7 +19,50 @@ export default function Auth() {
     email: '',
     password: '',
     username: '',
+    fullName: '',
+    cpf: '',
+    dataNascimento: '',
   });
+
+  // Função para formatar CPF
+  const formatCPF = (value: string) => {
+    const numbers = value.replace(/\D/g, '');
+    if (numbers.length <= 11) {
+      return numbers
+        .replace(/(\d{3})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+    }
+    return value;
+  };
+
+  // Função para validar CPF
+  const validateCPF = (cpf: string): boolean => {
+    const numbers = cpf.replace(/\D/g, '');
+    if (numbers.length !== 11) return false;
+    
+    // Verificar se todos os dígitos são iguais
+    if (/^(\d)\1{10}$/.test(numbers)) return false;
+    
+    // Validar dígitos verificadores
+    let sum = 0;
+    for (let i = 0; i < 9; i++) {
+      sum += parseInt(numbers.charAt(i)) * (10 - i);
+    }
+    let digit = 11 - (sum % 11);
+    if (digit >= 10) digit = 0;
+    if (digit !== parseInt(numbers.charAt(9))) return false;
+    
+    sum = 0;
+    for (let i = 0; i < 10; i++) {
+      sum += parseInt(numbers.charAt(i)) * (11 - i);
+    }
+    digit = 11 - (sum % 11);
+    if (digit >= 10) digit = 0;
+    if (digit !== parseInt(numbers.charAt(10))) return false;
+    
+    return true;
+  };
 
   // Redirect if already logged in
   if (user) {
@@ -103,8 +146,39 @@ export default function Auth() {
           }
         }
       } else {
+        // Validações para cadastro
         if (!formData.username.trim()) {
           toast.error('Por favor, insira um nome de usuário');
+          setLoading(false);
+          return;
+        }
+        if (!formData.fullName.trim()) {
+          toast.error('Por favor, insira seu nome completo');
+          setLoading(false);
+          return;
+        }
+        if (!formData.cpf.trim()) {
+          toast.error('Por favor, insira seu CPF');
+          setLoading(false);
+          return;
+        }
+        if (!validateCPF(formData.cpf)) {
+          toast.error('CPF inválido. Por favor, verifique o número');
+          setLoading(false);
+          return;
+        }
+        if (!formData.dataNascimento) {
+          toast.error('Por favor, insira sua data de nascimento');
+          setLoading(false);
+          return;
+        }
+        // Validar idade mínima (18 anos)
+        const dataNasc = new Date(formData.dataNascimento);
+        const hoje = new Date();
+        const idade = hoje.getFullYear() - dataNasc.getFullYear();
+        const mes = hoje.getMonth() - dataNasc.getMonth();
+        if (idade < 18 || (idade === 18 && mes < 0) || (idade === 18 && mes === 0 && hoje.getDate() < dataNasc.getDate())) {
+          toast.error('Você deve ter pelo menos 18 anos para se cadastrar');
           setLoading(false);
           return;
         }
@@ -114,7 +188,14 @@ export default function Auth() {
           return;
         }
         
-        const { error } = await signUp(formData.email, formData.password, formData.username);
+        const { error } = await signUp({
+          email: formData.email,
+          password: formData.password,
+          username: formData.username,
+          fullName: formData.fullName,
+          cpf: formData.cpf,
+          dataNascimento: formData.dataNascimento,
+        });
         if (error) {
           if (error.message.includes('already registered')) {
             toast.error('Este email já está cadastrado');
@@ -183,21 +264,75 @@ export default function Auth() {
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               {!isLogin && (
-                <div className="space-y-2">
-                  <Label htmlFor="username" className="text-white">Nome de usuário</Label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                    <Input
-                      id="username"
-                      type="text"
-                      placeholder="seunome"
-                      className="pl-10 bg-[#2a2a2a] border-[#3a3a3a] text-white placeholder:text-gray-500"
-                      value={formData.username}
-                      onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                      required={!isLogin}
-                    />
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="fullName" className="text-white">Nome completo</Label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <Input
+                        id="fullName"
+                        type="text"
+                        placeholder="Seu nome completo"
+                        className="pl-10 bg-[#2a2a2a] border-[#3a3a3a] text-white placeholder:text-gray-500"
+                        value={formData.fullName}
+                        onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                        required
+                      />
+                    </div>
                   </div>
-                </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="username" className="text-white">Nome de usuário</Label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <Input
+                        id="username"
+                        type="text"
+                        placeholder="seunome"
+                        className="pl-10 bg-[#2a2a2a] border-[#3a3a3a] text-white placeholder:text-gray-500"
+                        value={formData.username}
+                        onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="cpf" className="text-white">CPF</Label>
+                    <div className="relative">
+                      <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <Input
+                        id="cpf"
+                        type="text"
+                        placeholder="000.000.000-00"
+                        maxLength={14}
+                        className="pl-10 bg-[#2a2a2a] border-[#3a3a3a] text-white placeholder:text-gray-500"
+                        value={formData.cpf}
+                        onChange={(e) => {
+                          const formatted = formatCPF(e.target.value);
+                          setFormData({ ...formData, cpf: formatted });
+                        }}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="dataNascimento" className="text-white">Data de nascimento</Label>
+                    <div className="relative">
+                      <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <Input
+                        id="dataNascimento"
+                        type="date"
+                        className="pl-10 bg-[#2a2a2a] border-[#3a3a3a] text-white placeholder:text-gray-500"
+                        value={formData.dataNascimento}
+                        onChange={(e) => setFormData({ ...formData, dataNascimento: e.target.value })}
+                        max={new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().split('T')[0]}
+                        required
+                      />
+                    </div>
+                  </div>
+                </>
               )}
 
               <div className="space-y-2">

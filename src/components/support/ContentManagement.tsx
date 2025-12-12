@@ -14,6 +14,7 @@ import {
 import { useUnlockedModules } from '@/hooks/useUnlockedModules';
 import { useReorderModules } from '@/hooks/useReorderModules';
 import { useReorderLessons } from '@/hooks/useReorderLessons';
+import { useCourseBanner, useUpdateCourseBanner, useDeleteCourseBanner } from '@/hooks/useCourseBanner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -377,6 +378,11 @@ export function ContentManagement() {
   const [modulesList, setModulesList] = useState<Module[]>([]);
   const [lessonsByModule, setLessonsByModule] = useState<Record<string, Lesson[]>>({});
 
+  // Hooks para gerenciar banner no banco de dados
+  const { data: currentBanner } = useCourseBanner();
+  const updateBanner = useUpdateCourseBanner();
+  const deleteBanner = useDeleteCourseBanner();
+
   // Sincronizar módulos e aulas quando dados mudarem
   useEffect(() => {
     if (modules) {
@@ -403,45 +409,54 @@ export function ContentManagement() {
     })
   );
 
-  // Carregar banner existente
+  // Carregar banner existente do banco de dados
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem('course_banner');
-      if (stored) {
-        const banner = JSON.parse(stored);
-        setBannerImageUrl(banner.image_url || '');
-        setBannerTitle(banner.title || '');
-        setBannerDescription(banner.description || '');
-        setBannerLinkUrl(banner.link_url || '');
-      }
-    } catch (e) {
-      console.error('Error loading banner:', e);
-    }
-  }, []);
-
-  const handleSaveBanner = () => {
-    const banner = {
-      image_url: bannerImageUrl || null,
-      title: bannerTitle || null,
-      description: bannerDescription || null,
-      link_url: bannerLinkUrl || null,
-      is_active: true,
-      created_at: new Date().toISOString(),
-    };
-    localStorage.setItem('course_banner', JSON.stringify(banner));
-    setBannerDialogOpen(false);
-    // Recarregar página para atualizar o banner
-    window.location.reload();
-  };
-
-  const handleDeleteBanner = () => {
-    if (confirm('Tem certeza que deseja remover o banner?')) {
-      localStorage.removeItem('course_banner');
+    if (currentBanner) {
+      setBannerImageUrl(currentBanner.image_url || '');
+      setBannerTitle(currentBanner.title || '');
+      setBannerDescription(currentBanner.description || '');
+      setBannerLinkUrl(currentBanner.link_url || '');
+    } else {
+      // Limpar campos se não houver banner
       setBannerImageUrl('');
       setBannerTitle('');
       setBannerDescription('');
       setBannerLinkUrl('');
-      window.location.reload();
+    }
+  }, [currentBanner]);
+
+  const handleSaveBanner = () => {
+    updateBanner.mutate({
+      image_url: bannerImageUrl || undefined,
+      title: bannerTitle || undefined,
+      description: bannerDescription || undefined,
+      link_url: bannerLinkUrl || undefined,
+    }, {
+      onSuccess: () => {
+        setBannerDialogOpen(false);
+      },
+      onError: (error) => {
+        console.error('Error saving banner:', error);
+        alert('Erro ao salvar banner. Tente novamente.');
+      },
+    });
+  };
+
+  const handleDeleteBanner = () => {
+    if (confirm('Tem certeza que deseja remover o banner?')) {
+      deleteBanner.mutate(undefined, {
+        onSuccess: () => {
+          setBannerImageUrl('');
+          setBannerTitle('');
+          setBannerDescription('');
+          setBannerLinkUrl('');
+          setBannerDialogOpen(false);
+        },
+        onError: (error) => {
+          console.error('Error deleting banner:', error);
+          alert('Erro ao remover banner. Tente novamente.');
+        },
+      });
     }
   };
 
@@ -648,18 +663,7 @@ export function ContentManagement() {
                 variant="outline" 
                 size="sm"
                 onClick={() => {
-                  try {
-                    const stored = localStorage.getItem('course_banner');
-                    if (stored) {
-                      const banner = JSON.parse(stored);
-                      setBannerImageUrl(banner.image_url || '');
-                      setBannerTitle(banner.title || '');
-                      setBannerDescription(banner.description || '');
-                      setBannerLinkUrl(banner.link_url || '');
-                    }
-                  } catch (e) {
-                    console.error('Error loading banner:', e);
-                  }
+                  // Os dados já são carregados automaticamente via useEffect quando currentBanner muda
                 }}
               >
                 <Image className="w-4 h-4 mr-2" />
@@ -753,23 +757,7 @@ export function ContentManagement() {
                 variant="outline" 
                 size="sm"
                 onClick={() => {
-                  try {
-                    const stored = localStorage.getItem('course_banner');
-                    if (stored) {
-                      const banner = JSON.parse(stored);
-                      setBannerImageUrl(banner.image_url || '');
-                      setBannerTitle(banner.title || '');
-                      setBannerDescription(banner.description || '');
-                      setBannerLinkUrl(banner.link_url || '');
-                    } else {
-                      setBannerImageUrl('');
-                      setBannerTitle('');
-                      setBannerDescription('');
-                      setBannerLinkUrl('');
-                    }
-                  } catch (e) {
-                    console.error('Error loading banner:', e);
-                  }
+                  // Os dados já são carregados automaticamente via useEffect quando currentBanner muda
                 }}
               >
                 <Image className="w-4 h-4 mr-2" />

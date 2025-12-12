@@ -2,11 +2,20 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
+export interface SignUpData {
+  email: string;
+  password: string;
+  username: string;
+  fullName: string;
+  cpf: string;
+  dataNascimento: string; // formato YYYY-MM-DD
+}
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  signUp: (email: string, password: string, username: string) => Promise<{ error: any }>;
+  signUp: (data: SignUpData) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
 }
@@ -76,16 +85,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const signUp = async (email: string, password: string, username: string) => {
+  const signUp = async (data: SignUpData) => {
     const redirectUrl = `${window.location.origin}/`;
     
+    // Limpar CPF (remover pontos, traços e espaços)
+    const cpfLimpo = data.cpf.replace(/[.\-\s]/g, '');
+    
     const { error } = await supabase.auth.signUp({
-      email,
-      password,
+      email: data.email,
+      password: data.password,
       options: {
         emailRedirectTo: redirectUrl,
         data: {
-          username,
+          username: data.username,
+          full_name: data.fullName,
+          cpf: cpfLimpo,
+          data_nascimento: data.dataNascimento,
         }
       }
     });
