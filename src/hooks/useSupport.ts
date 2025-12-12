@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from './useProfile';
 import { deleteImage } from '@/lib/upload';
+import { deleteAudio } from '@/lib/audioUpload';
 
 const ADMIN_EMAIL = 'admin@gmail.com';
 
@@ -183,10 +184,10 @@ export function useDeleteSupportMessage() {
     mutationFn: async (messageId: string) => {
       if (!isSupport) throw new Error('Sem permissão');
 
-      // Buscar a mensagem antes de deletar para verificar se tem imagem
+      // Buscar a mensagem antes de deletar para verificar se tem imagem ou áudio
       const { data: message, error: fetchError } = await supabase
         .from('support_chat')
-        .select('image_url')
+        .select('image_url, message')
         .eq('id', messageId)
         .single();
 
@@ -199,6 +200,20 @@ export function useDeleteSupportMessage() {
         } catch (error) {
           console.error('Erro ao deletar imagem do storage:', error);
           // Continuar mesmo se falhar ao deletar a imagem
+        }
+      }
+
+      // Deletar o áudio do storage se existir (formato: 🎤AUDIO:URL|DURATION)
+      if (message?.message?.startsWith('🎤AUDIO:')) {
+        try {
+          const match = message.message.match(/🎤AUDIO:(.+?)\|(\d+)/);
+          if (match && match[1]) {
+            const audioUrl = match[1];
+            await deleteAudio(audioUrl);
+          }
+        } catch (error) {
+          console.error('Erro ao deletar áudio do storage:', error);
+          // Continuar mesmo se falhar ao deletar o áudio
         }
       }
 
