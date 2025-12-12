@@ -121,6 +121,11 @@ export function useSendMessage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['chat_messages'] });
       queryClient.invalidateQueries({ queryKey: ['profile'] });
+      // Mostrar notificação imediata
+      toast.success('Pontos Ganhos!', {
+        description: '+1 ponto por participar do chat!',
+        duration: 3000,
+      });
     },
   });
 }

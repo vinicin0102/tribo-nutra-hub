@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEffect } from 'react';
+import { toast } from 'sonner';
 
 export interface UserBadge {
   badge_id: string;
@@ -180,6 +181,11 @@ export function useCreatePost() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['posts'] });
       queryClient.invalidateQueries({ queryKey: ['profile'] });
+      // Mostrar notificação imediata
+      toast.success('Pontos Ganhos!', {
+        description: '+5 pontos por criar uma publicação!',
+        duration: 3000,
+      });
     },
   });
 }
@@ -217,11 +223,17 @@ export function useLikePost() {
         return { liked: true };
       }
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['posts'] });
       queryClient.invalidateQueries({ queryKey: ['likes'] });
       queryClient.invalidateQueries({ queryKey: ['user_likes'] });
       queryClient.invalidateQueries({ queryKey: ['profile'] });
+      
+      // Mostrar notificação apenas quando curtir (não quando descurtir)
+      if (data.liked) {
+        // A notificação será criada pelo trigger do banco para o dono do post
+        // Aqui apenas invalidamos as queries para atualizar os pontos
+      }
     },
   });
 }
@@ -355,6 +367,11 @@ export function useCreateComment() {
       queryClient.invalidateQueries({ queryKey: ['comments', variables.postId] });
       queryClient.invalidateQueries({ queryKey: ['posts'] });
       queryClient.invalidateQueries({ queryKey: ['profile'] });
+      // Mostrar notificação imediata
+      toast.success('Pontos Ganhos!', {
+        description: '+1 ponto por comentar!',
+        duration: 3000,
+      });
     },
   });
 }
