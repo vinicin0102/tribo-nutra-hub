@@ -10,7 +10,7 @@ interface CoverUploadProps {
   currentUrl?: string;
   onUpload: (url: string) => void;
   onRemove: () => void;
-  folder: 'modules' | 'lessons' | 'banners';
+  folder: 'modules' | 'lessons' | 'banners' | 'rewards';
   aspectRatio?: '16:9' | '1:1';
   className?: string;
 }
