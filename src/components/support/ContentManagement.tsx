@@ -1176,10 +1176,10 @@ export function ContentManagement() {
           </Card>
         ) : (
           <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
-          >
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
           <SortableContext
             items={[
               ...filteredModules.map(m => m.id),
