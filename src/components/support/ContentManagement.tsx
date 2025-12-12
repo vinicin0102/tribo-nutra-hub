@@ -24,6 +24,7 @@ import { Plus, Pencil, Trash2, ChevronDown, ChevronRight, BookOpen, Play, X, Lin
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { CoverUpload } from '@/components/courses/CoverUpload';
+import { PDFUpload } from '@/components/courses/PDFUpload';
 
 function ModuleForm({ 
   module, 
@@ -153,6 +154,7 @@ function LessonForm({
   const [title, setTitle] = useState(lesson?.title || '');
   const [description, setDescription] = useState(lesson?.description || '');
   const [vturbCode, setVturbCode] = useState(lesson?.vturb_code || '');
+  const [pdfUrl, setPdfUrl] = useState(lesson?.pdf_url || '');
   const [orderIndex, setOrderIndex] = useState(lesson?.order_index || 0);
   const [durationMinutes, setDurationMinutes] = useState(lesson?.duration_minutes || 0);
   const [isPublished, setIsPublished] = useState(lesson?.is_published || false);
@@ -180,6 +182,7 @@ function LessonForm({
       title, 
       description, 
       vturb_code: vturbCode,
+      pdf_url: pdfUrl || null,
       order_index: orderIndex, 
       duration_minutes: durationMinutes,
       is_published: isPublished,
@@ -245,6 +248,17 @@ function LessonForm({
         />
         <p className="text-xs text-muted-foreground mt-1">
           Suporta: Panda Video, Vturb, Voomly ou qualquer iframe. Cole o código completo do embed.
+        </p>
+      </div>
+      <div>
+        <Label>Material em PDF (Opcional)</Label>
+        <PDFUpload
+          currentUrl={pdfUrl}
+          onUpload={(url) => setPdfUrl(url)}
+          onRemove={() => setPdfUrl('')}
+        />
+        <p className="text-xs text-muted-foreground mt-1">
+          Se a aula for apenas um documento PDF, você pode fazer upload aqui. O PDF aparecerá no lugar do vídeo.
         </p>
       </div>
       <div className="grid grid-cols-2 gap-4">

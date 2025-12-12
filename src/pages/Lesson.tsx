@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useLesson, useLessons, useModules, Lesson as LessonType } from '@/hooks/useCourses';
-import { ArrowLeft, ArrowRight, ExternalLink, Clock, ChevronDown, ChevronUp, List, CheckCircle2, Circle } from 'lucide-react';
+import { ArrowLeft, ArrowRight, ExternalLink, Clock, ChevronDown, ChevronUp, List, CheckCircle2, Circle, FileText, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useState, useEffect, useRef } from 'react';
@@ -333,8 +333,38 @@ export default function Lesson() {
           </div>
         </div>
 
-        {/* Video Player */}
-        {lesson.vturb_code ? (
+        {/* Video Player ou PDF */}
+        {lesson.pdf_url ? (
+          <div className="w-full bg-[#1a1a1a] rounded-lg border border-[#2a2a2a] overflow-hidden">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="bg-red-500/20 rounded-lg p-3">
+                    <FileText className="w-6 h-6 text-red-500" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-white">Material em PDF</h3>
+                    <p className="text-sm text-gray-400">Documento da aula</p>
+                  </div>
+                </div>
+                <Button
+                  onClick={() => window.open(lesson.pdf_url || '', '_blank')}
+                  className="bg-primary hover:bg-primary/90"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Abrir PDF
+                </Button>
+              </div>
+              <div className="aspect-[4/3] bg-[#0a0a0a] rounded-lg overflow-hidden border border-[#2a2a2a]">
+                <iframe
+                  src={`${lesson.pdf_url}#toolbar=0`}
+                  className="w-full h-full"
+                  title="PDF Viewer"
+                />
+              </div>
+            </div>
+          </div>
+        ) : lesson.vturb_code ? (
           <VideoPlayer code={lesson.vturb_code} />
         ) : (
           <div className="w-full aspect-video bg-[#1a1a1a] rounded-lg flex items-center justify-center">

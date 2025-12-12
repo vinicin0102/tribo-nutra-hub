@@ -14,6 +14,7 @@ export interface Lesson {
   title: string;
   description: string | null;
   vturb_code: string | null;
+  pdf_url: string | null;
   external_links: ExternalLink[];
   order_index: number;
   is_published: boolean;
