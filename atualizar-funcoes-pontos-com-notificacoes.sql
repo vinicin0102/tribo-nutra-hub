@@ -139,6 +139,9 @@ BEGIN
 END;
 $$;
 
+-- Remover trigger antigo se existir
+DROP TRIGGER IF EXISTS on_comment_delete ON public.comments;
+
 CREATE TRIGGER on_comment_delete
   AFTER DELETE ON public.comments
   FOR EACH ROW 
