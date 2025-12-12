@@ -117,13 +117,32 @@ END;
 $$;
 
 -- Atualizar trigger de comentários para usar a nova função
+-- Primeiro remover o trigger antigo que só atualizava contador
 DROP TRIGGER IF EXISTS on_comment_change ON public.comments;
 DROP TRIGGER IF EXISTS trigger_add_points_comment ON public.comments;
 
+-- Criar novo trigger que adiciona pontos e cria notificação
 CREATE TRIGGER on_comment_change
-  AFTER INSERT OR DELETE ON public.comments
+  AFTER INSERT ON public.comments
   FOR EACH ROW 
   EXECUTE FUNCTION public.add_points_for_comment();
+
+-- Trigger separado para DELETE (só atualiza contador, não remove pontos)
+CREATE OR REPLACE FUNCTION public.update_post_comments_count_on_delete()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = public
+AS $$
+BEGIN
+  UPDATE public.posts SET comments_count = comments_count - 1 WHERE id = OLD.post_id;
+  RETURN NULL;
+END;
+$$;
+
+CREATE TRIGGER on_comment_delete
+  AFTER DELETE ON public.comments
+  FOR EACH ROW 
+  EXECUTE FUNCTION public.update_post_comments_count_on_delete();
 
 -- Verificar se as funções foram atualizadas
 SELECT 
