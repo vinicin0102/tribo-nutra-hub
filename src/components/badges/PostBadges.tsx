@@ -44,12 +44,14 @@ const medalBadgeStyles = {
 
 export function PostBadges({ badges, maxDisplay = 3 }: PostBadgesProps) {
   // Debug
-  console.log('PostBadges received:', badges);
+  console.log('🎖️ PostBadges component - badges received:', badges);
   
   if (!badges || badges.length === 0) {
-    console.log('PostBadges: No badges to display');
+    console.log('⚠️ PostBadges: No badges to display');
     return null;
   }
+  
+  console.log('✅ PostBadges: Will display', badges.length, 'badges');
 
   // Sort by points_required descending to show highest achievements first
   const sortedBadges = [...badges].sort(

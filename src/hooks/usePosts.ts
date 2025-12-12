@@ -87,13 +87,19 @@ export function usePosts() {
         .in('user_id', userIds);
       
       // Fetch user badges with badge details
-      const { data: userBadges, error: badgesError } = await supabase
-        .from('user_badges')
-        .select('user_id, badge_id, badges(name, icon, points_required)')
-        .in('user_id', userIds);
-      
-      if (badgesError) {
-        console.error('Error fetching user badges:', badgesError);
+      let userBadges: any[] = [];
+      if (userIds.length > 0) {
+        const { data, error: badgesError } = await supabase
+          .from('user_badges')
+          .select('user_id, badge_id, badges(name, icon, points_required)')
+          .in('user_id', userIds);
+        
+        if (badgesError) {
+          console.error('❌ Error fetching user badges:', badgesError);
+        } else {
+          userBadges = data || [];
+          console.log('✅ Fetched user badges:', userBadges.length, 'badges for', userIds.length, 'users');
+        }
       }
       
       // Create maps for quick lookup
@@ -101,7 +107,7 @@ export function usePosts() {
       
       // Group badges by user_id
       const badgesMap = new Map<string, UserBadge[]>();
-      (userBadges as any[] || []).forEach(ub => {
+      userBadges.forEach(ub => {
         if (ub && ub.user_id && ub.badges) {
           const existing = badgesMap.get(ub.user_id) || [];
           existing.push({ badge_id: ub.badge_id, badges: ub.badges });
@@ -109,20 +115,20 @@ export function usePosts() {
         }
       });
       
+      console.log('📊 Badges map:', Array.from(badgesMap.entries()).map(([uid, badges]) => ({ user_id: uid, count: badges.length })));
+      
       // Combine posts with profiles and badges
       const postsWithData = (posts as any[]).map(post => {
         const postBadges = badgesMap.get(post.user_id) || [];
+        if (postBadges.length > 0) {
+          console.log(`🎖️ Post from ${profileMap.get(post.user_id)?.username} has ${postBadges.length} badges:`, postBadges.map(b => b.badges.name));
+        }
         return {
           ...post,
           profiles: profileMap.get(post.user_id) || null,
           user_badges: postBadges
         };
       }) as Post[];
-      
-      // Debug: log badges for first post
-      if (postsWithData.length > 0 && postsWithData[0].user_badges) {
-        console.log('First post badges:', postsWithData[0].user_badges);
-      }
       
       return postsWithData;
     },

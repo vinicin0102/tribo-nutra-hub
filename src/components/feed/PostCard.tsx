@@ -121,11 +121,13 @@ export function PostCard({ post }: PostCardProps) {
             )}
             {/* Mostrar badges/conquistas */}
             {(() => {
-              // Debug
-              if (post.user_badges) {
-                console.log('PostCard - user_badges for', profile?.username, ':', post.user_badges);
+              const hasBadges = post.user_badges && post.user_badges.length > 0;
+              if (hasBadges) {
+                console.log(`✅ PostCard: ${profile?.username} has ${post.user_badges.length} badges:`, post.user_badges);
+              } else {
+                console.log(`⚠️ PostCard: ${profile?.username} has no badges. user_badges:`, post.user_badges);
               }
-              return post.user_badges && post.user_badges.length > 0 ? (
+              return hasBadges ? (
                 <PostBadges badges={post.user_badges} maxDisplay={3} />
               ) : null;
             })()}
