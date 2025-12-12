@@ -241,10 +241,20 @@ export default function Profile() {
                     {(formData.username || profile?.username)?.charAt(0).toUpperCase() || 'U'}
                   </AvatarFallback>
                 </Avatar>
+                {!hasDiamondAccess && (
+                  <button
+                    type="button"
+                    onClick={() => navigate('/upgrade')}
+                    className="absolute -bottom-1 -right-1 bg-gradient-to-r from-cyan-500 to-blue-500 text-white text-[10px] font-bold px-2 py-1 rounded-full border-2 border-card shadow-lg hover:scale-110 transition-transform cursor-pointer z-10"
+                    title="Assine o Plano Diamond"
+                  >
+                    💎 Diamond
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={handleFileButtonClick}
-                  className="absolute bottom-0 right-0 rounded-full bg-secondary p-2 text-secondary-foreground hover:bg-secondary/80 transition-colors"
+                  className={`absolute ${!hasDiamondAccess ? 'bottom-0 left-0' : 'bottom-0 right-0'} rounded-full bg-secondary p-2 text-secondary-foreground hover:bg-secondary/80 transition-colors`}
                   disabled={isUploadingAvatar}
                 >
                   <Camera className="h-4 w-4" />
