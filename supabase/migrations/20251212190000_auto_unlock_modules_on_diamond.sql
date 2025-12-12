@@ -6,6 +6,7 @@ SECURITY DEFINER SET search_path = public
 AS $$
 DECLARE
   v_module_id UUID;
+  v_modules_unlocked INTEGER := 0;
 BEGIN
   -- Verificar se o subscription_plan mudou para 'diamond'
   IF NEW.subscription_plan = 'diamond' AND (OLD.subscription_plan IS NULL OR OLD.subscription_plan != 'diamond') THEN
@@ -17,9 +18,15 @@ BEGIN
       INSERT INTO public.unlocked_modules (user_id, module_id)
       VALUES (NEW.user_id, v_module_id)
       ON CONFLICT (user_id, module_id) DO NOTHING;
+      
+      -- Contar apenas se foi inserido (não estava em conflito)
+      IF FOUND THEN
+        v_modules_unlocked := v_modules_unlocked + 1;
+      END IF;
     END LOOP;
     
-    RAISE NOTICE 'Módulos desbloqueados automaticamente para usuário %', NEW.user_id;
+    -- Log detalhado
+    RAISE NOTICE '✅ Módulos desbloqueados automaticamente para usuário %: % módulos', NEW.user_id, v_modules_unlocked;
   END IF;
   
   RETURN NEW;
