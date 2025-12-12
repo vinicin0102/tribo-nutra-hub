@@ -5,11 +5,27 @@
 -- Este script configura tudo de uma vez
 -- ============================================
 
--- 1. HABILITAR REALTIME PARA PROFILES
-ALTER PUBLICATION supabase_realtime ADD TABLE public.profiles;
+-- 1. HABILITAR REALTIME PARA PROFILES (se ainda não estiver)
+DO $$ 
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables 
+    WHERE pubname = 'supabase_realtime' AND tablename = 'profiles'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.profiles;
+  END IF;
+END $$;
 
--- 2. HABILITAR REALTIME PARA NOTIFICATIONS
-ALTER PUBLICATION supabase_realtime ADD TABLE public.notifications;
+-- 2. HABILITAR REALTIME PARA NOTIFICATIONS (se ainda não estiver)
+DO $$ 
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables 
+    WHERE pubname = 'supabase_realtime' AND tablename = 'notifications'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.notifications;
+  END IF;
+END $$;
 
 -- 3. ATUALIZAR FUNÇÃO PARA ADICIONAR PONTOS AO RECEBER CURTIDA
 CREATE OR REPLACE FUNCTION public.update_post_likes_count()
