@@ -1166,14 +1166,7 @@ export function ContentManagement() {
         </div>
 
         {/* Modules List */}
-        {!selectedCourseId ? (
-        <Card className="bg-card border-border">
-          <CardContent className="py-8 text-center">
-            <BookOpen className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-            <p className="text-muted-foreground">Selecione um curso para gerenciar módulos</p>
-          </CardContent>
-        </Card>
-      ) : !filteredModules || filteredModules.length === 0 ? (
+        {!filteredModules || filteredModules.length === 0 ? (
         <Card className="bg-card border-border">
           <CardContent className="py-8 text-center">
             <BookOpen className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
