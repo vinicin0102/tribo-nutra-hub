@@ -12,6 +12,8 @@ import {
   ExternalLink
 } from '@/hooks/useCourses';
 import { useUnlockedModules } from '@/hooks/useUnlockedModules';
+import { useReorderModules } from '@/hooks/useReorderModules';
+import { useReorderLessons } from '@/hooks/useReorderLessons';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -24,6 +26,23 @@ import { Plus, Pencil, Trash2, ChevronDown, ChevronRight, BookOpen, Play, X, Lin
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { CoverUpload } from '@/components/courses/CoverUpload';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { SortableModuleItem } from './SortableModuleItem';
+import { SortableLessonItem } from './SortableLessonItem';
 
 function ModuleForm({ 
   module, 
@@ -341,6 +360,8 @@ export function ContentManagement() {
   const updateLesson = useUpdateLesson();
   const deleteLesson = useDeleteLesson();
   const { isUnlocked, unlockModule, lockModule } = useUnlockedModules();
+  const reorderModules = useReorderModules();
+  const reorderLessons = useReorderLessons();
 
   const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set());
   const [moduleDialogOpen, setModuleDialogOpen] = useState(false);
@@ -353,6 +374,34 @@ export function ContentManagement() {
   const [bannerTitle, setBannerTitle] = useState('');
   const [bannerDescription, setBannerDescription] = useState('');
   const [bannerLinkUrl, setBannerLinkUrl] = useState('');
+  const [modulesList, setModulesList] = useState<Module[]>([]);
+  const [lessonsByModule, setLessonsByModule] = useState<Record<string, Lesson[]>>({});
+
+  // Sincronizar módulos e aulas quando dados mudarem
+  useEffect(() => {
+    if (modules) {
+      setModulesList(modules);
+      const lessonsMap: Record<string, Lesson[]> = {};
+      modules.forEach(module => {
+        if (module.lessons) {
+          lessonsMap[module.id] = module.lessons;
+        }
+      });
+      setLessonsByModule(lessonsMap);
+    }
+  }, [modules]);
+
+  // Configurar sensores para drag and drop
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   // Carregar banner existente
   useEffect(() => {
@@ -760,163 +809,82 @@ export function ContentManagement() {
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-3">
-          {modules.map(module => (
-            <Card key={module.id} className={cn(
-              "bg-card border-border overflow-hidden",
-              module.is_locked && "border-destructive/30"
-            )}>
-              <CardHeader className="p-3">
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={() => toggleModule(module.id)}
-                    className="p-1 hover:bg-muted rounded"
-                  >
-                    {expandedModules.has(module.id) ? (
-                      <ChevronDown className="w-5 h-5 text-muted-foreground" />
-                    ) : (
-                      <ChevronRight className="w-5 h-5 text-muted-foreground" />
-                    )}
-                  </button>
-                  
-                  {/* Module Thumbnail */}
-                  <div className={cn(
-                    "w-16 h-10 rounded overflow-hidden shrink-0 bg-muted",
-                    module.is_locked && "grayscale"
-                  )}>
-                    {module.cover_url ? (
-                      <img src={module.cover_url} alt="" className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <ImageIcon className="w-4 h-4 text-muted-foreground" />
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <CardTitle className="text-sm font-medium text-foreground truncate">
-                        {module.title}
-                      </CardTitle>
-                      {module.is_locked && (
-                        <span className="flex items-center gap-1 text-xs bg-destructive/20 text-destructive px-2 py-0.5 rounded">
-                          <Lock className="w-3 h-3" />
-                          Bloqueado
-                        </span>
-                      )}
-                      {!module.is_published && (
-                        <span className="text-xs bg-yellow-500/20 text-yellow-500 px-2 py-0.5 rounded">
-                          Rascunho
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      {module.lessons?.length || 0} aula(s) • Ordem: {module.order_index}
-                    </p>
-                  </div>
-                  <div className="flex gap-1">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8"
-                      onClick={() => {
-                        setSelectedModuleId(module.id);
-                        setEditingLesson(null);
-                        setLessonDialogOpen(true);
-                      }}
-                      title="Adicionar aula"
-                    >
-                      <Plus className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8"
-                      onClick={() => {
-                        setEditingModule(module);
-                        setModuleDialogOpen(true);
-                      }}
-                      title="Editar módulo"
-                    >
-                      <Pencil className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-destructive hover:text-destructive/80"
-                      onClick={() => handleDeleteModule(module.id)}
-                      title="Excluir módulo"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-              </CardHeader>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleModuleDragEnd}
+        >
+          <SortableContext
+            items={modulesList.map(m => m.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            <div className="space-y-3">
+              {modulesList.map(module => (
+                <SortableModuleItem
+                  key={module.id}
+                  module={module}
+                  isExpanded={expandedModules.has(module.id)}
+                  onToggle={() => toggleModule(module.id)}
+                  onAddLesson={() => {
+                    setSelectedModuleId(module.id);
+                    setEditingLesson(null);
+                    setLessonDialogOpen(true);
+                  }}
+                  onEdit={() => {
+                    setEditingModule(module);
+                    setModuleDialogOpen(true);
+                  }}
+                  onDelete={() => handleDeleteModule(module.id)}
+                />
+              ))}
+            </div>
+          </SortableContext>
 
-              {expandedModules.has(module.id) && (
-                <CardContent className="pt-0 pb-3">
-                  {module.lessons && module.lessons.length > 0 ? (
-                    <div className="space-y-1 ml-8 border-l border-border pl-4">
-                      {module.lessons.map((lesson, index) => (
-                        <div
-                          key={lesson.id}
-                          className="flex items-center gap-2 py-2 px-3 rounded-lg bg-muted"
-                        >
-                          {/* Lesson Thumbnail */}
-                          <div className="w-14 h-9 rounded overflow-hidden shrink-0 bg-background relative">
-                            {lesson.cover_url ? (
-                              <img src={lesson.cover_url} alt="" className="w-full h-full object-cover" />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center">
-                                <Play className="w-3 h-3 text-muted-foreground" />
-                              </div>
-                            )}
-                          </div>
-                          
-                          <div className="w-6 h-6 rounded-full bg-background flex items-center justify-center text-xs text-muted-foreground shrink-0">
-                            {index + 1}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm text-foreground truncate">{lesson.title}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {lesson.duration_minutes || 0} min
-                              {!lesson.is_published && ' • Rascunho'}
-                            </p>
-                          </div>
-                          <div className="flex gap-1">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7"
-                              onClick={() => {
+          {/* Aulas dentro de cada módulo */}
+          {modulesList.map(module => {
+            if (!expandedModules.has(module.id)) return null;
+            
+            const lessons = lessonsByModule[module.id] || [];
+            
+            return (
+              <Card key={`lessons-${module.id}`} className="mt-2 ml-4 border-border">
+                <CardContent className="pt-3 pb-3">
+                  {lessons.length > 0 ? (
+                    <DndContext
+                      sensors={sensors}
+                      collisionDetection={closestCenter}
+                      onDragEnd={(e) => handleLessonDragEnd(e, module.id)}
+                    >
+                      <SortableContext
+                        items={lessons.map(l => l.id)}
+                        strategy={verticalListSortingStrategy}
+                      >
+                        <div className="space-y-1 ml-8 border-l border-border pl-4">
+                          {lessons.map((lesson, index) => (
+                            <SortableLessonItem
+                              key={lesson.id}
+                              lesson={lesson}
+                              index={index}
+                              onEdit={() => {
                                 setEditingLesson(lesson);
                                 setLessonDialogOpen(true);
                               }}
-                            >
-                              <Pencil className="w-3 h-3" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7 text-destructive hover:text-destructive/80"
-                              onClick={() => handleDeleteLesson(lesson.id)}
-                            >
-                              <Trash2 className="w-3 h-3" />
-                            </Button>
-                          </div>
+                              onDelete={() => handleDeleteLesson(lesson.id)}
+                            />
+                          ))}
                         </div>
-                      ))}
-                    </div>
+                      </SortableContext>
+                    </DndContext>
                   ) : (
                     <p className="text-sm text-muted-foreground ml-8 py-2">
                       Nenhuma aula neste módulo
                     </p>
                   )}
                 </CardContent>
-              )}
-            </Card>
-          ))}
-        </div>
+              </Card>
+            );
+          })}
+        </DndContext>
       )}
     </div>
   );
