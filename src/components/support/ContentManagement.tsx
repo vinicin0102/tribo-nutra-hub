@@ -11,6 +11,13 @@ import {
   Lesson,
   ExternalLink
 } from '@/hooks/useCourses';
+import {
+  useCourses,
+  useCreateCourse,
+  useUpdateCourse,
+  useDeleteCourse,
+  Course
+} from '@/hooks/useCoursesManagement';
 import { useUnlockedModules } from '@/hooks/useUnlockedModules';
 import { useReorderModules } from '@/hooks/useReorderModules';
 import { useReorderLessons } from '@/hooks/useReorderLessons';
@@ -23,7 +30,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Pencil, Trash2, ChevronDown, ChevronRight, BookOpen, Play, X, Link as LinkIcon, Lock, Unlock, Image as ImageIcon, Image } from 'lucide-react';
+import { Plus, Pencil, Trash2, ChevronDown, ChevronRight, BookOpen, Play, X, Link as LinkIcon, Lock, Unlock, Image as ImageIcon, Image, GraduationCap } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { CoverUpload } from '@/components/courses/CoverUpload';
@@ -45,17 +52,111 @@ import {
 import { SortableModuleItem } from './SortableModuleItem';
 import { SortableLessonItem } from './SortableLessonItem';
 
+function CourseForm({ 
+  course, 
+  onSubmit, 
+  onCancel 
+}: { 
+  course?: Course; 
+  onSubmit: (data: Partial<Course>) => void;
+  onCancel: () => void;
+}) {
+  const [title, setTitle] = useState(course?.title || '');
+  const [description, setDescription] = useState(course?.description || '');
+  const [orderIndex, setOrderIndex] = useState(course?.order_index || 0);
+  const [isPublished, setIsPublished] = useState(course?.is_published || false);
+  const [coverUrl, setCoverUrl] = useState(course?.cover_url || '');
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSubmit({ 
+      title, 
+      description, 
+      order_index: orderIndex, 
+      is_published: isPublished,
+      cover_url: coverUrl || null
+    });
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
+      <div>
+        <Label>Capa do Curso</Label>
+        <CoverUpload
+          currentUrl={coverUrl}
+          onUpload={(url) => setCoverUrl(url)}
+          onRemove={() => setCoverUrl('')}
+          folder="courses"
+          aspectRatio="16:9"
+        />
+      </div>
+      <div>
+        <Label htmlFor="title">Título do Curso</Label>
+        <Input
+          id="title"
+          value={title}
+          onChange={e => setTitle(e.target.value)}
+          placeholder="Ex: Curso Completo de Nutrição"
+          required
+        />
+      </div>
+      <div>
+        <Label htmlFor="description">Descrição</Label>
+        <Textarea
+          id="description"
+          value={description}
+          onChange={e => setDescription(e.target.value)}
+          placeholder="Descreva o curso..."
+          rows={4}
+        />
+      </div>
+      <div>
+        <Label htmlFor="order">Ordem</Label>
+        <Input
+          id="order"
+          type="number"
+          value={orderIndex}
+          onChange={e => setOrderIndex(parseInt(e.target.value) || 0)}
+          min={0}
+        />
+      </div>
+      <div className="flex items-center justify-between pt-2 border-t border-border">
+        <Label htmlFor="published" className="flex items-center gap-2">
+          <Play className="w-4 h-4" />
+          Publicado
+        </Label>
+        <Switch
+          id="published"
+          checked={isPublished}
+          onCheckedChange={setIsPublished}
+        />
+      </div>
+      <div className="flex gap-2 pt-2">
+        <Button type="button" variant="outline" onClick={onCancel} className="flex-1">
+          Cancelar
+        </Button>
+        <Button type="submit" className="flex-1">
+          {course ? 'Atualizar' : 'Criar'} Curso
+        </Button>
+      </div>
+    </form>
+  );
+}
+
 function ModuleForm({ 
   module, 
+  courses,
   onSubmit, 
   onCancel 
 }: { 
   module?: Module; 
+  courses: Course[];
   onSubmit: (data: Partial<Module>) => void;
   onCancel: () => void;
 }) {
   const [title, setTitle] = useState(module?.title || '');
   const [description, setDescription] = useState(module?.description || '');
+  const [courseId, setCourseId] = useState(module?.course_id || '');
   const [orderIndex, setOrderIndex] = useState(module?.order_index || 0);
   const [isPublished, setIsPublished] = useState(module?.is_published || false);
   const [isLocked, setIsLocked] = useState(module?.is_locked || false);
@@ -63,9 +164,14 @@ function ModuleForm({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!courseId) {
+      alert('Por favor, selecione um curso');
+      return;
+    }
     onSubmit({ 
       title, 
-      description, 
+      description,
+      course_id: courseId,
       order_index: orderIndex, 
       is_published: isPublished,
       is_locked: isLocked,
@@ -84,6 +190,19 @@ function ModuleForm({
           folder="modules"
           aspectRatio="16:9"
         />
+      </div>
+      <div>
+        <Label htmlFor="course">Curso</Label>
+        <Select value={courseId} onValueChange={setCourseId} required>
+          <SelectTrigger>
+            <SelectValue placeholder="Selecione o curso" />
+          </SelectTrigger>
+          <SelectContent>
+            {courses.map(c => (
+              <SelectItem key={c.id} value={c.id}>{c.title}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
       <div>
         <Label htmlFor="title">Título do Módulo</Label>
@@ -353,7 +472,11 @@ function LessonForm({
 }
 
 export function ContentManagement() {
-  const { data: modules, isLoading } = useModulesWithLessons();
+  const { data: courses, isLoading: coursesLoading } = useCourses();
+  const { data: modules, isLoading: modulesLoading } = useModulesWithLessons();
+  const createCourse = useCreateCourse();
+  const updateCourse = useUpdateCourse();
+  const deleteCourse = useDeleteCourse();
   const createModule = useCreateModule();
   const updateModule = useUpdateModule();
   const deleteModule = useDeleteModule();
@@ -364,10 +487,13 @@ export function ContentManagement() {
   const reorderModules = useReorderModules();
   const reorderLessons = useReorderLessons();
 
+  const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
   const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set());
+  const [courseDialogOpen, setCourseDialogOpen] = useState(false);
   const [moduleDialogOpen, setModuleDialogOpen] = useState(false);
   const [lessonDialogOpen, setLessonDialogOpen] = useState(false);
   const [bannerDialogOpen, setBannerDialogOpen] = useState(false);
+  const [editingCourse, setEditingCourse] = useState<Course | null>(null);
   const [editingModule, setEditingModule] = useState<Module | null>(null);
   const [editingLesson, setEditingLesson] = useState<Lesson | null>(null);
   const [selectedModuleId, setSelectedModuleId] = useState<string | undefined>();
@@ -377,6 +503,11 @@ export function ContentManagement() {
   const [bannerLinkUrl, setBannerLinkUrl] = useState('');
   const [modulesList, setModulesList] = useState<Module[]>([]);
   const [lessonsByModule, setLessonsByModule] = useState<Record<string, Lesson[]>>({});
+
+  // Filtrar módulos por curso selecionado
+  const filteredModules = selectedCourseId 
+    ? modulesList.filter(m => (m as any).course_id === selectedCourseId)
+    : modulesList;
 
   // Hooks para gerenciar banner no banco de dados
   const { data: currentBanner } = useCourseBanner();
@@ -396,6 +527,13 @@ export function ContentManagement() {
       setLessonsByModule(lessonsMap);
     }
   }, [modules]);
+
+  // Selecionar primeiro curso automaticamente se houver cursos
+  useEffect(() => {
+    if (courses && courses.length > 0 && !selectedCourseId) {
+      setSelectedCourseId(courses[0].id);
+    }
+  }, [courses, selectedCourseId]);
 
   // Configurar sensores para drag and drop
   const sensors = useSensors(
@@ -470,6 +608,38 @@ export function ContentManagement() {
       }
       return next;
     });
+  };
+
+  const handleCreateCourse = (data: Partial<Course>) => {
+    createCourse.mutate(data as any, {
+      onSuccess: (newCourse) => {
+        setCourseDialogOpen(false);
+        setEditingCourse(null);
+        setSelectedCourseId(newCourse.id);
+      }
+    });
+  };
+
+  const handleUpdateCourse = (data: Partial<Course>) => {
+    if (!editingCourse) return;
+    updateCourse.mutate({ id: editingCourse.id, ...data }, {
+      onSuccess: () => {
+        setCourseDialogOpen(false);
+        setEditingCourse(null);
+      }
+    });
+  };
+
+  const handleDeleteCourse = (id: string) => {
+    if (confirm('Tem certeza que deseja excluir este curso? Todos os módulos e aulas serão excluídos também.')) {
+      deleteCourse.mutate(id, {
+        onSuccess: () => {
+          if (selectedCourseId === id) {
+            setSelectedCourseId(null);
+          }
+        }
+      });
+    }
   };
 
   const handleCreateModule = (data: Partial<Module>) => {
@@ -583,6 +753,8 @@ export function ContentManagement() {
     }
   };
 
+  const isLoading = coursesLoading || modulesLoading;
+
   if (isLoading) {
     return (
       <div className="space-y-4">
@@ -594,12 +766,132 @@ export function ContentManagement() {
   }
 
   return (
-    <div className="space-y-4">
-      {/* Header */}
-      <div className="flex items-center justify-between gap-4 flex-wrap">
-        <h2 className="text-lg font-semibold text-foreground">Gerenciar Conteúdo</h2>
-        <div className="flex gap-2">
-          <Dialog open={moduleDialogOpen} onOpenChange={setModuleDialogOpen}>
+    <div className="space-y-6">
+      {/* Seção de Cursos */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between gap-4 flex-wrap">
+          <div className="flex items-center gap-2">
+            <GraduationCap className="w-5 h-5 text-primary" />
+            <h2 className="text-lg font-semibold text-foreground">Cursos</h2>
+          </div>
+          <Dialog open={courseDialogOpen} onOpenChange={setCourseDialogOpen}>
+            <DialogTrigger asChild>
+              <Button 
+                size="sm"
+                onClick={() => setEditingCourse(null)}
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Novo Curso
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-lg">
+              <DialogHeader>
+                <DialogTitle>{editingCourse ? 'Editar Curso' : 'Novo Curso'}</DialogTitle>
+              </DialogHeader>
+              <CourseForm
+                course={editingCourse || undefined}
+                onSubmit={editingCourse ? handleUpdateCourse : handleCreateCourse}
+                onCancel={() => {
+                  setCourseDialogOpen(false);
+                  setEditingCourse(null);
+                }}
+              />
+            </DialogContent>
+          </Dialog>
+        </div>
+
+        {/* Lista de Cursos */}
+        {courses && courses.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {courses.map(course => (
+              <Card 
+                key={course.id} 
+                className={cn(
+                  "cursor-pointer transition-all hover:border-primary",
+                  selectedCourseId === course.id && "border-primary border-2"
+                )}
+                onClick={() => setSelectedCourseId(course.id)}
+              >
+                <CardHeader>
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <CardTitle className="text-base">{course.title}</CardTitle>
+                      {course.description && (
+                        <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                          {course.description}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex gap-1 ml-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEditingCourse(course);
+                          setCourseDialogOpen(true);
+                        }}
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-destructive"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteCourse(course.id);
+                        }}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </CardHeader>
+                {course.cover_url && (
+                  <div className="px-6 pb-4">
+                    <img 
+                      src={course.cover_url} 
+                      alt={course.title}
+                      className="w-full h-32 object-cover rounded-lg"
+                    />
+                  </div>
+                )}
+                <CardContent>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className={cn(
+                      "px-2 py-1 rounded",
+                      course.is_published 
+                        ? "bg-green-500/20 text-green-500" 
+                        : "bg-gray-500/20 text-gray-500"
+                    )}>
+                      {course.is_published ? 'Publicado' : 'Rascunho'}
+                    </span>
+                    <span className="text-muted-foreground">
+                      {filteredModules.filter(m => (m as any).course_id === course.id).length} módulos
+                    </span>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <Card>
+            <CardContent className="py-8 text-center text-muted-foreground">
+              Nenhum curso criado ainda. Clique em "Novo Curso" para começar.
+            </CardContent>
+          </Card>
+        )}
+      </div>
+
+      {/* Seção de Módulos e Aulas */}
+      {selectedCourseId && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between gap-4 flex-wrap">
+            <h2 className="text-lg font-semibold text-foreground">Módulos e Aulas</h2>
+            <div className="flex gap-2">
+              <Dialog open={moduleDialogOpen} onOpenChange={setModuleDialogOpen}>
             <DialogTrigger asChild>
               <Button 
                 variant="outline" 
@@ -616,6 +908,7 @@ export function ContentManagement() {
               </DialogHeader>
               <ModuleForm
                 module={editingModule || undefined}
+                courses={courses || []}
                 onSubmit={editingModule ? handleUpdateModule : handleCreateModule}
                 onCancel={() => {
                   setModuleDialogOpen(false);
@@ -633,7 +926,7 @@ export function ContentManagement() {
                   setEditingLesson(null);
                   setSelectedModuleId(undefined);
                 }}
-                disabled={!modules || modules.length === 0}
+                disabled={!filteredModules || filteredModules.length === 0}
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Aula
@@ -645,7 +938,7 @@ export function ContentManagement() {
               </DialogHeader>
               <LessonForm
                 lesson={editingLesson || undefined}
-                modules={modules || []}
+                modules={filteredModules || []}
                 defaultModuleId={selectedModuleId}
                 onSubmit={editingLesson ? handleUpdateLesson : handleCreateLesson}
                 onCancel={() => {
@@ -848,11 +1141,18 @@ export function ContentManagement() {
       </div>
 
       {/* Modules List */}
-      {!modules || modules.length === 0 ? (
+      {!selectedCourseId ? (
         <Card className="bg-card border-border">
           <CardContent className="py-8 text-center">
             <BookOpen className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-            <p className="text-muted-foreground">Nenhum módulo criado ainda</p>
+            <p className="text-muted-foreground">Selecione um curso para gerenciar módulos</p>
+          </CardContent>
+        </Card>
+      ) : !filteredModules || filteredModules.length === 0 ? (
+        <Card className="bg-card border-border">
+          <CardContent className="py-8 text-center">
+            <BookOpen className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+            <p className="text-muted-foreground">Nenhum módulo criado ainda neste curso</p>
             <p className="text-muted-foreground/70 text-sm mt-1">Crie seu primeiro módulo para começar</p>
           </CardContent>
         </Card>
@@ -870,7 +1170,7 @@ export function ContentManagement() {
             strategy={verticalListSortingStrategy}
           >
             <div className="space-y-3">
-              {modulesList.map(module => (
+              {filteredModules.map(module => (
                 <div key={module.id}>
                   <SortableModuleItem
                     module={module}
