@@ -18,7 +18,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
             "group toast group-[.toaster]:bg-[#1f1f1f] group-[.toaster]:text-white group-[.toaster]:border-[#3a3a3a] group-[.toaster]:shadow-2xl group-[.toaster]:rounded-xl group-[.toaster]:px-5 group-[.toaster]:py-4 group-[.toaster]:min-w-[320px] group-[.toaster]:max-w-[calc(100vw-32px)] group-[.toaster]:backdrop-blur-sm",
           description: "group-[.toast]:text-gray-200 group-[.toast]:text-sm group-[.toast]:leading-relaxed group-[.toast]:mt-1",
           title: "group-[.toast]:text-white group-[.toast]:font-semibold group-[.toast]:text-base group-[.toast]:leading-tight",
-          success: "group-[.toaster]:bg-gradient-to-r group-[.toaster]:from-green-600/30 group-[.toaster]:to-green-500/20 group-[.toaster]:border-green-400/60 group-[.toaster]:text-green-50 group-[.toaster]:shadow-green-500/20",
+          success: "group-[.toaster]:bg-gradient-to-r group-[.toaster]:from-primary/90 group-[.toaster]:to-orange-500/80 group-[.toaster]:border-primary/60 group-[.toaster]:text-white group-[.toaster]:shadow-primary/30",
           error: "group-[.toaster]:bg-gradient-to-r group-[.toaster]:from-red-600/30 group-[.toaster]:to-red-500/20 group-[.toaster]:border-red-400/60 group-[.toaster]:text-red-50 group-[.toaster]:shadow-red-500/20",
           warning: "group-[.toaster]:bg-gradient-to-r group-[.toaster]:from-yellow-600/30 group-[.toaster]:to-yellow-500/20 group-[.toaster]:border-yellow-400/60 group-[.toaster]:text-yellow-50 group-[.toaster]:shadow-yellow-500/20",
           info: "group-[.toaster]:bg-gradient-to-r group-[.toaster]:from-blue-600/30 group-[.toaster]:to-blue-500/20 group-[.toaster]:border-blue-400/60 group-[.toaster]:text-blue-50 group-[.toaster]:shadow-blue-500/20",

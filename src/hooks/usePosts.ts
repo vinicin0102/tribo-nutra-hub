@@ -184,11 +184,8 @@ export function useCreatePost() {
       // Forçar atualização imediata do perfil
       await queryClient.refetchQueries({ queryKey: ['profile'] });
       
-      // Mostrar notificação imediata
-      toast.success('Pontos Ganhos!', {
-        description: '+5 pontos por criar uma publicação!',
-        duration: 3000,
-      });
+      // Notificação será criada pelo banco e capturada pelo usePointsNotifications
+      // Não mostrar toast aqui para evitar duplicação
     },
   });
 }
@@ -375,11 +372,8 @@ export function useCreateComment() {
       // Forçar atualização imediata do perfil
       await queryClient.refetchQueries({ queryKey: ['profile'] });
       
-      // Mostrar notificação imediata
-      toast.success('Pontos Ganhos!', {
-        description: '+1 ponto por comentar!',
-        duration: 3000,
-      });
+      // Notificação será criada pelo banco e capturada pelo usePointsNotifications
+      // Não mostrar toast aqui para evitar duplicação
     },
   });
 }

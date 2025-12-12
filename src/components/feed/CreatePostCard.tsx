@@ -133,7 +133,8 @@ export function CreatePostCard() {
       if (cameraInputRef.current) {
         cameraInputRef.current.value = '';
       }
-      toast.success('Publicação criada!');
+      // Notificação de pontos será mostrada pelo usePointsNotifications
+      // Não mostrar toast aqui para evitar duplicação
     } catch (error: any) {
       console.error('Erro ao criar publicação:', error);
       const errorMessage = error?.message || 'Erro ao criar publicação';
