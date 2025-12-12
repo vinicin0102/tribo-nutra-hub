@@ -62,18 +62,6 @@ export function Navbar() {
                     {profile?.username?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || 'U'}
                   </AvatarFallback>
                 </Avatar>
-                {!hasDiamondAccess && (
-                  <div 
-                    className="absolute -bottom-1 -right-1 bg-gradient-to-r from-cyan-500 to-blue-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full border-2 border-[#1a1a1a] cursor-pointer hover:scale-110 transition-transform shadow-lg"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      navigate('/upgrade');
-                    }}
-                    title="Assine o Plano Diamond"
-                  >
-                    💎
-                  </div>
-                )}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56" align="end" forceMount>
@@ -110,10 +98,13 @@ export function Navbar() {
                   <DropdownMenuSeparator />
                   <DropdownMenuItem 
                     onClick={() => navigate('/upgrade')}
-                    className="bg-gradient-to-r from-cyan-500/20 to-blue-500/20 text-cyan-400 focus:text-cyan-300 focus:bg-gradient-to-r focus:from-cyan-500/30 focus:to-blue-500/30"
+                    className="bg-gradient-to-r from-cyan-500/20 to-blue-500/20 text-cyan-400 focus:text-cyan-300 focus:bg-gradient-to-r focus:from-cyan-500/30 focus:to-blue-500/30 border border-cyan-500/30"
                   >
-                    <Sparkles className="mr-2 h-4 w-4" />
-                    💎 Assinar Plano Diamond
+                    <Sparkles className="mr-2 h-4 w-4 text-cyan-400" />
+                    <div className="flex flex-col">
+                      <span className="font-semibold">Assinar Plano Diamond</span>
+                      <span className="text-xs text-cyan-400/70">Desbloqueie recursos exclusivos</span>
+                    </div>
                   </DropdownMenuItem>
                 </>
               )}
