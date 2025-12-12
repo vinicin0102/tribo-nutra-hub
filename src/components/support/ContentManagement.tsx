@@ -812,78 +812,65 @@ export function ContentManagement() {
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
-          onDragEnd={handleModuleDragEnd}
+          onDragEnd={handleDragEnd}
         >
           <SortableContext
-            items={modulesList.map(m => m.id)}
+            items={[
+              ...modulesList.map(m => m.id),
+              ...Object.values(lessonsByModule).flat().map(l => l.id)
+            ]}
             strategy={verticalListSortingStrategy}
           >
             <div className="space-y-3">
               {modulesList.map(module => (
-                <SortableModuleItem
-                  key={module.id}
-                  module={module}
-                  isExpanded={expandedModules.has(module.id)}
-                  onToggle={() => toggleModule(module.id)}
-                  onAddLesson={() => {
-                    setSelectedModuleId(module.id);
-                    setEditingLesson(null);
-                    setLessonDialogOpen(true);
-                  }}
-                  onEdit={() => {
-                    setEditingModule(module);
-                    setModuleDialogOpen(true);
-                  }}
-                  onDelete={() => handleDeleteModule(module.id)}
-                />
+                <div key={module.id}>
+                  <SortableModuleItem
+                    module={module}
+                    isExpanded={expandedModules.has(module.id)}
+                    onToggle={() => toggleModule(module.id)}
+                    onAddLesson={() => {
+                      setSelectedModuleId(module.id);
+                      setEditingLesson(null);
+                      setLessonDialogOpen(true);
+                    }}
+                    onEdit={() => {
+                      setEditingModule(module);
+                      setModuleDialogOpen(true);
+                    }}
+                    onDelete={() => handleDeleteModule(module.id)}
+                  />
+
+                  {/* Aulas dentro de cada módulo */}
+                  {expandedModules.has(module.id) && (
+                    <Card className="mt-2 ml-4 border-border">
+                      <CardContent className="pt-3 pb-3">
+                        {lessonsByModule[module.id] && lessonsByModule[module.id].length > 0 ? (
+                          <div className="space-y-1 ml-8 border-l border-border pl-4">
+                            {lessonsByModule[module.id].map((lesson, index) => (
+                              <SortableLessonItem
+                                key={lesson.id}
+                                lesson={lesson}
+                                index={index}
+                                onEdit={() => {
+                                  setEditingLesson(lesson);
+                                  setLessonDialogOpen(true);
+                                }}
+                                onDelete={() => handleDeleteLesson(lesson.id)}
+                              />
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-sm text-muted-foreground ml-8 py-2">
+                            Nenhuma aula neste módulo
+                          </p>
+                        )}
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
               ))}
             </div>
           </SortableContext>
-
-          {/* Aulas dentro de cada módulo */}
-          {modulesList.map(module => {
-            if (!expandedModules.has(module.id)) return null;
-            
-            const lessons = lessonsByModule[module.id] || [];
-            
-            return (
-              <Card key={`lessons-${module.id}`} className="mt-2 ml-4 border-border">
-                <CardContent className="pt-3 pb-3">
-                  {lessons.length > 0 ? (
-                    <DndContext
-                      sensors={sensors}
-                      collisionDetection={closestCenter}
-                      onDragEnd={(e) => handleLessonDragEnd(e, module.id)}
-                    >
-                      <SortableContext
-                        items={lessons.map(l => l.id)}
-                        strategy={verticalListSortingStrategy}
-                      >
-                        <div className="space-y-1 ml-8 border-l border-border pl-4">
-                          {lessons.map((lesson, index) => (
-                            <SortableLessonItem
-                              key={lesson.id}
-                              lesson={lesson}
-                              index={index}
-                              onEdit={() => {
-                                setEditingLesson(lesson);
-                                setLessonDialogOpen(true);
-                              }}
-                              onDelete={() => handleDeleteLesson(lesson.id)}
-                            />
-                          ))}
-                        </div>
-                      </SortableContext>
-                    </DndContext>
-                  ) : (
-                    <p className="text-sm text-muted-foreground ml-8 py-2">
-                      Nenhuma aula neste módulo
-                    </p>
-                  )}
-                </CardContent>
-              </Card>
-            );
-          })}
         </DndContext>
       )}
     </div>
