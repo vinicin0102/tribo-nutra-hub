@@ -21,29 +21,36 @@ BEGIN
 END $$;
 
 -- Criar política RLS para o bucket "documents" (se existir)
--- Permitir leitura pública
-CREATE POLICY IF NOT EXISTS "Documents are publicly accessible"
+-- Primeiro, remover políticas existentes se houver
+DROP POLICY IF EXISTS "Documents are publicly accessible" ON storage.objects;
+DROP POLICY IF EXISTS "Authenticated users can upload documents" ON storage.objects;
+DROP POLICY IF EXISTS "Authenticated users can update documents" ON storage.objects;
+DROP POLICY IF EXISTS "Authenticated users can delete documents" ON storage.objects;
+DROP POLICY IF EXISTS "Authenticated users can upload PDFs to images bucket" ON storage.objects;
+
+-- Permitir leitura pública do bucket "documents"
+CREATE POLICY "Documents are publicly accessible"
 ON storage.objects FOR SELECT
 USING (bucket_id = 'documents');
 
--- Permitir upload para usuários autenticados
-CREATE POLICY IF NOT EXISTS "Authenticated users can upload documents"
+-- Permitir upload para usuários autenticados no bucket "documents"
+CREATE POLICY "Authenticated users can upload documents"
 ON storage.objects FOR INSERT
 WITH CHECK (
   bucket_id = 'documents' 
   AND auth.role() = 'authenticated'
 );
 
--- Permitir atualização para usuários autenticados
-CREATE POLICY IF NOT EXISTS "Authenticated users can update documents"
+-- Permitir atualização para usuários autenticados no bucket "documents"
+CREATE POLICY "Authenticated users can update documents"
 ON storage.objects FOR UPDATE
 USING (
   bucket_id = 'documents' 
   AND auth.role() = 'authenticated'
 );
 
--- Permitir deleção para usuários autenticados
-CREATE POLICY IF NOT EXISTS "Authenticated users can delete documents"
+-- Permitir deleção para usuários autenticados no bucket "documents"
+CREATE POLICY "Authenticated users can delete documents"
 ON storage.objects FOR DELETE
 USING (
   bucket_id = 'documents' 
@@ -52,7 +59,7 @@ USING (
 
 -- Se preferir usar o bucket "images" existente, adicione esta política:
 -- (Mas você ainda precisa configurar o MIME type no Dashboard)
-CREATE POLICY IF NOT EXISTS "Authenticated users can upload PDFs to images bucket"
+CREATE POLICY "Authenticated users can upload PDFs to images bucket"
 ON storage.objects FOR INSERT
 WITH CHECK (
   bucket_id = 'images' 
