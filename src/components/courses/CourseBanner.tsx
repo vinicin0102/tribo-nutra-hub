@@ -24,13 +24,13 @@ export function CourseBanner() {
   const BannerContent = () => {
     if (!banner) {
       return (
-        <div className="relative overflow-hidden rounded-2xl border border-dashed border-border/50 aspect-[3/1] min-h-[120px] sm:min-h-[160px] bg-muted/30 flex items-center justify-center">
-          <div className="text-center">
-            <ImageIcon className="w-12 h-12 text-muted-foreground/50 mx-auto mb-2" />
-            <p className="text-sm text-muted-foreground">
+        <div className="relative overflow-hidden rounded-2xl border border-dashed border-border/50 w-full bg-muted/30 flex items-center justify-center" style={{ minHeight: '120px', aspectRatio: '3/1' }}>
+          <div className="text-center p-4">
+            <ImageIcon className="w-8 h-8 sm:w-12 sm:h-12 text-muted-foreground/50 mx-auto mb-2" />
+            <p className="text-xs sm:text-sm text-muted-foreground">
               Espaço para banner promocional
             </p>
-            <p className="text-xs text-muted-foreground/70 mt-1">
+            <p className="text-[10px] sm:text-xs text-muted-foreground/70 mt-1">
               Configure no painel admin
             </p>
           </div>
@@ -39,12 +39,13 @@ export function CourseBanner() {
     }
 
     return (
-      <div className="relative overflow-hidden rounded-2xl border border-border aspect-[3/1] min-h-[120px] sm:min-h-[160px]">
+      <div className="relative overflow-hidden rounded-2xl border border-border w-full" style={{ minHeight: '120px', aspectRatio: '3/1' }}>
         {banner.image_url ? (
           <img 
             src={banner.image_url} 
             alt={banner.title || 'Banner'} 
             className="w-full h-full object-cover"
+            loading="lazy"
           />
         ) : (
           <div className="w-full h-full bg-gradient-to-r from-primary/20 to-orange-500/20" />
@@ -52,14 +53,14 @@ export function CourseBanner() {
         
         {(banner.title || banner.description) && (
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex items-end">
-            <div className="p-4 sm:p-6 w-full">
+            <div className="p-3 sm:p-4 md:p-6 w-full">
               {banner.title && (
-                <h3 className="text-xl sm:text-2xl font-bold text-white mb-2">
+                <h3 className="text-base sm:text-xl md:text-2xl font-bold text-white mb-1 sm:mb-2">
                   {banner.title}
                 </h3>
               )}
               {banner.description && (
-                <p className="text-sm sm:text-base text-gray-200">
+                <p className="text-xs sm:text-sm md:text-base text-gray-200 line-clamp-2 sm:line-clamp-none">
                   {banner.description}
                 </p>
               )}
@@ -68,10 +69,10 @@ export function CourseBanner() {
                   href={banner.link_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 mt-3 text-primary hover:text-primary/80 font-medium text-sm"
+                  className="inline-flex items-center gap-2 mt-2 sm:mt-3 text-primary hover:text-primary/80 font-medium text-xs sm:text-sm"
                 >
                   Saiba mais
-                  <ExternalLink className="w-4 h-4" />
+                  <ExternalLink className="w-3 h-3 sm:w-4 sm:h-4" />
                 </a>
               )}
             </div>
@@ -83,7 +84,7 @@ export function CourseBanner() {
 
   if (isLoading) {
     return (
-      <div className="relative overflow-hidden rounded-2xl border border-border aspect-[3/1] min-h-[120px] sm:min-h-[160px] bg-muted animate-pulse" />
+      <div className="relative overflow-hidden rounded-2xl border border-border w-full bg-muted animate-pulse" style={{ minHeight: '120px', aspectRatio: '3/1' }} />
     );
   }
 
