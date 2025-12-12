@@ -5,6 +5,7 @@ import { useLessonProgress } from '@/hooks/useLessonProgress';
 import { useIsAdmin } from '@/hooks/useAdmin';
 import { useUnlockedModules } from '@/hooks/useUnlockedModules';
 import { cn } from '@/lib/utils';
+import { DiamondOfferModal } from './DiamondOfferModal';
 
 interface ModuleCardProps {
   module: Module;
@@ -19,12 +20,11 @@ function ModuleCard({ module, progress, isLocked = false, onClick }: ModuleCardP
       onClick={onClick}
       className={cn(
         "flex-shrink-0 w-[160px] md:w-[200px] rounded-2xl overflow-hidden transition-all duration-300 relative",
-        "bg-card text-left",
+        "bg-card text-left cursor-pointer",
         isLocked 
-          ? "grayscale cursor-not-allowed border-2 border-border" 
-          : "cursor-pointer border-2 border-primary/60 shadow-[0_0_20px_rgba(251,146,60,0.3),inset_0_0_20px_rgba(251,146,60,0.05)]"
+          ? "grayscale border-2 border-border hover:border-cyan-500/50 hover:grayscale-0" 
+          : "border-2 border-primary/60 shadow-[0_0_20px_rgba(251,146,60,0.3),inset_0_0_20px_rgba(251,146,60,0.05)]"
       )}
-      disabled={isLocked}
     >
       {/* Card image - vertical phone-like aspect ratio */}
       <div className="relative aspect-[9/16] overflow-hidden">
@@ -77,6 +77,7 @@ interface ModuleCarouselProps {
 export function ModuleCarousel({ modules, onModuleSelect }: ModuleCarouselProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [showDiamondOffer, setShowDiamondOffer] = useState(false);
   const { completedLessons } = useLessonProgress();
   const isAdmin = useIsAdmin();
   const { isUnlocked } = useUnlockedModules();
@@ -164,11 +165,17 @@ export function ModuleCarousel({ modules, onModuleSelect }: ModuleCarouselProps)
               module={module} 
               progress={getModuleProgress(module)} 
               isLocked={locked}
-              onClick={() => !locked && onModuleSelect(module)} 
+              onClick={() => locked ? setShowDiamondOffer(true) : onModuleSelect(module)} 
             />
           );
         })}
       </div>
+
+      {/* Modal de oferta Diamond */}
+      <DiamondOfferModal 
+        open={showDiamondOffer} 
+        onOpenChange={setShowDiamondOffer} 
+      />
     </div>
   );
 }
