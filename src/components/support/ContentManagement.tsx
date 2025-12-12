@@ -1167,14 +1167,14 @@ export function ContentManagement() {
 
         {/* Modules List */}
         {!filteredModules || filteredModules.length === 0 ? (
-        <Card className="bg-card border-border">
-          <CardContent className="py-8 text-center">
-            <BookOpen className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-            <p className="text-muted-foreground">Nenhum módulo criado ainda neste curso</p>
-            <p className="text-muted-foreground/70 text-sm mt-1">Crie seu primeiro módulo para começar</p>
-          </CardContent>
-        </Card>
-      ) : (
+          <Card className="bg-card border-border">
+            <CardContent className="py-8 text-center">
+              <BookOpen className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground">Nenhum módulo criado ainda neste curso</p>
+              <p className="text-muted-foreground/70 text-sm mt-1">Crie seu primeiro módulo para começar</p>
+            </CardContent>
+          </Card>
+        ) : (
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
@@ -1239,8 +1239,8 @@ export function ContentManagement() {
           </SortableContext>
         </DndContext>
         )}
-      </div>
-    )}
+        </div>
+      )}
     </div>
   );
 }
