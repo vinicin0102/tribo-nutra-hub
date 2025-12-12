@@ -1238,7 +1238,7 @@ export function ContentManagement() {
             </div>
           </SortableContext>
         </DndContext>
-        )}
+      )}
       </div>
     )}
     </div>
