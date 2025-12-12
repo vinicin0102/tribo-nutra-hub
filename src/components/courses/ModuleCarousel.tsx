@@ -171,7 +171,7 @@ export function ModuleCarousel({ modules, onModuleSelect }: ModuleCarouselProps)
       </div>
       
       {/* Pagination dots */}
-      <div className="flex justify-center gap-1.5 sm:gap-2 px-4">
+      <div className="flex justify-center gap-1 sm:gap-2 px-4">
         {publishedModules.map((_, index) => (
           <button
             key={index}
@@ -183,10 +183,10 @@ export function ModuleCarousel({ modules, onModuleSelect }: ModuleCarouselProps)
               }
             }}
             className={cn(
-              "h-1.5 sm:h-2 rounded-full transition-all",
+              "h-1 sm:h-2 rounded-full transition-all",
               index === currentIndex 
-                ? "bg-primary w-4 sm:w-6" 
-                : "bg-muted-foreground/30 w-1.5 sm:w-2"
+                ? "bg-primary w-3 sm:w-6" 
+                : "bg-muted-foreground/30 w-1 sm:w-2"
             )}
           />
         ))}
