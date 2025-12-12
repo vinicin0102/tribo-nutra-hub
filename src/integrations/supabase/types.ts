@@ -766,6 +766,16 @@ export type Database = {
         Args: { p_expires_at?: string; p_plan: string; p_user_id: string }
         Returns: Json
       }
+      create_badge_admin: {
+        Args: {
+          p_description?: string
+          p_icon: string
+          p_name: string
+          p_points_required?: number
+        }
+        Returns: Json
+      }
+      delete_badge_admin: { Args: { p_badge_id: string }; Returns: Json }
       is_admin: { Args: never; Returns: boolean }
       mute_user: {
         Args: { p_hours: number; p_user_id: string }
@@ -790,6 +800,16 @@ export type Database = {
       }
       unban_user_admin: { Args: { p_user_id: string }; Returns: Json }
       unmute_user_admin: { Args: { p_user_id: string }; Returns: Json }
+      update_badge_admin: {
+        Args: {
+          p_badge_id: string
+          p_description?: string
+          p_icon?: string
+          p_name?: string
+          p_points_required?: number
+        }
+        Returns: Json
+      }
       update_user_points_admin: {
         Args: { p_points: number; p_user_id: string }
         Returns: Json

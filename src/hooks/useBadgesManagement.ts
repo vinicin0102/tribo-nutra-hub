@@ -8,14 +8,22 @@ export function useCreateBadge() {
 
   return useMutation({
     mutationFn: async (data: Omit<Badge, 'id'>) => {
-      const { data: badge, error } = await supabase
-        .from('badges')
-        .insert(data)
-        .select()
-        .single();
+      const { data: result, error } = await supabase
+        .rpc('create_badge_admin', {
+          p_name: data.name,
+          p_icon: data.icon,
+          p_description: data.description || null,
+          p_points_required: data.points_required || 0
+        });
 
       if (error) throw error;
-      return badge;
+      
+      const response = result as { success: boolean; error?: string; id?: string };
+      if (!response.success) {
+        throw new Error(response.error || 'Erro ao criar conquista');
+      }
+      
+      return response;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['badges'] });
@@ -32,14 +40,23 @@ export function useUpdateBadge() {
 
   return useMutation({
     mutationFn: async ({ id, ...data }: Partial<Badge> & { id: string }) => {
-      const { data: badge, error } = await supabase
-        .from('badges')
-        .update(data)
-        .eq('id', id)
-        .select();
+      const { data: result, error } = await supabase
+        .rpc('update_badge_admin', {
+          p_badge_id: id,
+          p_name: data.name || null,
+          p_description: data.description || null,
+          p_icon: data.icon || null,
+          p_points_required: data.points_required ?? null
+        });
 
       if (error) throw error;
-      return badge?.[0] || null;
+      
+      const response = result as { success: boolean; error?: string };
+      if (!response.success) {
+        throw new Error(response.error || 'Erro ao atualizar conquista');
+      }
+      
+      return response;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['badges'] });
@@ -57,21 +74,19 @@ export function useDeleteBadge() {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      // Primeiro, deletar todas as referências em user_badges
-      const { error: userBadgesError } = await supabase
-        .from('user_badges')
-        .delete()
-        .eq('badge_id', id);
-
-      if (userBadgesError) throw userBadgesError;
-
-      // Depois, deletar o badge
-      const { error } = await supabase
-        .from('badges')
-        .delete()
-        .eq('id', id);
+      const { data: result, error } = await supabase
+        .rpc('delete_badge_admin', {
+          p_badge_id: id
+        });
 
       if (error) throw error;
+      
+      const response = result as { success: boolean; error?: string };
+      if (!response.success) {
+        throw new Error(response.error || 'Erro ao excluir conquista');
+      }
+      
+      return response;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['badges'] });
@@ -83,4 +98,3 @@ export function useDeleteBadge() {
     },
   });
 }
-
