@@ -120,6 +120,7 @@ export function useSendMessage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['chat_messages'] });
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
     },
   });
 }

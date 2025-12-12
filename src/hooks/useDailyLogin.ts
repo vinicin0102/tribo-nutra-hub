@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
 export function useDailyLogin() {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [hasCheckedToday, setHasCheckedToday] = useState(false);
 
   useEffect(() => {
@@ -35,6 +37,9 @@ export function useDailyLogin() {
         localStorage.setItem(lastCheckKey, 'true');
         setHasCheckedToday(true);
 
+        // Invalidar perfil para atualizar pontos imediatamente
+        queryClient.invalidateQueries({ queryKey: ['profile'] });
+        
         // Verificar resultado da função
         if (data) {
           const result = data as any;

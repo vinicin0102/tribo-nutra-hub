@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -30,6 +31,34 @@ export interface Profile {
 
 export function useProfile() {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
+
+  // Subscription em tempo real para atualizar pontos automaticamente
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel(`profile-${user.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'profiles',
+          filter: `user_id=eq.${user.id}`,
+        },
+        () => {
+          // Invalidar query quando o perfil for atualizado (pontos mudarem)
+          queryClient.invalidateQueries({ queryKey: ['profile', user.id] });
+          queryClient.invalidateQueries({ queryKey: ['profile'] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user, queryClient]);
 
   return useQuery({
     queryKey: ['profile', user?.id],
@@ -57,8 +86,8 @@ export function useProfile() {
     },
     enabled: !!user,
     retry: 1,
-    refetchOnWindowFocus: false,
-    staleTime: 60000, // 1 minuto
+    refetchOnWindowFocus: true,
+    staleTime: 0, // Sempre buscar dados atualizados
   });
 }
 
