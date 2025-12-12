@@ -1164,10 +1164,9 @@ export function ContentManagement() {
             </DialogContent>
           </Dialog>
         </div>
-      </div>
 
-      {/* Modules List */}
-      {!selectedCourseId ? (
+        {/* Modules List */}
+        {!selectedCourseId ? (
         <Card className="bg-card border-border">
           <CardContent className="py-8 text-center">
             <BookOpen className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
