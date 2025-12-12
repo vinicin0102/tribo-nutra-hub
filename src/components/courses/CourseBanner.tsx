@@ -1,25 +1,11 @@
 import { ExternalLink, Image as ImageIcon } from 'lucide-react';
-import { useState, useEffect } from 'react';
-
-interface Banner {
-  image_url?: string;
-  title?: string;
-  description?: string;
-  link_url?: string;
-}
+import { useCourseBanner } from '@/hooks/useCourseBanner';
 
 export function CourseBanner() {
-  const [banner, setBanner] = useState<Banner | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    // Usar localStorage para banner
-    const stored = localStorage.getItem('course_banner');
-    if (stored) {
-      setBanner(JSON.parse(stored));
-    }
-    setIsLoading(false);
-  }, []);
+  const { data: banner, isLoading, error } = useCourseBanner();
+  
+  // Sempre mostrar o banner, mesmo se houver erro ou não houver dados
+  // O placeholder será mostrado se não houver banner configurado
 
   const BannerContent = () => {
     if (!banner) {
@@ -83,25 +69,34 @@ export function CourseBanner() {
     );
   };
 
+  // Se estiver carregando, mostrar skeleton
   if (isLoading) {
     return (
       <div className="relative overflow-hidden rounded-2xl border border-border w-full bg-muted animate-pulse" style={{ minHeight: '100px', height: 'auto' }} />
     );
   }
 
+  // Se houver erro, ainda mostrar o placeholder para que o espaço seja visível
+  if (error) {
+    console.warn('Erro ao carregar banner:', error);
+    // Continuar e mostrar placeholder mesmo com erro
+  }
+
+  // Se houver banner apenas com link (sem título/descrição), tornar o banner inteiro clicável
   if (banner && banner.link_url && !banner.title && !banner.description) {
     return (
       <a
         href={banner.link_url}
         target="_blank"
         rel="noopener noreferrer"
-        className="block"
+        className="block w-full"
       >
         <BannerContent />
       </a>
     );
   }
 
+  // Sempre renderizar o conteúdo do banner (pode ser placeholder se não houver banner)
   return <BannerContent />;
 }
 
