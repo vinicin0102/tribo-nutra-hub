@@ -508,6 +508,66 @@ export function ContentManagement() {
     }
   };
 
+  // Handler para drag end (módulos e aulas)
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    
+    if (!over || active.id === over.id) return;
+
+    // Verificar se é um módulo ou uma aula
+    const isModule = modulesList.some(m => m.id === active.id);
+    
+    if (isModule) {
+      // Reordenar módulos
+      if (!modulesList) return;
+
+      const oldIndex = modulesList.findIndex(m => m.id === active.id);
+      const newIndex = modulesList.findIndex(m => m.id === over.id);
+
+      if (oldIndex === -1 || newIndex === -1) return;
+
+      const newModules = arrayMove(modulesList, oldIndex, newIndex);
+      setModulesList(newModules);
+
+      // Atualizar ordem no banco
+      const updates = newModules.map((module, index) => ({
+        id: module.id,
+        order_index: index,
+      }));
+
+      reorderModules.mutate(updates);
+    } else {
+      // Reordenar aulas - encontrar qual módulo contém esta aula
+      const moduleId = Object.keys(lessonsByModule).find(moduleId =>
+        lessonsByModule[moduleId].some(l => l.id === active.id)
+      );
+
+      if (!moduleId) return;
+
+      const lessons = lessonsByModule[moduleId];
+      if (!lessons) return;
+
+      const oldIndex = lessons.findIndex(l => l.id === active.id);
+      const newIndex = lessons.findIndex(l => l.id === over.id);
+
+      if (oldIndex === -1 || newIndex === -1) return;
+
+      const newLessons = arrayMove(lessons, oldIndex, newIndex);
+      setLessonsByModule({
+        ...lessonsByModule,
+        [moduleId]: newLessons,
+      });
+
+      // Atualizar ordem no banco
+      const updates = newLessons.map((lesson, index) => ({
+        id: lesson.id,
+        order_index: index,
+      }));
+
+      reorderLessons.mutate(updates);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-4">
