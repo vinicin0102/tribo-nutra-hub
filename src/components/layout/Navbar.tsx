@@ -1,4 +1,4 @@
-import { User, LogOut, Settings, Shield, HelpCircle, Gem } from 'lucide-react';
+import { User, LogOut, Settings, Shield, HelpCircle, Sparkles } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -96,10 +96,19 @@ export function Navbar() {
                 Suporte
               </DropdownMenuItem>
               {!hasDiamondAccess && (
-                <DropdownMenuItem onClick={() => navigate('/upgrade')}>
-                  <Gem className="mr-2 h-4 w-4" />
-                  Se torne Diamond 💎
-                </DropdownMenuItem>
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem 
+                    onClick={() => navigate('/upgrade')}
+                    className="bg-gradient-to-r from-cyan-500/20 to-blue-500/20 text-cyan-400 focus:text-cyan-300 focus:bg-gradient-to-r focus:from-cyan-500/30 focus:to-blue-500/30 border border-cyan-500/30"
+                  >
+                    <Sparkles className="mr-2 h-4 w-4 text-cyan-400" />
+                    <div className="flex flex-col">
+                      <span className="font-semibold">Virar Diamond</span>
+                      <span className="text-xs text-cyan-400/70">Desbloqueie recursos exclusivos</span>
+                    </div>
+                  </DropdownMenuItem>
+                </>
               )}
               {isAdmin && (
                 <>
