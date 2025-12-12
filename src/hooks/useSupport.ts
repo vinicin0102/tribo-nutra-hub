@@ -184,24 +184,14 @@ export function useDeleteSupportMessage() {
     mutationFn: async (messageId: string) => {
       if (!isSupport) throw new Error('Sem permissão');
 
-      // Buscar a mensagem antes de deletar para verificar se tem imagem ou áudio
+      // Buscar a mensagem antes de deletar para verificar se tem áudio
       const { data: message, error: fetchError } = await supabase
         .from('support_chat')
-        .select('image_url, message')
+        .select('message')
         .eq('id', messageId)
         .single();
 
       if (fetchError) throw fetchError;
-
-      // Deletar a imagem do storage se existir
-      if (message?.image_url) {
-        try {
-          await deleteImage(message.image_url);
-        } catch (error) {
-          console.error('Erro ao deletar imagem do storage:', error);
-          // Continuar mesmo se falhar ao deletar a imagem
-        }
-      }
 
       // Deletar o áudio do storage se existir (formato: 🎤AUDIO:URL|DURATION)
       if (message?.message?.startsWith('🎤AUDIO:')) {
@@ -213,7 +203,6 @@ export function useDeleteSupportMessage() {
           }
         } catch (error) {
           console.error('Erro ao deletar áudio do storage:', error);
-          // Continuar mesmo se falhar ao deletar o áudio
         }
       }
 
