@@ -93,29 +93,51 @@ export async function uploadPDF(
     const fileName = `${userId}-${Date.now()}.pdf`;
     const filePath = `${folder}/${fileName}`;
 
-    // Fazer upload do arquivo
-    const { error: uploadError } = await supabase.storage
-      .from('images')
+    // Tentar primeiro com bucket "documents" (recomendado)
+    // Se não existir, tentar com "images"
+    let bucketName = 'documents';
+    let uploadError = null;
+    let uploadResult = null;
+
+    // Tentar upload no bucket "documents"
+    uploadResult = await supabase.storage
+      .from('documents')
       .upload(filePath, file, {
         cacheControl: '3600',
         upsert: false,
         contentType: 'application/pdf',
       });
 
+    uploadError = uploadResult.error;
+
+    // Se o bucket "documents" não existir, tentar "images"
+    if (uploadError && (uploadError.message?.includes('Bucket not found') || uploadError.message?.includes('not found'))) {
+      bucketName = 'images';
+      uploadResult = await supabase.storage
+        .from('images')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false,
+          contentType: 'application/pdf',
+        });
+      
+      uploadError = uploadResult.error;
+    }
+
     if (uploadError) {
-      if (uploadError.message?.includes('Bucket not found') || uploadError.message?.includes('not found')) {
-        throw new Error('Bucket de arquivos não configurado no Supabase. Configure o bucket "images" no Storage.');
+      if (uploadError.message?.includes('mime type') || uploadError.message?.includes('not supported')) {
+        throw new Error('O bucket não está configurado para aceitar PDFs. Execute o script configurar-storage-pdf.sql e configure o bucket no Supabase Dashboard.');
       }
       throw uploadError;
     }
 
     // Obter URL pública
     const { data } = supabase.storage
-      .from('images')
+      .from(bucketName)
       .getPublicUrl(filePath);
 
     return data.publicUrl;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Erro ao fazer upload do PDF:', error);
     throw error;
   }
