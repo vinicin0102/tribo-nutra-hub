@@ -24,8 +24,8 @@ export function CourseBanner() {
   const BannerContent = () => {
     if (!banner) {
       return (
-        <div className="relative overflow-hidden rounded-2xl border border-dashed border-border/50 w-full bg-muted/30 flex items-center justify-center" style={{ minHeight: '120px', aspectRatio: '3/1' }}>
-          <div className="text-center p-4">
+        <div className="relative overflow-hidden rounded-2xl border border-dashed border-border/50 w-full bg-muted/30 flex items-center justify-center" style={{ minHeight: '100px', height: 'auto' }}>
+          <div className="text-center p-4 w-full">
             <ImageIcon className="w-8 h-8 sm:w-12 sm:h-12 text-muted-foreground/50 mx-auto mb-2" />
             <p className="text-xs sm:text-sm text-muted-foreground">
               Espaço para banner promocional
@@ -39,16 +39,17 @@ export function CourseBanner() {
     }
 
     return (
-      <div className="relative overflow-hidden rounded-2xl border border-border w-full" style={{ minHeight: '120px', aspectRatio: '3/1' }}>
+      <div className="relative overflow-hidden rounded-2xl border border-border w-full" style={{ minHeight: '100px', height: 'auto' }}>
         {banner.image_url ? (
           <img 
             src={banner.image_url} 
             alt={banner.title || 'Banner'} 
-            className="w-full h-full object-cover"
+            className="w-full h-auto object-cover block"
             loading="lazy"
+            style={{ minHeight: '100px' }}
           />
         ) : (
-          <div className="w-full h-full bg-gradient-to-r from-primary/20 to-orange-500/20" />
+          <div className="w-full h-full bg-gradient-to-r from-primary/20 to-orange-500/20" style={{ minHeight: '100px' }} />
         )}
         
         {(banner.title || banner.description) && (
@@ -84,7 +85,7 @@ export function CourseBanner() {
 
   if (isLoading) {
     return (
-      <div className="relative overflow-hidden rounded-2xl border border-border w-full bg-muted animate-pulse" style={{ minHeight: '120px', aspectRatio: '3/1' }} />
+      <div className="relative overflow-hidden rounded-2xl border border-border w-full bg-muted animate-pulse" style={{ minHeight: '100px', height: 'auto' }} />
     );
   }
 
