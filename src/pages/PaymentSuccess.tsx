@@ -101,6 +101,9 @@ export default function PaymentSuccess() {
               toast.success('Plano Diamond ativado!');
               queryClient.invalidateQueries({ queryKey: ['profile', user.id] });
               queryClient.invalidateQueries({ queryKey: ['subscription', user.id] });
+              queryClient.invalidateQueries({ queryKey: ['unlocked-modules', user.id] });
+              queryClient.invalidateQueries({ queryKey: ['modules'] });
+              queryClient.invalidateQueries({ queryKey: ['courses'] });
             } else {
               toast.error('Execute o SQL permitir-usuario-atualizar-proprio-plano.sql no Supabase para liberar imediatamente.', {
                 duration: 10000
@@ -117,6 +120,9 @@ export default function PaymentSuccess() {
           queryClient.invalidateQueries({ queryKey: ['profile', user.id] });
           queryClient.invalidateQueries({ queryKey: ['subscription', user.id] });
           queryClient.invalidateQueries({ queryKey: ['support-users'] });
+          queryClient.invalidateQueries({ queryKey: ['unlocked-modules', user.id] });
+          queryClient.invalidateQueries({ queryKey: ['modules'] });
+          queryClient.invalidateQueries({ queryKey: ['courses'] });
         }
 
         setIsUpdating(false);
