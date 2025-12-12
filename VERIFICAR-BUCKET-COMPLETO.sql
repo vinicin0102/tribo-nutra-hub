@@ -33,4 +33,3 @@ SELECT
   '3. USUÁRIO ATUAL:' as verificação,
   current_user as usuário,
   current_database() as banco;
-

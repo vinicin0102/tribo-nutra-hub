@@ -102,3 +102,5 @@ USING (bucket_id = 'images');
 2. Teste enviar um áudio no chat
 3. Deve funcionar imediatamente!
 
+
+

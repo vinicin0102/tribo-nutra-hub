@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Shield, Users, MessageSquare, LogOut, Home, Gift, BookOpen } from 'lucide-react';
+import { Shield, Users, MessageSquare, LogOut, Home, Gift, BookOpen, Trophy } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -11,6 +11,8 @@ import { SupportChat } from '@/components/support/SupportChat';
 import { UserManagement } from '@/components/support/UserManagement';
 import { RewardManagement } from '@/components/support/RewardManagement';
 import { ContentManagement } from '@/components/support/ContentManagement';
+import { BadgeManagement } from '@/components/support/BadgeManagement';
+import { cn } from '@/lib/utils';
 
 export default function SupportDashboard() {
   const navigate = useNavigate();
@@ -103,7 +105,10 @@ export default function SupportDashboard() {
 
       <div className="container py-6 px-4">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList className="bg-[#1a1a1a] border border-[#2a2a2a] w-full grid grid-cols-4">
+          <TabsList className={cn(
+            "bg-[#1a1a1a] border border-[#2a2a2a] w-full grid",
+            canAccessAdminPanel ? "grid-cols-5" : "grid-cols-4"
+          )}>
             <TabsTrigger value="chat" className="data-[state=active]:bg-primary text-xs">
               <MessageSquare className="h-4 w-4 sm:mr-2" />
               <span className="hidden sm:inline">Chat</span>
@@ -111,6 +116,10 @@ export default function SupportDashboard() {
             <TabsTrigger value="rewards" className="data-[state=active]:bg-primary text-xs">
               <Gift className="h-4 w-4 sm:mr-2" />
               <span className="hidden sm:inline">Resgates</span>
+            </TabsTrigger>
+            <TabsTrigger value="badges" className="data-[state=active]:bg-primary text-xs">
+              <Trophy className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Conquistas</span>
             </TabsTrigger>
             <TabsTrigger value="content" className="data-[state=active]:bg-primary text-xs">
               <BookOpen className="h-4 w-4 sm:mr-2" />
@@ -130,6 +139,10 @@ export default function SupportDashboard() {
 
           <TabsContent value="rewards" className="space-y-4">
             <RewardManagement />
+          </TabsContent>
+
+          <TabsContent value="badges" className="space-y-4">
+            <BadgeManagement />
           </TabsContent>
 
           <TabsContent value="content" className="space-y-4">
