@@ -1,7 +1,9 @@
 -- Adicionar política RLS para permitir que admins deletem mensagens de support_chat
-CREATE POLICY IF NOT EXISTS "Support can delete support chat messages" ON public.support_chat FOR DELETE 
+DROP POLICY IF EXISTS "Support can delete support chat messages" ON public.support_chat;
+
+CREATE POLICY "Support can delete support chat messages" ON public.support_chat FOR DELETE 
   USING (
     auth.uid() IN (SELECT user_id FROM public.profiles WHERE role IN ('support', 'admin'))
-    OR auth.uid() IN (SELECT id FROM auth.users WHERE email = 'admin@gmail.com')
+    OR EXISTS (SELECT 1 FROM auth.users WHERE id = auth.uid() AND email = 'admin@gmail.com')
   );
 
