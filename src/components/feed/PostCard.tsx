@@ -120,9 +120,15 @@ export function PostCard({ post }: PostCardProps) {
               </Badge>
             )}
             {/* Mostrar badges/conquistas */}
-            {post.user_badges && post.user_badges.length > 0 && (
-              <PostBadges badges={post.user_badges} maxDisplay={3} />
-            )}
+            {(() => {
+              // Debug
+              if (post.user_badges) {
+                console.log('PostCard - user_badges for', profile?.username, ':', post.user_badges);
+              }
+              return post.user_badges && post.user_badges.length > 0 ? (
+                <PostBadges badges={post.user_badges} maxDisplay={3} />
+              ) : null;
+            })()}
             {isSupportPost && (
               <Badge className="bg-primary text-white text-xs px-2 py-0.5">
                 <Shield className="h-3 w-3 mr-1" />

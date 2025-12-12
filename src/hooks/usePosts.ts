@@ -87,10 +87,14 @@ export function usePosts() {
         .in('user_id', userIds);
       
       // Fetch user badges with badge details
-      const { data: userBadges } = await supabase
+      const { data: userBadges, error: badgesError } = await supabase
         .from('user_badges')
         .select('user_id, badge_id, badges(name, icon, points_required)')
         .in('user_id', userIds);
+      
+      if (badgesError) {
+        console.error('Error fetching user badges:', badgesError);
+      }
       
       // Create maps for quick lookup
       const profileMap = new Map((profiles as any[] || []).map(p => [p.user_id, p]));
@@ -98,17 +102,29 @@ export function usePosts() {
       // Group badges by user_id
       const badgesMap = new Map<string, UserBadge[]>();
       (userBadges as any[] || []).forEach(ub => {
-        const existing = badgesMap.get(ub.user_id) || [];
-        existing.push({ badge_id: ub.badge_id, badges: ub.badges });
-        badgesMap.set(ub.user_id, existing);
+        if (ub && ub.user_id && ub.badges) {
+          const existing = badgesMap.get(ub.user_id) || [];
+          existing.push({ badge_id: ub.badge_id, badges: ub.badges });
+          badgesMap.set(ub.user_id, existing);
+        }
       });
       
       // Combine posts with profiles and badges
-      return (posts as any[]).map(post => ({
-        ...post,
-        profiles: profileMap.get(post.user_id) || null,
-        user_badges: badgesMap.get(post.user_id) || []
-      })) as Post[];
+      const postsWithData = (posts as any[]).map(post => {
+        const postBadges = badgesMap.get(post.user_id) || [];
+        return {
+          ...post,
+          profiles: profileMap.get(post.user_id) || null,
+          user_badges: postBadges
+        };
+      }) as Post[];
+      
+      // Debug: log badges for first post
+      if (postsWithData.length > 0 && postsWithData[0].user_badges) {
+        console.log('First post badges:', postsWithData[0].user_badges);
+      }
+      
+      return postsWithData;
     },
   });
 }
