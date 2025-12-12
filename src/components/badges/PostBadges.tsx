@@ -33,7 +33,7 @@ export function PostBadges({ badges, maxDisplay = 3 }: PostBadgesProps) {
         {displayBadges.map((badge) => (
           <Tooltip key={badge.badge_id}>
             <TooltipTrigger asChild>
-              <span className="text-[10px] cursor-pointer hover:scale-110 transition-transform">
+              <span className="text-[8px] cursor-pointer hover:scale-110 transition-transform leading-none">
                 {badge.badges.icon}
               </span>
             </TooltipTrigger>
