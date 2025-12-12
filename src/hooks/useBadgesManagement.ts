@@ -36,11 +36,10 @@ export function useUpdateBadge() {
         .from('badges')
         .update(data)
         .eq('id', id)
-        .select()
-        .single();
+        .select();
 
       if (error) throw error;
-      return badge;
+      return badge?.[0] || null;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['badges'] });
