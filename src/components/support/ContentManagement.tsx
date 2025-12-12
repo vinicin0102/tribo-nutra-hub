@@ -240,11 +240,11 @@ function ModuleForm({
             <Play className="w-4 h-4" />
             Publicado
           </Label>
-        <Switch
-          id="published"
-          checked={isPublished}
-          onCheckedChange={setIsPublished}
-        />
+          <Switch
+            id="published"
+            checked={isPublished}
+            onCheckedChange={setIsPublished}
+          />
         </div>
         <div className="flex items-center justify-between">
           <Label htmlFor="locked" className="flex items-center gap-2">
@@ -767,156 +767,10 @@ export function ContentManagement() {
 
   return (
     <div className="space-y-6">
-      {/* Seção de Cursos */}
-      <div className="space-y-4">
+      {/* Header com título e botões */}
       <div className="flex items-center justify-between gap-4 flex-wrap">
-          <div className="flex items-center gap-2">
-            <GraduationCap className="w-5 h-5 text-primary" />
-            <h2 className="text-lg font-semibold text-foreground">Cursos</h2>
-          </div>
-          <Dialog open={courseDialogOpen} onOpenChange={setCourseDialogOpen}>
-            <DialogTrigger asChild>
-              <Button 
-                size="sm"
-                onClick={() => setEditingCourse(null)}
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Novo Curso
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-lg">
-              <DialogHeader>
-                <DialogTitle>{editingCourse ? 'Editar Curso' : 'Novo Curso'}</DialogTitle>
-              </DialogHeader>
-              <CourseForm
-                course={editingCourse || undefined}
-                onSubmit={editingCourse ? handleUpdateCourse : handleCreateCourse}
-                onCancel={() => {
-                  setCourseDialogOpen(false);
-                  setEditingCourse(null);
-                }}
-              />
-            </DialogContent>
-          </Dialog>
-        </div>
-
-        {/* Lista de Cursos */}
-        {courses && courses.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {courses.map(course => (
-              <Card 
-                key={course.id} 
-                className={cn(
-                  "cursor-pointer transition-all hover:border-primary",
-                  selectedCourseId === course.id && "border-primary border-2"
-                )}
-                onClick={() => setSelectedCourseId(course.id)}
-              >
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <CardTitle className="text-base">{course.title}</CardTitle>
-                      {course.description && (
-                        <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                          {course.description}
-                        </p>
-                      )}
-                    </div>
-                    <div className="flex gap-1 ml-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setEditingCourse(course);
-                          setCourseDialogOpen(true);
-                        }}
-                      >
-                        <Pencil className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-destructive"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteCourse(course.id);
-                        }}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </CardHeader>
-                {course.cover_url && (
-                  <div className="px-6 pb-4">
-                    <img 
-                      src={course.cover_url} 
-                      alt={course.title}
-                      className="w-full h-32 object-cover rounded-lg"
-                    />
-                  </div>
-                )}
-                <CardContent>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className={cn(
-                      "px-2 py-1 rounded",
-                      course.is_published 
-                        ? "bg-green-500/20 text-green-500" 
-                        : "bg-gray-500/20 text-gray-500"
-                    )}>
-                      {course.is_published ? 'Publicado' : 'Rascunho'}
-                    </span>
-                    <span className="text-muted-foreground">
-                      {filteredModules.filter(m => (m as any).course_id === course.id).length} módulos
-                    </span>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        ) : (
-          <Card>
-            <CardContent className="py-8 text-center text-muted-foreground">
-              Nenhum curso criado ainda. Clique em "Novo Curso" para começar.
-            </CardContent>
-          </Card>
-        )}
-      </div>
-
-      {/* Seção de Módulos e Aulas */}
-      {selectedCourseId && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between gap-4 flex-wrap">
-            <h2 className="text-lg font-semibold text-foreground">Módulos e Aulas</h2>
-        <div className="flex gap-2">
-          <Dialog open={courseDialogOpen} onOpenChange={setCourseDialogOpen}>
-            <DialogTrigger asChild>
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => setEditingCourse(null)}
-              >
-                <GraduationCap className="w-4 h-4 mr-2" />
-                Curso
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-lg">
-              <DialogHeader>
-                <DialogTitle>{editingCourse ? 'Editar Curso' : 'Novo Curso'}</DialogTitle>
-              </DialogHeader>
-              <CourseForm
-                course={editingCourse || undefined}
-                onSubmit={editingCourse ? handleUpdateCourse : handleCreateCourse}
-                onCancel={() => {
-                  setCourseDialogOpen(false);
-                  setEditingCourse(null);
-                }}
-              />
-            </DialogContent>
-          </Dialog>
-
+        <h2 className="text-lg font-semibold text-foreground">Gerenciar Conteúdo</h2>
+        <div className="flex gap-2 flex-wrap">
           <Dialog open={moduleDialogOpen} onOpenChange={setModuleDialogOpen}>
             <DialogTrigger asChild>
               <Button 
@@ -981,9 +835,6 @@ export function ContentManagement() {
               <Button 
                 variant="outline" 
                 size="sm"
-                onClick={() => {
-                  // Os dados já são carregados automaticamente via useEffect quando currentBanner muda
-                }}
               >
                 <Image className="w-4 h-4 mr-2" />
                 Banner
@@ -1006,101 +857,7 @@ export function ContentManagement() {
                   <p className="text-xs text-muted-foreground mt-1">
                     Recomendado: 1200x400px ou proporção 3:1
                   </p>
-                      </div>
-                <div>
-                  <Label htmlFor="banner-title">Título (Opcional)</Label>
-                  <Input
-                    id="banner-title"
-                    value={bannerTitle}
-                    onChange={e => setBannerTitle(e.target.value)}
-                    placeholder="Ex: Novo curso disponível!"
-                  />
-                  </div>
-                <div>
-                  <Label htmlFor="banner-description">Descrição (Opcional)</Label>
-                  <Textarea
-                    id="banner-description"
-                    value={bannerDescription}
-                    onChange={e => setBannerDescription(e.target.value)}
-                    placeholder="Descrição do banner..."
-                    rows={3}
-                  />
-                    </div>
-                <div>
-                  <Label htmlFor="banner-link">Link (Opcional)</Label>
-                  <Input
-                    id="banner-link"
-                    value={bannerLinkUrl}
-                    onChange={e => setBannerLinkUrl(e.target.value)}
-                    placeholder="https://..."
-                    type="url"
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    URL para onde o banner deve redirecionar ao ser clicado
-                    </p>
-                  </div>
-                <div className="flex gap-2 pt-2">
-                    <Button
-                    type="button" 
-                    variant="outline" 
-                    onClick={() => setBannerDialogOpen(false)} 
-                    className="flex-1"
-                  >
-                    Cancelar
-                    </Button>
-                  {bannerImageUrl && (
-                    <Button
-                      type="button" 
-                      variant="destructive" 
-                      onClick={handleDeleteBanner} 
-                      className="flex-1"
-                    >
-                      Remover
-                    </Button>
-                  )}
-                    <Button
-                    type="button" 
-                    onClick={handleSaveBanner} 
-                    className="flex-1"
-                  >
-                    Salvar Banner
-                    </Button>
-                  </div>
                 </div>
-            </DialogContent>
-          </Dialog>
-
-          <Dialog open={bannerDialogOpen} onOpenChange={setBannerDialogOpen}>
-            <DialogTrigger asChild>
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => {
-                  // Os dados já são carregados automaticamente via useEffect quando currentBanner muda
-                }}
-              >
-                <Image className="w-4 h-4 mr-2" />
-                Banner
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-lg">
-              <DialogHeader>
-                <DialogTitle>Gerenciar Banner da Área de Membros</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
-                <div>
-                  <Label>Imagem do Banner</Label>
-                  <CoverUpload
-                    currentUrl={bannerImageUrl}
-                    onUpload={(url) => setBannerImageUrl(url)}
-                    onRemove={() => setBannerImageUrl('')}
-                    folder="banners"
-                    aspectRatio="16:9"
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Recomendado: 1200x400px ou proporção 3:1
-                  </p>
-                              </div>
                 <div>
                   <Label htmlFor="banner-title">Título (Opcional)</Label>
                   <Input
@@ -1109,7 +866,7 @@ export function ContentManagement() {
                     onChange={e => setBannerTitle(e.target.value)}
                     placeholder="Ex: Novo curso disponível!"
                   />
-                              </div>
+                </div>
                 <div>
                   <Label htmlFor="banner-description">Descrição (Opcional)</Label>
                   <Textarea
@@ -1119,7 +876,7 @@ export function ContentManagement() {
                     placeholder="Descrição do banner..."
                     rows={3}
                   />
-                          </div>
+                </div>
                 <div>
                   <Label htmlFor="banner-link">Link (Opcional)</Label>
                   <Input
@@ -1131,19 +888,19 @@ export function ContentManagement() {
                   />
                   <p className="text-xs text-muted-foreground mt-1">
                     URL para onde o banner deve redirecionar ao ser clicado
-                            </p>
-                          </div>
+                  </p>
+                </div>
                 <div className="flex gap-2 pt-2">
-                            <Button
+                  <Button
                     type="button" 
                     variant="outline" 
                     onClick={() => setBannerDialogOpen(false)} 
                     className="flex-1"
                   >
                     Cancelar
-                            </Button>
+                  </Button>
                   {bannerImageUrl && (
-                            <Button
+                    <Button
                       type="button" 
                       variant="destructive" 
                       onClick={handleDeleteBanner} 
@@ -1152,29 +909,30 @@ export function ContentManagement() {
                       Remover
                     </Button>
                   )}
-                  <Button 
+                  <Button
                     type="button" 
                     onClick={handleSaveBanner} 
                     className="flex-1"
                   >
                     Salvar Banner
-                            </Button>
-                          </div>
-                        </div>
+                  </Button>
+                </div>
+              </div>
             </DialogContent>
           </Dialog>
         </div>
+      </div>
 
-        {/* Modules List */}
-        {!filteredModules || filteredModules.length === 0 ? (
-          <Card className="bg-card border-border">
-            <CardContent className="py-8 text-center">
-              <BookOpen className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground">Nenhum módulo criado ainda neste curso</p>
-              <p className="text-muted-foreground/70 text-sm mt-1">Crie seu primeiro módulo para começar</p>
-            </CardContent>
-          </Card>
-        ) : (
+      {/* Modules List */}
+      {!filteredModules || filteredModules.length === 0 ? (
+        <Card className="bg-card border-border">
+          <CardContent className="py-8 text-center">
+            <BookOpen className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+            <p className="text-muted-foreground">Nenhum módulo criado ainda</p>
+            <p className="text-muted-foreground/70 text-sm mt-1">Crie seu primeiro módulo para começar</p>
+          </CardContent>
+        </Card>
+      ) : (
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
@@ -1223,7 +981,7 @@ export function ContentManagement() {
                                 }}
                                 onDelete={() => handleDeleteLesson(lesson.id)}
                               />
-                      ))}
+                            ))}
                           </div>
                         ) : (
                           <p className="text-sm text-muted-foreground ml-8 py-2">
@@ -1238,9 +996,7 @@ export function ContentManagement() {
             </div>
           </SortableContext>
         </DndContext>
-        )}
-      </div>
-    )}
+      )}
     </div>
   );
 }

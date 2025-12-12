@@ -91,6 +91,72 @@ export type Database = {
           },
         ]
       }
+      course_banners: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean | null
+          link_url: string | null
+          title: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          link_url?: string | null
+          title?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          link_url?: string | null
+          title?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      courses: {
+        Row: {
+          cover_url: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          is_published: boolean | null
+          order_index: number
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          cover_url?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_published?: boolean | null
+          order_index?: number
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          cover_url?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_published?: boolean | null
+          order_index?: number
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       daily_points: {
         Row: {
           created_at: string
@@ -231,6 +297,7 @@ export type Database = {
       }
       modules: {
         Row: {
+          course_id: string | null
           cover_url: string | null
           created_at: string | null
           description: string | null
@@ -242,6 +309,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          course_id?: string | null
           cover_url?: string | null
           created_at?: string | null
           description?: string | null
@@ -253,6 +321,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          course_id?: string | null
           cover_url?: string | null
           created_at?: string | null
           description?: string | null
@@ -263,7 +332,15 @@ export type Database = {
           title?: string
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "modules_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       notifications: {
         Row: {
