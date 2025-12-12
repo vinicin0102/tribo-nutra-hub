@@ -28,6 +28,7 @@ export interface Module {
   id: string;
   title: string;
   description: string | null;
+  course_id: string | null;
   order_index: number;
   is_published: boolean;
   is_locked: boolean;
