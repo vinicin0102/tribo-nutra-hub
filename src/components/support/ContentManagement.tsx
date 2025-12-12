@@ -1232,17 +1232,17 @@ export function ContentManagement() {
                                 onDelete={() => handleDeleteLesson(lesson.id)}
                               />
                       ))}
-                    </div>
-                  ) : (
-                    <p className="text-sm text-muted-foreground ml-8 py-2">
-                      Nenhuma aula neste módulo
-                    </p>
-                  )}
-                </CardContent>
-            </Card>
+                          </div>
+                        ) : (
+                          <p className="text-sm text-muted-foreground ml-8 py-2">
+                            Nenhuma aula neste módulo
+                          </p>
+                        )}
+                      </CardContent>
+                    </Card>
                   )}
                 </div>
-          ))}
+              ))}
         </div>
           </SortableContext>
         </DndContext>
