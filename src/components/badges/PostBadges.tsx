@@ -1,5 +1,4 @@
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Badge } from '@/components/ui/badge';
 
 interface BadgeData {
   badge_id: string;
@@ -34,13 +33,9 @@ export function PostBadges({ badges, maxDisplay = 3 }: PostBadgesProps) {
         {displayBadges.map((badge) => (
           <Tooltip key={badge.badge_id}>
             <TooltipTrigger asChild>
-              <Badge 
-                variant="secondary"
-                className="text-[10px] px-1.5 py-0.5 flex items-center gap-1 cursor-pointer"
-              >
-                <span className="text-sm leading-none">{badge.badges.icon}</span>
-                <span>{badge.badges.name}</span>
-              </Badge>
+              <span className="text-base cursor-pointer hover:scale-110 transition-transform">
+                {badge.badges.icon}
+              </span>
             </TooltipTrigger>
             <TooltipContent side="top" className="text-xs">
               <p className="font-medium">{badge.badges.icon} {badge.badges.name}</p>
@@ -55,12 +50,9 @@ export function PostBadges({ badges, maxDisplay = 3 }: PostBadgesProps) {
         {remainingCount > 0 && (
           <Tooltip>
             <TooltipTrigger asChild>
-              <Badge 
-                variant="outline" 
-                className="text-[10px] px-1.5 py-0.5 cursor-pointer"
-              >
+              <span className="text-xs text-muted-foreground cursor-pointer hover:text-foreground transition-colors">
                 +{remainingCount}
-              </Badge>
+              </span>
             </TooltipTrigger>
             <TooltipContent side="top" className="text-xs">
               <p>+{remainingCount} conquistas adicionais</p>
