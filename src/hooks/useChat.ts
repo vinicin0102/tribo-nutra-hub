@@ -124,8 +124,13 @@ export function useSendMessage() {
       // Forçar atualização imediata do perfil
       await queryClient.refetchQueries({ queryKey: ['profile'] });
       
-      // Notificação será criada pelo banco e capturada pelo usePointsNotifications
-      // Não mostrar toast aqui para evitar duplicação
+      // Mostrar notificação imediata (fallback caso banco não crie)
+      setTimeout(() => {
+        toast.success('Pontos Ganhos!', {
+          description: '+1 ponto por participar do chat!',
+          duration: 4000,
+        });
+      }, 500);
     },
   });
 }

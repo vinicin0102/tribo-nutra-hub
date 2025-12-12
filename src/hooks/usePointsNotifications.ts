@@ -30,9 +30,14 @@ export function usePointsNotifications() {
             // Forçar atualização imediata dos pontos
             await queryClient.refetchQueries({ queryKey: ['profile'] });
             
+            // Usar um ID único para evitar duplicatas
+            const notificationId = `points-${notification.id || Date.now()}`;
+            
+            // Verificar se já existe uma notificação similar (evitar duplicatas)
             toast.success(notification.title || 'Pontos Ganhos!', {
               description: notification.message,
               duration: 4000,
+              id: notificationId,
             });
           }
         }
