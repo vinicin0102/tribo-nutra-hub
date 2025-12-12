@@ -17,10 +17,12 @@ export async function uploadImage(
       throw new Error('Arquivo deve ser uma imagem');
     }
 
-    // Validar tamanho (máximo 5MB antes do processamento)
-    const maxSize = 5 * 1024 * 1024; // 5MB
-    if (file.size > maxSize) {
-      throw new Error('Imagem muito grande. Tamanho máximo: 5MB');
+    // Validar tamanho apenas para avatares (posts não têm limite)
+    if (folder === 'avatars') {
+      const maxSize = 5 * 1024 * 1024; // 5MB para avatares
+      if (file.size > maxSize) {
+        throw new Error('Imagem muito grande. Tamanho máximo: 5MB');
+      }
     }
 
     // Processar imagem antes do upload

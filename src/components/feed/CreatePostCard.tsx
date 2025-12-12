@@ -32,11 +32,7 @@ export function CreatePostCard() {
         return;
       }
 
-      // Validar tamanho (5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error('Imagem muito grande. Tamanho máximo: 5MB');
-        return;
-      }
+      // Sem limite de tamanho para postagens
 
       setSelectedImage(file);
       
