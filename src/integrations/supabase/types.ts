@@ -651,24 +651,33 @@ export type Database = {
       }
       support_chat: {
         Row: {
+          audio_duration: number | null
+          audio_url: string | null
           created_at: string
           id: string
+          image_url: string | null
           is_from_support: boolean
           message: string
           support_user_id: string | null
           user_id: string
         }
         Insert: {
+          audio_duration?: number | null
+          audio_url?: string | null
           created_at?: string
           id?: string
+          image_url?: string | null
           is_from_support?: boolean
           message: string
           support_user_id?: string | null
           user_id: string
         }
         Update: {
+          audio_duration?: number | null
+          audio_url?: string | null
           created_at?: string
           id?: string
+          image_url?: string | null
           is_from_support?: boolean
           message?: string
           support_user_id?: string | null
