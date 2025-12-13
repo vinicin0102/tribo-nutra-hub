@@ -447,16 +447,14 @@ export function useUnlockMentoria() {
       }
 
       // Desbloquear todos os módulos bloqueados para o usuário
-      // Inserir um de cada vez para garantir que funciona com onConflict
+      // Inserir um de cada vez e ignorar duplicatas (já desbloqueados)
       for (const module of lockedModules) {
         const { error: unlockError } = await supabase
           .from('unlocked_modules')
-          .insert({ user_id: userId, module_id: module.id })
-          .select()
-          .single();
+          .insert({ user_id: userId, module_id: module.id });
         
-        // Ignorar erros de duplicata (já desbloqueado)
-        if (unlockError && !unlockError.message.includes('duplicate') && !unlockError.code === '23505') {
+        // Ignorar erros de duplicata (já desbloqueado) - código 23505 é unique violation
+        if (unlockError && unlockError.code !== '23505') {
           throw unlockError;
         }
       }
