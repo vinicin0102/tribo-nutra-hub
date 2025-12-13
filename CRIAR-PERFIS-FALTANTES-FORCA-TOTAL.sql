@@ -1,0 +1,168 @@
+-- =====================================================
+-- CRIAR PERFIS PARA TODOS OS USUÁRIOS FALTANTES - FORÇA TOTAL
+-- =====================================================
+-- Este script cria perfis para TODOS os usuários que não têm,
+-- independente de quando foram criados ou se o trigger falhou
+-- Execute no Supabase SQL Editor
+-- =====================================================
+
+-- PASSO 1: Verificar quantos usuários estão sem perfil
+DO $$
+DECLARE
+  v_total_sem_perfil INTEGER;
+BEGIN
+  SELECT COUNT(*) INTO v_total_sem_perfil
+  FROM auth.users u
+  WHERE NOT EXISTS (
+    SELECT 1 FROM public.profiles p WHERE p.user_id = u.id
+  );
+  
+  RAISE NOTICE '========================================';
+  RAISE NOTICE 'USUÁRIOS SEM PERFIL: %', v_total_sem_perfil;
+  RAISE NOTICE '========================================';
+END $$;
+
+-- PASSO 2: Criar perfis para TODOS os usuários sem perfil
+-- Usando SECURITY DEFINER para contornar RLS
+DO $$
+DECLARE
+  v_user RECORD;
+  v_perfis_criados INTEGER := 0;
+  v_perfis_com_erro INTEGER := 0;
+BEGIN
+  RAISE NOTICE '========================================';
+  RAISE NOTICE 'CRIANDO PERFIS FALTANTES...';
+  RAISE NOTICE '========================================';
+  
+  FOR v_user IN 
+    SELECT 
+      u.id,
+      u.email,
+      u.created_at,
+      u.raw_user_meta_data
+    FROM auth.users u
+    WHERE NOT EXISTS (
+      SELECT 1 FROM public.profiles p WHERE p.user_id = u.id
+    )
+    ORDER BY u.created_at DESC
+  LOOP
+    BEGIN
+      INSERT INTO public.profiles (
+        user_id,
+        username,
+        full_name,
+        avatar_url,
+        cpf,
+        data_nascimento,
+        telefone,
+        email,
+        points,
+        created_at,
+        updated_at
+      )
+      VALUES (
+        v_user.id,
+        COALESCE(
+          v_user.raw_user_meta_data->>'username',
+          split_part(v_user.email, '@', 1)
+        ),
+        COALESCE(v_user.raw_user_meta_data->>'full_name', ''),
+        v_user.raw_user_meta_data->>'avatar_url',
+        v_user.raw_user_meta_data->>'cpf',
+        CASE 
+          WHEN v_user.raw_user_meta_data->>'data_nascimento' IS NOT NULL 
+          THEN (v_user.raw_user_meta_data->>'data_nascimento')::DATE
+          ELSE NULL
+        END,
+        v_user.raw_user_meta_data->>'telefone',
+        v_user.email,
+        0,
+        v_user.created_at,
+        NOW()
+      )
+      ON CONFLICT (user_id) DO NOTHING;
+      
+      IF FOUND THEN
+        v_perfis_criados := v_perfis_criados + 1;
+      END IF;
+      
+      -- Log a cada 10 perfis criados
+      IF v_perfis_criados % 10 = 0 THEN
+        RAISE NOTICE 'Perfis criados até agora: %', v_perfis_criados;
+      END IF;
+      
+    EXCEPTION
+      WHEN OTHERS THEN
+        v_perfis_com_erro := v_perfis_com_erro + 1;
+        RAISE WARNING 'Erro ao criar perfil para usuário %: %', v_user.id, SQLERRM;
+    END;
+  END LOOP;
+  
+  RAISE NOTICE '========================================';
+  RAISE NOTICE 'RESULTADO:';
+  RAISE NOTICE 'Perfis criados com sucesso: %', v_perfis_criados;
+  RAISE NOTICE 'Perfis com erro: %', v_perfis_com_erro;
+  RAISE NOTICE '========================================';
+END $$;
+
+-- PASSO 3: Verificar quantos perfis foram criados
+SELECT 
+  COUNT(*) as perfis_criados_agora
+FROM public.profiles p
+WHERE p.created_at >= NOW() - INTERVAL '5 minutes';
+
+-- PASSO 4: Verificar se ainda há usuários sem perfil
+SELECT 
+  COUNT(*) as usuarios_ainda_sem_perfil
+FROM auth.users u
+WHERE NOT EXISTS (
+  SELECT 1 FROM public.profiles p WHERE p.user_id = u.id
+);
+
+-- PASSO 5: Listar usuários que ainda estão sem perfil (se houver)
+SELECT 
+  u.id as user_id,
+  u.email,
+  u.created_at as data_cadastro,
+  u.raw_user_meta_data->>'username' as username_metadata,
+  u.raw_user_meta_data->>'cpf' as cpf_metadata,
+  u.raw_user_meta_data->>'telefone' as telefone_metadata
+FROM auth.users u
+WHERE NOT EXISTS (
+  SELECT 1 FROM public.profiles p WHERE p.user_id = u.id
+)
+ORDER BY u.created_at DESC
+LIMIT 20;
+
+-- =====================================================
+-- VERIFICAR E CORRIGIR O TRIGGER
+-- =====================================================
+
+-- Verificar se o trigger existe
+SELECT 
+  trigger_name,
+  event_manipulation,
+  action_timing,
+  action_statement
+FROM information_schema.triggers
+WHERE trigger_name = 'on_auth_user_created';
+
+-- Recriar o trigger se necessário
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW 
+  EXECUTE FUNCTION public.handle_new_user();
+
+COMMENT ON TRIGGER on_auth_user_created ON auth.users IS 
+'Cria automaticamente um perfil quando um novo usuário é criado';
+
+-- =====================================================
+-- VERIFICAÇÃO FINAL
+-- =====================================================
+SELECT 
+  (SELECT COUNT(*) FROM auth.users) as total_usuarios_auth,
+  (SELECT COUNT(*) FROM public.profiles) as total_perfis,
+  (SELECT COUNT(*) FROM auth.users) - (SELECT COUNT(*) FROM public.profiles) as diferenca;
+
