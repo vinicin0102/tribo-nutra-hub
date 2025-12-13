@@ -42,18 +42,21 @@ BEGIN
   -- Desbloquear todos os módulos bloqueados
   FOREACH v_module_id IN ARRAY v_locked_modules
   LOOP
-    INSERT INTO public.unlocked_modules (user_id, module_id)
-    VALUES (p_user_id, v_module_id)
-    ON CONFLICT (user_id, module_id) DO NOTHING;
-    
-    IF FOUND THEN
+    BEGIN
+      INSERT INTO public.unlocked_modules (user_id, module_id)
+      VALUES (p_user_id, v_module_id);
       v_modules_unlocked := v_modules_unlocked + 1;
-    END IF;
+    EXCEPTION
+      WHEN unique_violation THEN
+        -- Módulo já estava desbloqueado, ignorar
+        NULL;
+    END;
   END LOOP;
   
   RETURN json_build_object(
     'success', true,
-    'modules_unlocked', array_length(v_locked_modules, 1),
+    'modules_unlocked', v_modules_unlocked,
+    'total_modules', array_length(v_locked_modules, 1),
     'user_id', p_user_id
   );
 END;
