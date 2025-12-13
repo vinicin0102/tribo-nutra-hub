@@ -64,7 +64,7 @@ interface UserProfile {
 export function UserManagement() {
   const isAdmin = useIsAdmin();
   const { data: usersData = [], isLoading, error } = useSupportUsers();
-  const users = usersData as UserProfile[];
+  const users = usersData as unknown as UserProfile[];
   
   // Debug: verificar se telefone está sendo buscado
   if (users.length > 0) {

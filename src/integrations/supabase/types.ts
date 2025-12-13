@@ -480,6 +480,7 @@ export type Database = {
           role: string | null
           subscription_expires_at: string | null
           subscription_plan: string | null
+          telefone: string | null
           tier: string | null
           updated_at: string | null
           user_id: string
@@ -500,6 +501,7 @@ export type Database = {
           role?: string | null
           subscription_expires_at?: string | null
           subscription_plan?: string | null
+          telefone?: string | null
           tier?: string | null
           updated_at?: string | null
           user_id: string
@@ -520,6 +522,7 @@ export type Database = {
           role?: string | null
           subscription_expires_at?: string | null
           subscription_plan?: string | null
+          telefone?: string | null
           tier?: string | null
           updated_at?: string | null
           user_id?: string
