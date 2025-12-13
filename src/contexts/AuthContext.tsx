@@ -9,6 +9,7 @@ export interface SignUpData {
   fullName: string;
   cpf: string;
   dataNascimento: string; // formato YYYY-MM-DD
+  telefone: string;
 }
 
 interface AuthContextType {
@@ -91,6 +92,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Limpar CPF (remover pontos, traços e espaços)
     const cpfLimpo = data.cpf.replace(/[.\-\s]/g, '');
     
+    // Limpar telefone (remover parênteses, traços e espaços)
+    const telefoneLimpo = data.telefone.replace(/[()\-\s]/g, '');
+    
     const { error } = await supabase.auth.signUp({
       email: data.email,
       password: data.password,
@@ -101,6 +105,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           full_name: data.fullName,
           cpf: cpfLimpo,
           data_nascimento: data.dataNascimento,
+          telefone: telefoneLimpo,
         }
       }
     });

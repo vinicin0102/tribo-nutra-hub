@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Eye, EyeOff, Mail, Lock, User, Calendar, CreditCard } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, User, Calendar, CreditCard, Phone } from 'lucide-react';
 
 export default function Auth() {
   const navigate = useNavigate();
@@ -22,6 +22,7 @@ export default function Auth() {
     fullName: '',
     cpf: '',
     dataNascimento: '',
+    telefone: '',
   });
 
   // Função para formatar CPF
@@ -32,6 +33,25 @@ export default function Auth() {
         .replace(/(\d{3})(\d)/, '$1.$2')
         .replace(/(\d{3})(\d)/, '$1.$2')
         .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+    }
+    return value;
+  };
+
+  // Função para formatar telefone
+  const formatPhone = (value: string) => {
+    const numbers = value.replace(/\D/g, '');
+    if (numbers.length <= 11) {
+      if (numbers.length <= 10) {
+        // Telefone fixo: (00) 0000-0000
+        return numbers
+          .replace(/(\d{2})(\d)/, '($1) $2')
+          .replace(/(\d{4})(\d)/, '$1-$2');
+      } else {
+        // Celular: (00) 00000-0000
+        return numbers
+          .replace(/(\d{2})(\d)/, '($1) $2')
+          .replace(/(\d{5})(\d)/, '$1-$2');
+      }
     }
     return value;
   };
@@ -328,6 +348,26 @@ export default function Auth() {
                         value={formData.dataNascimento}
                         onChange={(e) => setFormData({ ...formData, dataNascimento: e.target.value })}
                         max={new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().split('T')[0]}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="telefone" className="text-white">Telefone</Label>
+                    <div className="relative">
+                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <Input
+                        id="telefone"
+                        type="text"
+                        placeholder="(00) 00000-0000"
+                        maxLength={15}
+                        className="pl-10 bg-[#2a2a2a] border-[#3a3a3a] text-white placeholder:text-gray-500"
+                        value={formData.telefone}
+                        onChange={(e) => {
+                          const formatted = formatPhone(e.target.value);
+                          setFormData({ ...formData, telefone: formatted });
+                        }}
                         required
                       />
                     </div>
