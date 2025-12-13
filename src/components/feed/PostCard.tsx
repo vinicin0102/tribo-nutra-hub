@@ -174,16 +174,6 @@ export function PostCard({ post }: PostCardProps) {
               {profile.username}
             </p>
           )}
-          {(profile as any)?.tier && getTierBadge((profile as any).tier) && (
-            <div className="flex items-center gap-2 mt-1 flex-wrap">
-              <Badge className={cn(
-                "bg-transparent border border-gray-600/50 text-[10px] px-1.5 py-0",
-                getTierBadge((profile as any).tier)?.color
-              )}>
-                {getTierBadge((profile as any).tier)?.emoji} {getTierBadge((profile as any).tier)?.label}
-              </Badge>
-            </div>
-          )}
           <p className="text-xs text-gray-400 mt-0.5">
             {new Date(post.created_at).toLocaleDateString('pt-BR', {
               day: '2-digit',

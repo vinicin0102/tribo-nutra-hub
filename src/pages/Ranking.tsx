@@ -115,17 +115,6 @@ export default function Ranking() {
                 <div className="text-white flex-1">
                   <h2 className="font-display text-xl font-bold">{currentProfile.username}</h2>
                   <div className="flex items-center gap-2 mt-1">
-                    {currentProfile.tier && (
-                      <Badge className={cn(
-                        'text-xs flex items-center gap-1.5',
-                        getTierInfo(currentProfile.tier).bg,
-                        getTierInfo(currentProfile.tier).border,
-                        getTierInfo(currentProfile.tier).color
-                      )}>
-                        {getTierInfo(currentProfile.tier).icon}
-                        {getTierInfo(currentProfile.tier).name}
-                      </Badge>
-                    )}
                     {currentUserRank && (
                       <span className="text-white/80 text-sm">
                         {currentUserRank.rank}º lugar
