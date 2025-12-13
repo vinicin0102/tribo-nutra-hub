@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { useModulesWithLessons } from '@/hooks/useCourses';
 import { HeroBanner } from '@/components/courses/HeroBanner';
@@ -15,7 +15,13 @@ export default function Courses() {
   const { data: modules, isLoading } = useModulesWithLessons();
   const [selectedModuleId, setSelectedModuleId] = useState<string | null>(null);
   const isAdmin = useIsAdmin();
-  const { isUnlocked } = useUnlockedModules();
+  const { isUnlocked, refetch } = useUnlockedModules();
+
+  // Refetch módulos desbloqueados quando a página é acessada
+  // Isso garante que o usuário veja módulos recém-desbloqueados
+  useEffect(() => {
+    refetch();
+  }, [refetch]);
 
   const publishedModules = modules?.filter(m => m.is_published) || [];
   const selectedModule = selectedModuleId 
