@@ -739,14 +739,18 @@ export default function Support() {
                           variant="ghost"
                           size="icon"
                           onClick={() => {
-                            console.log('📷 Botão de imagem clicado');
-                            imageInputRef.current?.click();
+                            console.log('📷 Botão de imagem clicado (suporte)');
+                            if (imageInputRef.current) {
+                              imageInputRef.current.click();
+                            } else {
+                              console.error('❌ imageInputRef.current é null');
+                            }
                           }}
-                          className="text-gray-400 hover:text-white h-8 w-8 sm:h-9 sm:w-9"
+                          className="text-gray-400 hover:text-white hover:bg-[#2a2a2a] h-8 w-8 sm:h-9 sm:w-9 flex-shrink-0"
                           title="Enviar imagem"
                           aria-label="Enviar imagem"
                         >
-                          <ImageIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                          <ImageIcon className="h-4 w-4 sm:h-5 sm:w-5" />
                         </Button>
                         <Button
                           type="button"
@@ -754,13 +758,15 @@ export default function Support() {
                           size="icon"
                           onClick={handleAudioClick}
                           className={cn(
-                            "h-8 w-8 sm:h-9 sm:w-9",
+                            "h-8 w-8 sm:h-9 sm:w-9 flex-shrink-0",
                             isRecording 
                               ? "text-red-500 hover:text-red-600 animate-pulse" 
-                              : "text-gray-400 hover:text-white"
+                              : "text-gray-400 hover:text-white hover:bg-[#2a2a2a]"
                           )}
+                          title="Enviar áudio"
+                          aria-label="Enviar áudio"
                         >
-                          <Mic className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                          <Mic className="h-4 w-4 sm:h-5 sm:w-5" />
                         </Button>
                       </div>
                       <Textarea
@@ -1014,13 +1020,17 @@ export default function Support() {
                       size="icon"
                       onClick={() => {
                         console.log('📷 Botão de imagem clicado (usuário)');
-                        imageInputRef.current?.click();
+                        if (imageInputRef.current) {
+                          imageInputRef.current.click();
+                        } else {
+                          console.error('❌ imageInputRef.current é null');
+                        }
                       }}
-                      className="text-gray-400 hover:text-white h-8 w-8 sm:h-9 sm:w-9"
+                      className="text-gray-400 hover:text-white hover:bg-[#2a2a2a] h-8 w-8 sm:h-9 sm:w-9 flex-shrink-0"
                       title="Enviar imagem"
                       aria-label="Enviar imagem"
                     >
-                      <ImageIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                      <ImageIcon className="h-4 w-4 sm:h-5 sm:w-5" />
                     </Button>
                     <Button
                       type="button"
@@ -1028,13 +1038,15 @@ export default function Support() {
                       size="icon"
                       onClick={handleAudioClick}
                       className={cn(
-                        "h-8 w-8 sm:h-9 sm:w-9",
+                        "h-8 w-8 sm:h-9 sm:w-9 flex-shrink-0",
                         isRecording 
                           ? "text-red-500 hover:text-red-600 animate-pulse" 
-                          : "text-gray-400 hover:text-white"
+                          : "text-gray-400 hover:text-white hover:bg-[#2a2a2a]"
                       )}
+                      title="Enviar áudio"
+                      aria-label="Enviar áudio"
                     >
-                      <Mic className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                      <Mic className="h-4 w-4 sm:h-5 sm:w-5" />
                     </Button>
                   </div>
                   <Textarea
