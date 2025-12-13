@@ -123,6 +123,15 @@ export function UserManagement() {
     }
   };
 
+  const handleUnlockMentoria = async (userId: string, username: string) => {
+    try {
+      await unlockMentoria.mutateAsync(userId);
+      toast.success(`Mentoria liberada para ${username}`);
+    } catch (error: any) {
+      toast.error(`Erro ao liberar mentoria: ${error?.message || 'Erro desconhecido'}`);
+    }
+  };
+
   const handleDelete = async (userId: string, username: string) => {
     try {
       await deleteUser.mutateAsync(userId);
