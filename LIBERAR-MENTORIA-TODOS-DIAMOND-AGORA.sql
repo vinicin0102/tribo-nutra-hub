@@ -1,6 +1,6 @@
 -- =====================================================
 -- LIBERAR MENTORIA PARA TODOS OS USUÁRIOS DIAMOND
--- Execute este script para liberar a mentoria para TODOS os Diamond de uma vez
+-- Execute este script no Supabase SQL Editor
 -- =====================================================
 
 DO $$
