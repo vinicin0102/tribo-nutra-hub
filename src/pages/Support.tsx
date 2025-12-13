@@ -731,9 +731,9 @@ export default function Support() {
                     <div ref={messagesEndRef} />
                   </div>
 
-                  <div className="border-t border-[#2a2a2a] p-2.5 sm:p-4 flex-shrink-0 bg-[#1a1a1a]">
+                  <div className="border-t border-[#2a2a2a] p-2.5 sm:p-4 flex-shrink-0 bg-[#1a1a1a] relative z-20">
                     <div className="flex gap-1.5 sm:gap-2 items-end">
-                      <div className="flex gap-1 flex-shrink-0 z-10">
+                      <div className="flex gap-1 flex-shrink-0 relative z-30">
                         <Button
                           type="button"
                           variant="ghost"
@@ -749,11 +749,12 @@ export default function Support() {
                               toast.error('Erro: input de imagem não encontrado');
                             }
                           }}
-                          className="text-gray-300 hover:text-white hover:bg-[#2a2a2a] active:bg-[#3a3a3a] h-9 w-9 sm:h-10 sm:w-10 flex-shrink-0 border border-transparent hover:border-[#3a3a3a] transition-all"
+                          className="!text-white !bg-[#2a2a2a] hover:!bg-[#3a3a3a] active:!bg-[#4a4a4a] !h-10 !w-10 sm:!h-11 sm:!w-11 flex-shrink-0 !border !border-[#3a3a3a] hover:!border-[#4a4a4a] transition-all shadow-lg"
                           title="Enviar imagem"
                           aria-label="Enviar imagem"
+                          style={{ display: 'flex', visibility: 'visible', opacity: 1 }}
                         >
-                          <ImageIcon className="h-5 w-5 sm:h-6 sm:w-6" strokeWidth={2} />
+                          <ImageIcon className="h-5 w-5 sm:h-6 sm:w-6" strokeWidth={2.5} />
                         </Button>
                         <Button
                           type="button"
@@ -761,15 +762,15 @@ export default function Support() {
                           size="icon"
                           onClick={handleAudioClick}
                           className={cn(
-                            "h-8 w-8 sm:h-9 sm:w-9 flex-shrink-0",
+                            "!h-10 !w-10 sm:!h-11 sm:!w-11 flex-shrink-0",
                             isRecording 
-                              ? "text-red-500 hover:text-red-600 animate-pulse" 
-                              : "text-gray-400 hover:text-white hover:bg-[#2a2a2a]"
+                              ? "!text-red-500 hover:!text-red-600 animate-pulse" 
+                              : "!text-gray-300 hover:!text-white hover:!bg-[#2a2a2a]"
                           )}
                           title="Enviar áudio"
                           aria-label="Enviar áudio"
                         >
-                          <Mic className="h-4 w-4 sm:h-5 sm:w-5" />
+                          <Mic className="h-5 w-5 sm:h-6 sm:w-6" />
                         </Button>
                       </div>
                       <Textarea
