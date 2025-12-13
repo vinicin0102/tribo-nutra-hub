@@ -98,6 +98,7 @@ BEGIN
     
     BEGIN
       -- Atualizar perfil com dados de auth.users
+      -- Usar COALESCE para pegar dados de auth.users se profile estiver NULL ou vazio
       UPDATE public.profiles
       SET
         email = COALESCE(
@@ -106,20 +107,24 @@ BEGIN
         ),
         telefone = COALESCE(
           NULLIF(profiles.telefone, ''),
-          v_profile.telefone_auth
+          NULLIF(v_profile.telefone_auth, ''),
+          NULL
         ),
         cpf = COALESCE(
           NULLIF(profiles.cpf, ''),
-          v_profile.cpf_auth
+          NULLIF(v_profile.cpf_auth, ''),
+          NULL
         ),
         full_name = COALESCE(
           NULLIF(profiles.full_name, ''),
-          v_profile.full_name_auth
+          NULLIF(v_profile.full_name_auth, ''),
+          NULL
         ),
         data_nascimento = COALESCE(
           profiles.data_nascimento,
           CASE 
             WHEN v_profile.data_nascimento_auth IS NOT NULL 
+              AND v_profile.data_nascimento_auth != ''
             THEN (v_profile.data_nascimento_auth)::DATE
             ELSE NULL
           END
