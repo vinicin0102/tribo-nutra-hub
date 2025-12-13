@@ -271,7 +271,7 @@ export default function Support() {
     try {
       const { data: messagesData, error } = await supabase
         .from('support_chat')
-        .select('*')
+        .select('id, user_id, message, created_at, is_from_support, image_url, audio_url, audio_duration, support_user_id')
         .eq('user_id', userId)
         .order('created_at', { ascending: true });
 
@@ -738,8 +738,13 @@ export default function Support() {
                           type="button"
                           variant="ghost"
                           size="icon"
-                          onClick={() => imageInputRef.current?.click()}
+                          onClick={() => {
+                            console.log('📷 Botão de imagem clicado');
+                            imageInputRef.current?.click();
+                          }}
                           className="text-gray-400 hover:text-white h-8 w-8 sm:h-9 sm:w-9"
+                          title="Enviar imagem"
+                          aria-label="Enviar imagem"
                         >
                           <ImageIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                         </Button>
@@ -1006,8 +1011,13 @@ export default function Support() {
                       type="button"
                       variant="ghost"
                       size="icon"
-                      onClick={() => imageInputRef.current?.click()}
+                      onClick={() => {
+                        console.log('📷 Botão de imagem clicado (usuário)');
+                        imageInputRef.current?.click();
+                      }}
                       className="text-gray-400 hover:text-white h-8 w-8 sm:h-9 sm:w-9"
+                      title="Enviar imagem"
+                      aria-label="Enviar imagem"
                     >
                       <ImageIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                     </Button>
@@ -1054,6 +1064,7 @@ export default function Support() {
                   accept="image/*"
                   className="hidden"
                   onChange={async (e) => {
+                    console.log('📷 Input de imagem alterado (usuário)');
                     const file = e.target.files?.[0];
                     if (file && user) {
                       try {
