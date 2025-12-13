@@ -8,6 +8,12 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { useProfile, useUpdateProfile } from '@/hooks/useProfile';
 import { useAuth } from '@/contexts/AuthContext';
 import { uploadImage, deleteImage } from '@/lib/upload';
@@ -254,15 +260,34 @@ export default function Profile() {
                     {(formData.username || profile?.username)?.charAt(0).toUpperCase() || 'U'}
                   </AvatarFallback>
                 </Avatar>
-                <button
-                  type="button"
-                  onClick={handleFileButtonClick}
-                  className="absolute bottom-0 right-0 rounded-full bg-secondary p-2 text-secondary-foreground hover:bg-secondary/80 transition-colors"
-                  disabled={isUploadingAvatar}
-                  title="Escolher foto"
-                >
-                  <Camera className="h-4 w-4" />
-                </button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      type="button"
+                      className="absolute bottom-0 right-0 rounded-full bg-secondary p-2 text-secondary-foreground hover:bg-secondary/80 transition-colors"
+                      disabled={isUploadingAvatar}
+                      title="Escolher foto"
+                    >
+                      <Camera className="h-4 w-4" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="bg-[#1a1a1a] border-[#2a2a2a]">
+                    <DropdownMenuItem
+                      onClick={handleFileButtonClick}
+                      className="text-white cursor-pointer"
+                    >
+                      <FolderOpen className="h-4 w-4 mr-2" />
+                      Escolher da Galeria
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={handleCameraButtonClick}
+                      className="text-white cursor-pointer"
+                    >
+                      <Camera className="h-4 w-4 mr-2" />
+                      Tirar Foto
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
                 {/* Input para galeria (sem capture) */}
                 <input
                   ref={fileInputRef}
