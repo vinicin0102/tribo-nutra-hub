@@ -58,44 +58,43 @@ BEGIN
     v_total_processados := v_total_processados + 1;
     
     BEGIN
-      -- Garantir que a coluna email existe
-      INSERT INTO public.profiles (
-        user_id,
-        username,
-        full_name,
-        avatar_url,
-        cpf,
-        data_nascimento,
-        telefone,
-        email,
-        points,
-        created_at,
-        updated_at
-      )
-      VALUES (
-        v_user.id,
-        COALESCE(
-          v_user.raw_user_meta_data->>'username',
-          split_part(v_user.email, '@', 1)
-        ),
-        COALESCE(v_user.raw_user_meta_data->>'full_name', ''),
-        v_user.raw_user_meta_data->>'avatar_url',
-        v_user.raw_user_meta_data->>'cpf',
-        CASE 
-          WHEN v_user.raw_user_meta_data->>'data_nascimento' IS NOT NULL 
-          THEN (v_user.raw_user_meta_data->>'data_nascimento')::DATE
-          ELSE NULL
-        END,
-        v_user.raw_user_meta_data->>'telefone',
-        v_user.email,
-        0,
-        v_user.created_at,
-        NOW()
-      )
-      ON CONFLICT (user_id) DO NOTHING;
-      
-      -- Verificar se foi inserido (não estava em conflito)
-      IF NOT FOUND OR (SELECT COUNT(*) FROM public.profiles WHERE user_id = v_user.id) > 0 THEN
+      -- Verificar se o perfil já existe antes de tentar inserir
+      IF NOT EXISTS (SELECT 1 FROM public.profiles WHERE user_id = v_user.id) THEN
+        -- Garantir que a coluna email existe
+        INSERT INTO public.profiles (
+          user_id,
+          username,
+          full_name,
+          avatar_url,
+          cpf,
+          data_nascimento,
+          telefone,
+          email,
+          points,
+          created_at,
+          updated_at
+        )
+        VALUES (
+          v_user.id,
+          COALESCE(
+            v_user.raw_user_meta_data->>'username',
+            split_part(v_user.email, '@', 1)
+          ),
+          COALESCE(v_user.raw_user_meta_data->>'full_name', ''),
+          v_user.raw_user_meta_data->>'avatar_url',
+          v_user.raw_user_meta_data->>'cpf',
+          CASE 
+            WHEN v_user.raw_user_meta_data->>'data_nascimento' IS NOT NULL 
+            THEN (v_user.raw_user_meta_data->>'data_nascimento')::DATE
+            ELSE NULL
+          END,
+          v_user.raw_user_meta_data->>'telefone',
+          v_user.email,
+          0,
+          v_user.created_at,
+          NOW()
+        );
+        
         v_perfis_criados := v_perfis_criados + 1;
       END IF;
       
