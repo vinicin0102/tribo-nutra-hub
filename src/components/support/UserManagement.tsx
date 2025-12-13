@@ -66,6 +66,16 @@ export function UserManagement() {
   const { data: usersData = [], isLoading, error } = useSupportUsers();
   const users = usersData as UserProfile[];
   
+  // Debug: verificar se telefone está sendo buscado
+  if (users.length > 0) {
+    console.log('🔍 [UserManagement] Primeiro usuário:', {
+      username: users[0].username,
+      email: users[0].email,
+      telefone: users[0].telefone,
+      hasTelefone: !!users[0].telefone
+    });
+  }
+  
   const banUserTemporary = useBanUserTemporary();
   const unbanUser = useUnbanUser();
   const muteUser = useMuteUser();
@@ -405,22 +415,25 @@ export function UserManagement() {
                         {user.full_name || user.username || 'Usuário'}
                       </p>
                       <p className="text-xs text-gray-400 truncate">@{user.username}</p>
-                      {(user.email || user.telefone) && (
-                        <div className="flex items-center gap-3 mt-1 flex-wrap">
-                          {user.email && (
-                            <div className="flex items-center gap-1 text-xs text-gray-500">
-                              <Mail className="h-3 w-3" />
-                              <span className="truncate">{user.email}</span>
-                            </div>
-                          )}
-                          {user.telefone && (
-                            <div className="flex items-center gap-1 text-xs text-gray-500">
-                              <Phone className="h-3 w-3" />
-                              <span className="truncate">{formatPhoneDisplay(user.telefone)}</span>
-                            </div>
-                          )}
-                        </div>
-                      )}
+                      <div className="flex items-center gap-3 mt-1 flex-wrap">
+                        {user.email && (
+                          <div className="flex items-center gap-1 text-xs text-gray-500">
+                            <Mail className="h-3 w-3" />
+                            <span className="truncate">{user.email}</span>
+                          </div>
+                        )}
+                        {user.telefone ? (
+                          <div className="flex items-center gap-1 text-xs text-gray-500">
+                            <Phone className="h-3 w-3" />
+                            <span className="truncate">{formatPhoneDisplay(user.telefone)}</span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-1 text-xs text-gray-400 italic">
+                            <Phone className="h-3 w-3 opacity-50" />
+                            <span className="truncate">Sem telefone</span>
+                          </div>
+                        )}
+                      </div>
                       <div className="flex items-center gap-2 mt-1 flex-wrap">
                         <span className="text-xs text-gray-500">{user.points || 0} pontos</span>
                         {user.subscription_plan && (

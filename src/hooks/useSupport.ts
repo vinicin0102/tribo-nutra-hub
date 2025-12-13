@@ -54,6 +54,23 @@ export function useSupportUsers() {
       }
       
       console.log('Usuários encontrados:', data?.length || 0);
+      
+      // Debug: verificar se telefone está sendo retornado
+      if (data && data.length > 0) {
+        const firstUser = data[0] as any;
+        console.log('🔍 [useSupportUsers] Primeiro usuário retornado:', {
+          username: firstUser.username,
+          email: firstUser.email,
+          telefone: firstUser.telefone,
+          hasTelefone: !!firstUser.telefone,
+          telefoneType: typeof firstUser.telefone
+        });
+        
+        // Contar quantos têm telefone
+        const withTelefone = data.filter((u: any) => u.telefone && u.telefone.trim() !== '').length;
+        console.log(`📊 [useSupportUsers] Usuários com telefone: ${withTelefone} de ${data.length}`);
+      }
+      
       return data || [];
     },
     enabled: !!user && (canAccess || user?.email === ADMIN_EMAIL),
