@@ -733,24 +733,27 @@ export default function Support() {
 
                   <div className="border-t border-[#2a2a2a] p-2.5 sm:p-4 flex-shrink-0 bg-[#1a1a1a]">
                     <div className="flex gap-1.5 sm:gap-2 items-end">
-                      <div className="flex gap-1 flex-shrink-0">
+                      <div className="flex gap-1 flex-shrink-0 z-10">
                         <Button
                           type="button"
                           variant="ghost"
                           size="icon"
-                          onClick={() => {
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
                             console.log('📷 Botão de imagem clicado (suporte)');
                             if (imageInputRef.current) {
                               imageInputRef.current.click();
                             } else {
                               console.error('❌ imageInputRef.current é null');
+                              toast.error('Erro: input de imagem não encontrado');
                             }
                           }}
-                          className="text-gray-400 hover:text-white hover:bg-[#2a2a2a] h-8 w-8 sm:h-9 sm:w-9 flex-shrink-0"
+                          className="text-gray-300 hover:text-white hover:bg-[#2a2a2a] active:bg-[#3a3a3a] h-9 w-9 sm:h-10 sm:w-10 flex-shrink-0 border border-transparent hover:border-[#3a3a3a] transition-all"
                           title="Enviar imagem"
                           aria-label="Enviar imagem"
                         >
-                          <ImageIcon className="h-4 w-4 sm:h-5 sm:w-5" />
+                          <ImageIcon className="h-5 w-5 sm:h-6 sm:w-6" strokeWidth={2} />
                         </Button>
                         <Button
                           type="button"
