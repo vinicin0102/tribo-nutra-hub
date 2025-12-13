@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Play, ChevronLeft, ChevronRight, Image as ImageIcon } from 'lucide-react';
 import { useModulesWithLessons, Lesson, Module } from '@/hooks/useCourses';
 import { useLessonProgress } from '@/hooks/useLessonProgress';
+import { useUnlockedModules } from '@/hooks/useUnlockedModules';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 
@@ -12,6 +13,7 @@ export function ContinueWatching() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const { data: modules, isLoading } = useModulesWithLessons();
   const { completedLessons } = useLessonProgress();
+  const { isUnlocked } = useUnlockedModules();
 
   // Get watch progress from localStorage
   const getWatchProgress = (lessonId: string) => {
@@ -44,7 +46,7 @@ export function ContinueWatching() {
   if (isLoading || !modules) return null;
 
   const incompleteLessons: { lesson: Lesson; module: Module; progress: { percentage: number; currentMinutes: number } }[] = [];
-  modules.filter(m => m.is_published && !m.is_locked).forEach(module => {
+  modules.filter(m => m.is_published && (!m.is_locked || isUnlocked(m.id))).forEach(module => {
     module.lessons?.filter(l => l.is_published && !completedLessons.includes(l.id)).forEach(lesson => {
       const progress = getLessonProgress(lesson);
       // Only show lessons with some progress

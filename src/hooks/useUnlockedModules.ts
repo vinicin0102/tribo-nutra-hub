@@ -22,7 +22,7 @@ export function useUnlockedModules() {
       console.log('🔍 [useUnlockedModules] Buscando módulos desbloqueados para:', user.id);
       
       const { data, error } = await supabase
-        .from('unlocked_modules' as any)
+        .from('unlocked_modules')
         .select('module_id')
         .eq('user_id', user.id);
 
