@@ -435,35 +435,26 @@ export function useUnlockMentoria() {
 
   return useMutation({
     mutationFn: async (userId: string) => {
-      // Buscar todos os módulos bloqueados
-      const { data: lockedModules, error: modulesError } = await supabase
-        .from('modules')
-        .select('id')
-        .eq('is_locked', true);
+      // Usar função RPC que contorna RLS e verifica permissões de admin
+      const { data, error } = await supabase.rpc('unlock_mentoria_for_user', {
+        p_user_id: userId
+      });
 
-      if (modulesError) throw modulesError;
-      if (!lockedModules || lockedModules.length === 0) {
-        throw new Error('Nenhum módulo bloqueado encontrado');
+      if (error) {
+        console.error('Erro ao liberar mentoria:', error);
+        throw error;
       }
 
-      // Desbloquear todos os módulos bloqueados para o usuário
-      // Inserir um de cada vez e ignorar duplicatas (já desbloqueados)
-      for (const module of lockedModules) {
-        const { error: unlockError } = await supabase
-          .from('unlocked_modules')
-          .insert({ user_id: userId, module_id: module.id });
-        
-        // Ignorar erros de duplicata (já desbloqueado) - código 23505 é unique violation
-        if (unlockError && unlockError.code !== '23505') {
-          throw unlockError;
-        }
+      if (data && typeof data === 'object' && 'success' in data && !data.success) {
+        throw new Error(data.error || 'Erro ao liberar mentoria');
       }
 
-      return { unlocked: lockedModules.length };
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['support-users'] });
       queryClient.invalidateQueries({ queryKey: ['unlocked-modules'] });
+      queryClient.invalidateQueries({ queryKey: ['modules'] });
     },
   });
 }
