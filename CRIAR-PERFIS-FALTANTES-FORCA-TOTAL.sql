@@ -94,7 +94,10 @@ BEGIN
       )
       ON CONFLICT (user_id) DO NOTHING;
       
-      GET DIAGNOSTICS v_perfis_criados = ROW_COUNT;
+      -- Verificar se foi inserido (não estava em conflito)
+      IF NOT FOUND OR (SELECT COUNT(*) FROM public.profiles WHERE user_id = v_user.id) > 0 THEN
+        v_perfis_criados := v_perfis_criados + 1;
+      END IF;
       
       -- Log a cada 10 perfis criados
       IF v_total_processados % 10 = 0 THEN
