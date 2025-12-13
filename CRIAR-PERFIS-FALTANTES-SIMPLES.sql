@@ -1,38 +1,26 @@
 -- =====================================================
--- CRIAR PERFIS PARA TODOS OS USUÁRIOS FALTANTES - FORÇA TOTAL
+-- CRIAR PERFIS FALTANTES - VERSÃO SIMPLES E SEGURA
 -- =====================================================
--- Este script cria perfis para TODOS os usuários que não têm,
--- independente de quando foram criados ou se o trigger falhou
+-- Este script apenas cria perfis para usuários que não têm,
+-- SEM tentar modificar triggers ou funções do sistema
 -- Execute no Supabase SQL Editor
 -- =====================================================
 
 -- PASSO 1: Verificar quantos usuários estão sem perfil
-DO $$
-DECLARE
-  v_total_sem_perfil INTEGER;
-BEGIN
-  SELECT COUNT(*) INTO v_total_sem_perfil
-  FROM auth.users u
-  WHERE NOT EXISTS (
-    SELECT 1 FROM public.profiles p WHERE p.user_id = u.id
-  );
-  
-  RAISE NOTICE '========================================';
-  RAISE NOTICE 'USUÁRIOS SEM PERFIL: %', v_total_sem_perfil;
-  RAISE NOTICE '========================================';
-END $$;
+SELECT 
+  COUNT(*) as usuarios_sem_perfil
+FROM auth.users u
+WHERE NOT EXISTS (
+  SELECT 1 FROM public.profiles p WHERE p.user_id = u.id
+);
 
--- PASSO 2: Criar perfis para TODOS os usuários sem perfil
--- Usando função com SECURITY DEFINER para contornar RLS
-CREATE OR REPLACE FUNCTION public.criar_perfis_faltantes()
-RETURNS TABLE(
-  perfis_criados INTEGER,
-  perfis_com_erro INTEGER,
-  total_processados INTEGER
-)
-LANGUAGE plpgsql
-SECURITY DEFINER SET search_path = public
-AS $$
+-- PASSO 2: Garantir que a coluna email existe
+ALTER TABLE public.profiles 
+ADD COLUMN IF NOT EXISTS email TEXT;
+
+-- PASSO 3: Criar perfis para TODOS os usuários sem perfil
+-- Usando INSERT direto com tratamento de erros
+DO $$
 DECLARE
   v_user RECORD;
   v_perfis_criados INTEGER := 0;
@@ -60,7 +48,6 @@ BEGIN
     BEGIN
       -- Verificar se o perfil já existe antes de tentar inserir
       IF NOT EXISTS (SELECT 1 FROM public.profiles WHERE user_id = v_user.id) THEN
-        -- Garantir que a coluna email existe
         INSERT INTO public.profiles (
           user_id,
           username,
@@ -116,21 +103,15 @@ BEGIN
   RAISE NOTICE 'Perfis criados com sucesso: %', v_perfis_criados;
   RAISE NOTICE 'Perfis com erro: %', v_perfis_com_erro;
   RAISE NOTICE '========================================';
-  
-  RETURN QUERY SELECT v_perfis_criados, v_perfis_com_erro, v_total_processados;
-END;
-$$;
+END $$;
 
--- Executar a função
-SELECT * FROM public.criar_perfis_faltantes();
-
--- PASSO 3: Verificar quantos perfis foram criados
+-- PASSO 4: Verificar quantos perfis foram criados
 SELECT 
   COUNT(*) as perfis_criados_agora
 FROM public.profiles p
 WHERE p.created_at >= NOW() - INTERVAL '5 minutes';
 
--- PASSO 4: Verificar se ainda há usuários sem perfil
+-- PASSO 5: Verificar se ainda há usuários sem perfil
 SELECT 
   COUNT(*) as usuarios_ainda_sem_perfil
 FROM auth.users u
@@ -138,7 +119,7 @@ WHERE NOT EXISTS (
   SELECT 1 FROM public.profiles p WHERE p.user_id = u.id
 );
 
--- PASSO 5: Listar usuários que ainda estão sem perfil (se houver)
+-- PASSO 6: Listar usuários que ainda estão sem perfil (se houver)
 SELECT 
   u.id as user_id,
   u.email,
@@ -153,24 +134,7 @@ WHERE NOT EXISTS (
 ORDER BY u.created_at DESC
 LIMIT 20;
 
--- =====================================================
--- NOTA SOBRE O TRIGGER
--- =====================================================
--- O trigger on_auth_user_created deve ser criado via migration
--- ou pelo Supabase Dashboard, pois requer permissões de owner
--- da tabela auth.users.
--- 
--- Para verificar se o trigger existe, execute:
--- SELECT trigger_name, event_manipulation, action_timing
--- FROM information_schema.triggers
--- WHERE trigger_name = 'on_auth_user_created';
---
--- Se o trigger não existir, crie uma migration no Supabase
--- ou use o Dashboard para criar o trigger.
-
--- =====================================================
--- VERIFICAÇÃO FINAL
--- =====================================================
+-- PASSO 7: Verificação final
 SELECT 
   (SELECT COUNT(*) FROM auth.users) as total_usuarios_auth,
   (SELECT COUNT(*) FROM public.profiles) as total_perfis,
