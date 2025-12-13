@@ -45,7 +45,7 @@ export function useSupportUsers() {
 
       const { data, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select('user_id, username, full_name, avatar_url, email, telefone, points, subscription_plan, role, is_banned, banned_until, is_muted, mute_until, created_at, updated_at')
         .order('created_at', { ascending: false });
 
       if (error) {

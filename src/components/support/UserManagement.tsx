@@ -405,20 +405,22 @@ export function UserManagement() {
                         {user.full_name || user.username || 'Usuário'}
                       </p>
                       <p className="text-xs text-gray-400 truncate">@{user.username}</p>
-                      <div className="flex items-center gap-3 mt-1 flex-wrap">
-                        {user.email && (
-                          <div className="flex items-center gap-1 text-xs text-gray-500">
-                            <Mail className="h-3 w-3" />
-                            <span className="truncate">{user.email}</span>
-                          </div>
-                        )}
-                        {user.telefone && (
-                          <div className="flex items-center gap-1 text-xs text-gray-500">
-                            <Phone className="h-3 w-3" />
-                            <span className="truncate">{formatPhoneDisplay(user.telefone)}</span>
-                          </div>
-                        )}
-                      </div>
+                      {(user.email || user.telefone) && (
+                        <div className="flex items-center gap-3 mt-1 flex-wrap">
+                          {user.email && (
+                            <div className="flex items-center gap-1 text-xs text-gray-500">
+                              <Mail className="h-3 w-3" />
+                              <span className="truncate">{user.email}</span>
+                            </div>
+                          )}
+                          {user.telefone && (
+                            <div className="flex items-center gap-1 text-xs text-gray-500">
+                              <Phone className="h-3 w-3" />
+                              <span className="truncate">{formatPhoneDisplay(user.telefone)}</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
                       <div className="flex items-center gap-2 mt-1 flex-wrap">
                         <span className="text-xs text-gray-500">{user.points || 0} pontos</span>
                         {user.subscription_plan && (
