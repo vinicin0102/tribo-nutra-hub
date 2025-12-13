@@ -6,10 +6,17 @@ import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Post, useLikePost, useUserLikes } from '@/hooks/usePosts';
+import { Post, useLikePost, useUserLikes, useDeleteOwnPost } from '@/hooks/usePosts';
 import { CommentsSection } from './CommentsSection';
 import { useDeletePost, useIsSupport } from '@/hooks/useSupport';
 import { PostBadges } from '@/components/badges/PostBadges';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -62,21 +69,32 @@ const getPlanBadge = (plan?: string) => {
 
 export function PostCard({ post }: PostCardProps) {
   const [showComments, setShowComments] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const likePost = useLikePost();
   const { data: userLikes = [] } = useUserLikes();
-  const deletePost = useDeletePost();
+  const deletePostSupport = useDeletePost();
+  const deleteOwnPost = useDeleteOwnPost();
   const isSupport = useIsSupport();
+  const { user } = useAuth();
   
   const isLiked = userLikes.includes(post.id);
   const profile = post.profiles;
   const isSupportPost = post.is_support_post || profile?.role === 'support' || profile?.role === 'admin';
+  const isOwnPost = user?.id === post.user_id;
 
   const handleDelete = async () => {
     try {
-      await deletePost.mutateAsync(post.id);
+      if (isSupport) {
+        await deletePostSupport.mutateAsync(post.id);
+      } else if (isOwnPost) {
+        await deleteOwnPost.mutateAsync(post.id);
+      } else {
+        throw new Error('Sem permissão para deletar');
+      }
       toast.success('Publicação removida');
-    } catch (error) {
-      toast.error('Erro ao remover publicação');
+      setShowDeleteDialog(false);
+    } catch (error: any) {
+      toast.error(error.message || 'Erro ao remover publicação');
     }
   };
 
@@ -164,43 +182,58 @@ export function PostCard({ post }: PostCardProps) {
           </p>
         </div>
         <div className="flex items-center gap-1">
-          {isSupport && (
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
+          {(isOwnPost || isSupport) && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
                 <Button 
                   variant="ghost" 
                   size="icon" 
-                  className="h-8 w-8 flex-shrink-0 text-red-400 hover:text-red-300"
+                  className="h-8 w-8 flex-shrink-0 text-gray-400 hover:text-white"
                 >
-                  <Trash2 className="h-4 w-4" />
+                  <MoreHorizontal className="h-4 w-4" />
                 </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent className="bg-[#1a1a1a] border-[#2a2a2a]">
-                <AlertDialogHeader>
-                  <AlertDialogTitle className="text-white">
-                    Remover publicação
-                  </AlertDialogTitle>
-                  <AlertDialogDescription className="text-gray-400">
-                    Tem certeza que deseja remover esta publicação? Esta ação não pode ser desfeita.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel className="bg-[#2a2a2a] text-white border-[#3a3a3a]">
-                    Cancelar
-                  </AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={handleDelete}
-                    className="bg-red-500 hover:bg-red-600"
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="bg-[#1a1a1a] border-[#2a2a2a]">
+                {(isOwnPost || isSupport) && (
+                  <DropdownMenuItem
+                    onClick={() => setShowDeleteDialog(true)}
+                    className="text-red-400 focus:text-red-300 focus:bg-red-500/10"
                   >
-                    Remover
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Excluir publicação
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
-          <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0 text-gray-400 hover:text-white">
-            <MoreHorizontal className="h-4 w-4" />
-          </Button>
+          
+          <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+            <AlertDialogContent className="bg-[#1a1a1a] border-[#2a2a2a]">
+              <AlertDialogHeader>
+                <AlertDialogTitle className="text-white">
+                  Remover publicação
+                </AlertDialogTitle>
+                <AlertDialogDescription className="text-gray-400">
+                  Tem certeza que deseja remover esta publicação? Esta ação não pode ser desfeita.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel 
+                  onClick={() => setShowDeleteDialog(false)}
+                  className="bg-[#2a2a2a] text-white border-[#3a3a3a]"
+                >
+                  Cancelar
+                </AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={handleDelete}
+                  className="bg-red-500 hover:bg-red-600"
+                  disabled={deleteOwnPost.isPending || deletePostSupport.isPending}
+                >
+                  Remover
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </CardHeader>
 

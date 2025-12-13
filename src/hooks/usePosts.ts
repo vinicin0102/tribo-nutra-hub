@@ -218,6 +218,64 @@ export function useCreatePost() {
   });
 }
 
+export function useDeleteOwnPost() {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+
+  return useMutation({
+    mutationFn: async (postId: string) => {
+      if (!user) throw new Error('Not authenticated');
+
+      // Buscar o post para verificar se o usuário é o dono
+      const { data: post, error: fetchError } = await supabase
+        .from('posts')
+        .select('user_id, image_url')
+        .eq('id', postId)
+        .single();
+
+      if (fetchError) throw fetchError;
+      if (!post) throw new Error('Post não encontrado');
+
+      // Verificar se o usuário é o dono
+      if (post.user_id !== user.id) {
+        throw new Error('Você não tem permissão para deletar esta publicação');
+      }
+
+      // Deletar imagem do storage se existir
+      if (post.image_url) {
+        try {
+          const imagePath = post.image_url.split('/').pop()?.split('?')[0];
+          if (imagePath) {
+            const { error: deleteImageError } = await supabase.storage
+              .from('posts')
+              .remove([imagePath]);
+            
+            if (deleteImageError) {
+              console.error('Erro ao deletar imagem:', deleteImageError);
+              // Continua mesmo se falhar ao deletar a imagem
+            }
+          }
+        } catch (error) {
+          console.error('Erro ao processar imagem:', error);
+          // Continua mesmo se falhar
+        }
+      }
+
+      // Deletar o post
+      const { error } = await supabase
+        .from('posts')
+        .delete()
+        .eq('id', postId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['posts'] });
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
+    },
+  });
+}
+
 export function useLikePost() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
