@@ -124,11 +124,19 @@ export function UserManagement() {
   };
 
   const handleUnlockMentoria = async (userId: string, username: string) => {
+    console.log('🔓 [UserManagement] handleUnlockMentoria chamado', { userId, username });
     try {
-      await unlockMentoria.mutateAsync(userId);
-      toast.success(`Mentoria liberada para ${username}`);
+      const result = await unlockMentoria.mutateAsync(userId);
+      console.log('✅ [UserManagement] Resultado:', result);
+      
+      const modulesCount = result?.modules_unlocked || result?.unlocked || 'todos';
+      toast.success(`Mentoria liberada para ${username} (${modulesCount} módulos)`);
     } catch (error: any) {
-      toast.error(`Erro ao liberar mentoria: ${error?.message || 'Erro desconhecido'}`);
+      console.error('❌ [UserManagement] Erro ao liberar mentoria:', error);
+      const errorMsg = error?.message || error?.error || 'Erro desconhecido';
+      toast.error(`Erro ao liberar mentoria: ${errorMsg}`, {
+        duration: 5000
+      });
     }
   };
 

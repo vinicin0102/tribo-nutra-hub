@@ -435,28 +435,112 @@ export function useUnlockMentoria() {
 
   return useMutation({
     mutationFn: async (userId: string) => {
-      // Usar função RPC que contorna RLS e verifica permissões de admin
-      const { data, error } = await supabase.rpc('unlock_mentoria_for_user', {
-        p_user_id: userId
-      });
+      console.log('🔓 [useUnlockMentoria] Iniciando liberação de mentoria para:', userId);
+      
+      try {
+        // Primeiro, tentar usar a função RPC
+        const { data: rpcData, error: rpcError } = await supabase.rpc('unlock_mentoria_for_user', {
+          p_user_id: userId
+        });
 
-      if (error) {
-        console.error('Erro ao liberar mentoria:', error);
+        console.log('📡 [useUnlockMentoria] Resposta RPC:', { rpcData, rpcError });
+
+        if (rpcError) {
+          console.error('❌ [useUnlockMentoria] Erro na RPC:', rpcError);
+          
+          // Se a função RPC não existir, tentar método direto como fallback
+          if (rpcError.message?.includes('function') || rpcError.code === '42883') {
+            console.warn('⚠️ [useUnlockMentoria] Função RPC não encontrada, tentando método direto...');
+            return await unlockMentoriaDirect(userId);
+          }
+          
+          throw rpcError;
+        }
+
+        if (rpcData && typeof rpcData === 'object') {
+          if ('success' in rpcData && !rpcData.success) {
+            const errorMsg = rpcData.error || 'Erro ao liberar mentoria';
+            console.error('❌ [useUnlockMentoria] Função RPC retornou erro:', errorMsg);
+            throw new Error(errorMsg);
+          }
+          
+          console.log('✅ [useUnlockMentoria] Mentoria liberada com sucesso via RPC');
+          return rpcData;
+        }
+
+        // Fallback para método direto se RPC não retornar resultado esperado
+        console.warn('⚠️ [useUnlockMentoria] RPC não retornou resultado esperado, tentando método direto...');
+        return await unlockMentoriaDirect(userId);
+        
+      } catch (error: any) {
+        console.error('❌ [useUnlockMentoria] Erro geral:', error);
         throw error;
       }
-
-      if (data && typeof data === 'object' && 'success' in data && !data.success) {
-        throw new Error(data.error || 'Erro ao liberar mentoria');
-      }
-
-      return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('✅ [useUnlockMentoria] Sucesso, invalidando queries...');
       queryClient.invalidateQueries({ queryKey: ['support-users'] });
       queryClient.invalidateQueries({ queryKey: ['unlocked-modules'] });
       queryClient.invalidateQueries({ queryKey: ['modules'] });
     },
+    onError: (error: any) => {
+      console.error('❌ [useUnlockMentoria] Erro no mutation:', error);
+    },
   });
+}
+
+// Função auxiliar para método direto (fallback)
+async function unlockMentoriaDirect(userId: string) {
+  console.log('🔧 [unlockMentoriaDirect] Usando método direto para usuário:', userId);
+  
+  // Buscar todos os módulos bloqueados
+  const { data: lockedModules, error: modulesError } = await supabase
+    .from('modules')
+    .select('id')
+    .eq('is_locked', true);
+
+  if (modulesError) {
+    console.error('❌ [unlockMentoriaDirect] Erro ao buscar módulos:', modulesError);
+    throw modulesError;
+  }
+
+  if (!lockedModules || lockedModules.length === 0) {
+    console.warn('⚠️ [unlockMentoriaDirect] Nenhum módulo bloqueado encontrado');
+    throw new Error('Nenhum módulo bloqueado encontrado');
+  }
+
+  console.log(`📦 [unlockMentoriaDirect] Encontrados ${lockedModules.length} módulos bloqueados`);
+
+  // Tentar inserir módulos desbloqueados
+  let successCount = 0;
+  let errorCount = 0;
+  
+  for (const module of lockedModules) {
+    const { error: unlockError } = await supabase
+      .from('unlocked_modules')
+      .insert({ user_id: userId, module_id: module.id });
+    
+    if (unlockError) {
+      // Ignorar erros de duplicata (código 23505 é unique violation)
+      if (unlockError.code === '23505') {
+        console.log(`ℹ️ [unlockMentoriaDirect] Módulo ${module.id} já estava desbloqueado`);
+        successCount++;
+      } else {
+        console.error(`❌ [unlockMentoriaDirect] Erro ao desbloquear módulo ${module.id}:`, unlockError);
+        errorCount++;
+      }
+    } else {
+      successCount++;
+    }
+  }
+
+  console.log(`✅ [unlockMentoriaDirect] Processamento concluído: ${successCount} sucesso, ${errorCount} erros`);
+  
+  if (errorCount > 0 && successCount === 0) {
+    throw new Error(`Não foi possível desbloquear nenhum módulo. Verifique as permissões RLS.`);
+  }
+
+  return { unlocked: successCount, total: lockedModules.length };
 }
 
 export function useUpdateUserPoints() {
