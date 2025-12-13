@@ -788,13 +788,35 @@ export default function Support() {
                         const file = e.target.files?.[0];
                         if (file && user && selectedUserId) {
                           try {
+                            // Validar arquivo
+                            if (!file.type.startsWith('image/')) {
+                              toast.error('Por favor, selecione uma imagem válida');
+                              return;
+                            }
+
                             toast.info('Enviando imagem...');
                             
                             // Upload da imagem
-                            const imageUrl = await uploadImage(file, 'posts', user.id);
+                            let imageUrl: string;
+                            try {
+                              imageUrl = await uploadImage(file, 'posts', user.id);
+                              console.log('✅ Imagem enviada com sucesso:', imageUrl);
+                            } catch (uploadError: any) {
+                              console.error('❌ Erro no upload:', uploadError);
+                              const errorMsg = uploadError?.message || 'Erro desconhecido no upload';
+                              
+                              if (errorMsg.includes('Bucket not found') || errorMsg.includes('não configurado')) {
+                                toast.error('Bucket de imagens não configurado. Configure o bucket "images" no Supabase Storage.');
+                              } else if (errorMsg.includes('permission') || errorMsg.includes('policy')) {
+                                toast.error('Erro de permissão. Verifique as políticas do Storage no Supabase.');
+                              } else {
+                                toast.error(`Erro ao fazer upload: ${errorMsg}`);
+                              }
+                              return;
+                            }
                             
                             // Enviar mensagem com imagem
-                            const { error } = await supabase
+                            const { error, data } = await supabase
                               .from('support_chat')
                               .insert({
                                 user_id: selectedUserId,
@@ -802,9 +824,24 @@ export default function Support() {
                                 message: '📷 Imagem',
                                 image_url: imageUrl,
                                 is_from_support: true,
-                              });
+                              })
+                              .select();
                             
-                            if (error) throw error;
+                            if (error) {
+                              console.error('❌ Erro ao inserir mensagem:', error);
+                              
+                              // Mensagens de erro mais específicas
+                              if (error.message?.includes('column') && error.message?.includes('image_url')) {
+                                toast.error('Coluna image_url não existe. Execute ADICIONAR-COLUNA-IMAGE-URL-SUPPORT.sql no Supabase.');
+                              } else if (error.message?.includes('permission') || error.message?.includes('policy') || error.code === '42501') {
+                                toast.error('Erro de permissão. Verifique as políticas RLS da tabela support_chat.');
+                              } else {
+                                toast.error(`Erro ao enviar mensagem: ${error.message || 'Erro desconhecido'}`);
+                              }
+                              return;
+                            }
+                            
+                            console.log('✅ Mensagem com imagem inserida:', data);
                             
                             loadMessages(selectedUserId);
                             loadConversations();
@@ -815,8 +852,8 @@ export default function Support() {
                               imageInputRef.current.value = '';
                             }
                           } catch (error: any) {
-                            console.error('Erro ao enviar imagem:', error);
-                            toast.error('Erro ao enviar imagem');
+                            console.error('❌ Erro geral ao enviar imagem:', error);
+                            toast.error(`Erro ao enviar imagem: ${error?.message || 'Erro desconhecido'}`);
                           }
                         }
                       }}
@@ -1020,22 +1057,59 @@ export default function Support() {
                     const file = e.target.files?.[0];
                     if (file && user) {
                       try {
+                        // Validar arquivo
+                        if (!file.type.startsWith('image/')) {
+                          toast.error('Por favor, selecione uma imagem válida');
+                          return;
+                        }
+
                         toast.info('Enviando imagem...');
                         
                         // Upload da imagem
-                        const imageUrl = await uploadImage(file, 'posts', user.id);
+                        let imageUrl: string;
+                        try {
+                          imageUrl = await uploadImage(file, 'posts', user.id);
+                          console.log('✅ Imagem enviada com sucesso:', imageUrl);
+                        } catch (uploadError: any) {
+                          console.error('❌ Erro no upload:', uploadError);
+                          const errorMsg = uploadError?.message || 'Erro desconhecido no upload';
+                          
+                          if (errorMsg.includes('Bucket not found') || errorMsg.includes('não configurado')) {
+                            toast.error('Bucket de imagens não configurado. Configure o bucket "images" no Supabase Storage.');
+                          } else if (errorMsg.includes('permission') || errorMsg.includes('policy')) {
+                            toast.error('Erro de permissão. Verifique as políticas do Storage no Supabase.');
+                          } else {
+                            toast.error(`Erro ao fazer upload: ${errorMsg}`);
+                          }
+                          return;
+                        }
                         
                         // Enviar mensagem com imagem
-                        const { error } = await supabase
+                        const { error, data } = await supabase
                           .from('support_chat')
                           .insert({
                             user_id: user.id,
                             message: '📷 Imagem',
                             image_url: imageUrl,
                             is_from_support: false,
-                          });
+                          })
+                          .select();
                         
-                        if (error) throw error;
+                        if (error) {
+                          console.error('❌ Erro ao inserir mensagem:', error);
+                          
+                          // Mensagens de erro mais específicas
+                          if (error.message?.includes('column') && error.message?.includes('image_url')) {
+                            toast.error('Coluna image_url não existe. Execute ADICIONAR-COLUNA-IMAGE-URL-SUPPORT.sql no Supabase.');
+                          } else if (error.message?.includes('permission') || error.message?.includes('policy') || error.code === '42501') {
+                            toast.error('Erro de permissão. Verifique as políticas RLS da tabela support_chat.');
+                          } else {
+                            toast.error(`Erro ao enviar mensagem: ${error.message || 'Erro desconhecido'}`);
+                          }
+                          return;
+                        }
+                        
+                        console.log('✅ Mensagem com imagem inserida:', data);
                         
                         loadUserMessages();
                         toast.success('Imagem enviada!');
@@ -1045,8 +1119,8 @@ export default function Support() {
                           imageInputRef.current.value = '';
                         }
                       } catch (error: any) {
-                        console.error('Erro ao enviar imagem:', error);
-                        toast.error('Erro ao enviar imagem');
+                        console.error('❌ Erro geral ao enviar imagem:', error);
+                        toast.error(`Erro ao enviar imagem: ${error?.message || 'Erro desconhecido'}`);
                       }
                     }
                   }}
