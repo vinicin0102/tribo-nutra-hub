@@ -439,7 +439,7 @@ export function useUnlockMentoria() {
       
       try {
         // Primeiro, tentar usar a função RPC
-        const { data: rpcData, error: rpcError } = await supabase.rpc('unlock_mentoria_for_user', {
+        const { data: rpcData, error: rpcError } = await (supabase.rpc as any)('unlock_mentoria_for_user', {
           p_user_id: userId
         });
 
@@ -457,15 +457,17 @@ export function useUnlockMentoria() {
           throw rpcError;
         }
 
-        if (rpcData && typeof rpcData === 'object') {
-          if ('success' in rpcData && !rpcData.success) {
-            const errorMsg = rpcData.error || 'Erro ao liberar mentoria';
+        const typedRpcData = rpcData as { success?: boolean; error?: string; modules_unlocked?: number; total_modules?: number } | null;
+
+        if (typedRpcData && typeof typedRpcData === 'object') {
+          if ('success' in typedRpcData && !typedRpcData.success) {
+            const errorMsg = typedRpcData.error || 'Erro ao liberar mentoria';
             console.error('❌ [useUnlockMentoria] Função RPC retornou erro:', errorMsg);
             throw new Error(errorMsg);
           }
           
           console.log('✅ [useUnlockMentoria] Mentoria liberada com sucesso via RPC');
-          return rpcData;
+          return typedRpcData;
         }
 
         // Fallback para método direto se RPC não retornar resultado esperado
