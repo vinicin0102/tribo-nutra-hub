@@ -447,18 +447,21 @@ export function useUnlockMentoria() {
       }
 
       // Desbloquear todos os módulos bloqueados para o usuário
-      const unlocks = lockedModules.map(module => ({
-        user_id: userId,
-        module_id: module.id
-      }));
+      // Inserir um de cada vez para garantir que funciona com onConflict
+      for (const module of lockedModules) {
+        const { error: unlockError } = await supabase
+          .from('unlocked_modules')
+          .insert({ user_id: userId, module_id: module.id })
+          .select()
+          .single();
+        
+        // Ignorar erros de duplicata (já desbloqueado)
+        if (unlockError && !unlockError.message.includes('duplicate') && !unlockError.code === '23505') {
+          throw unlockError;
+        }
+      }
 
-      const { error: unlockError } = await supabase
-        .from('unlocked_modules')
-        .upsert(unlocks, { onConflict: 'user_id,module_id', ignoreDuplicates: true });
-
-      if (unlockError) throw unlockError;
-
-      return { unlocked: unlocks.length };
+      return { unlocked: lockedModules.length };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['support-users'] });
