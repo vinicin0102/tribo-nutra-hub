@@ -129,8 +129,12 @@ export function UserManagement() {
       const result = await unlockMentoria.mutateAsync(userId);
       console.log('✅ [UserManagement] Resultado:', result);
       
-      const modulesCount = result?.modules_unlocked || result?.unlocked || 'todos';
-      toast.success(`Mentoria liberada para ${username} (${modulesCount} módulos)`);
+      const modulesCount = result?.modules_unlocked || result?.unlocked || result?.total_modules || 'todos';
+      toast.success(`Mentoria liberada para ${username}! ${username} precisa recarregar a página para ver os módulos desbloqueados.`, {
+        duration: 8000
+      });
+      
+      console.log('ℹ️ [UserManagement] O usuário precisa recarregar a página para ver as alterações');
     } catch (error: any) {
       console.error('❌ [UserManagement] Erro ao liberar mentoria:', error);
       const errorMsg = error?.message || error?.error || 'Erro desconhecido';

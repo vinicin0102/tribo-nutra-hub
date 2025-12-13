@@ -477,11 +477,22 @@ export function useUnlockMentoria() {
         throw error;
       }
     },
-    onSuccess: (data) => {
-      console.log('✅ [useUnlockMentoria] Sucesso, invalidando queries...');
+    onSuccess: (data, userId) => {
+      console.log('✅ [useUnlockMentoria] Sucesso, invalidando queries para usuário:', userId);
+      
+      // Invalidar queries gerais
       queryClient.invalidateQueries({ queryKey: ['support-users'] });
-      queryClient.invalidateQueries({ queryKey: ['unlocked-modules'] });
       queryClient.invalidateQueries({ queryKey: ['modules'] });
+      queryClient.invalidateQueries({ queryKey: ['courses'] });
+      
+      // Invalidar especificamente a query do usuário alvo que teve a mentoria liberada
+      queryClient.invalidateQueries({ queryKey: ['unlocked-modules', userId] });
+      queryClient.invalidateQueries({ queryKey: ['unlocked-modules'] });
+      
+      // Remover do cache para forçar refetch
+      queryClient.removeQueries({ queryKey: ['unlocked-modules', userId] });
+      
+      console.log('✅ [useUnlockMentoria] Queries invalidadas');
     },
     onError: (error: any) => {
       console.error('❌ [useUnlockMentoria] Erro no mutation:', error);
