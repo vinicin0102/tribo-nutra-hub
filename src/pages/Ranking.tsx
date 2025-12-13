@@ -187,17 +187,6 @@ export default function Ranking() {
                         {user.user_id === currentProfile?.user_id && (
                           <Badge className="bg-primary text-white text-xs flex-shrink-0">você</Badge>
                         )}
-                        {user.tier && (
-                          <Badge className={cn(
-                            'text-xs flex items-center gap-1.5 flex-shrink-0',
-                            getTierInfo(user.tier).bg,
-                            getTierInfo(user.tier).border,
-                            getTierInfo(user.tier).color
-                          )}>
-                            {getTierInfo(user.tier).icon}
-                            {getTierInfo(user.tier).name}
-                          </Badge>
-                        )}
                       </div>
                       <p className="text-xs text-gray-400 mt-1 truncate">
                         {user.full_name || 'Membro da Tribo'}
