@@ -270,6 +270,14 @@ export default function Chat() {
   const confirmSendAudio = async () => {
     if (!audioPreview || !user) return;
 
+    // Verificar horário de funcionamento (9h - 21h, horário de Brasília)
+    if (!isWithinOperatingHours()) {
+      toast.error(getOperatingHoursMessage(), {
+        duration: 6000
+      });
+      return;
+    }
+
     setIsSendingAudio(true);
     
     try {
@@ -333,6 +341,15 @@ export default function Chat() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Verificar horário de funcionamento (9h - 21h, horário de Brasília)
+    if (!isWithinOperatingHours()) {
+      toast.error(getOperatingHoursMessage(), {
+        duration: 6000
+      });
+      return;
+    }
+    
     if (!newMessage.trim()) return;
 
     if (!checkDiamondAccess()) return;
