@@ -203,12 +203,12 @@ ORDER BY p.updated_at DESC;
 -- PASSO 7: Verificação final - todos os perfis devem ter dados agora
 SELECT 
   COUNT(*) as total_perfis,
-  COUNT(*) FILTER (WHERE email IS NOT NULL) as perfis_com_email,
-  COUNT(*) FILTER (WHERE telefone IS NOT NULL) as perfis_com_telefone,
-  COUNT(*) FILTER (WHERE cpf IS NOT NULL) as perfis_com_cpf,
-  COUNT(*) FILTER (WHERE email IS NOT NULL AND telefone IS NOT NULL AND cpf IS NOT NULL) as perfis_completos,
+  COUNT(*) FILTER (WHERE p.email IS NOT NULL) as perfis_com_email,
+  COUNT(*) FILTER (WHERE p.telefone IS NOT NULL) as perfis_com_telefone,
+  COUNT(*) FILTER (WHERE p.cpf IS NOT NULL) as perfis_com_cpf,
+  COUNT(*) FILTER (WHERE p.email IS NOT NULL AND p.telefone IS NOT NULL AND p.cpf IS NOT NULL) as perfis_completos,
   CASE 
-    WHEN COUNT(*) FILTER (WHERE email IS NOT NULL AND telefone IS NOT NULL AND cpf IS NOT NULL) = COUNT(*)
+    WHEN COUNT(*) FILTER (WHERE p.email IS NOT NULL AND p.telefone IS NOT NULL AND p.cpf IS NOT NULL) = COUNT(*)
     THEN '✅ SUCESSO: Todos os perfis têm dados completos!'
     ELSE '⚠️ ATENÇÃO: Alguns perfis ainda estão sem dados'
   END as status
