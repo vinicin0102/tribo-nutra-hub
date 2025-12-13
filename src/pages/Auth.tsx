@@ -192,6 +192,11 @@ export default function Auth() {
           setLoading(false);
           return;
         }
+        if (!formData.telefone.trim()) {
+          toast.error('Por favor, insira seu telefone');
+          setLoading(false);
+          return;
+        }
         // Validar idade mínima (18 anos)
         const dataNasc = new Date(formData.dataNascimento);
         const hoje = new Date();
@@ -215,6 +220,7 @@ export default function Auth() {
           fullName: formData.fullName,
           cpf: formData.cpf,
           dataNascimento: formData.dataNascimento,
+          telefone: formData.telefone,
         });
         if (error) {
           if (error.message.includes('already registered')) {
