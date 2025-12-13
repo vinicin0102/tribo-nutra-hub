@@ -657,9 +657,6 @@ export type Database = {
           message: string
           support_user_id: string | null
           user_id: string
-          image_url: string | null
-          audio_url: string | null
-          audio_duration: number | null
         }
         Insert: {
           created_at?: string
@@ -668,9 +665,6 @@ export type Database = {
           message: string
           support_user_id?: string | null
           user_id: string
-          image_url?: string | null
-          audio_url?: string | null
-          audio_duration?: number | null
         }
         Update: {
           created_at?: string
@@ -679,9 +673,6 @@ export type Database = {
           message?: string
           support_user_id?: string | null
           user_id?: string
-          image_url?: string | null
-          audio_url?: string | null
-          audio_duration?: number | null
         }
         Relationships: []
       }
