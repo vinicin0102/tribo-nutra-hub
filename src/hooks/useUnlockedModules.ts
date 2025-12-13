@@ -14,10 +14,12 @@ export function useUnlockedModules() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  const { data: unlockedModules = [], isLoading } = useQuery({
+  const { data: unlockedModules = [], isLoading, refetch } = useQuery({
     queryKey: ['unlocked-modules', user?.id],
     queryFn: async () => {
       if (!user) return [];
+      
+      console.log('🔍 [useUnlockedModules] Buscando módulos desbloqueados para:', user.id);
       
       const { data, error } = await supabase
         .from('unlocked_modules' as any)
@@ -25,13 +27,17 @@ export function useUnlockedModules() {
         .eq('user_id', user.id);
 
       if (error) {
-        console.error('Error fetching unlocked modules:', error);
+        console.error('❌ [useUnlockedModules] Erro ao buscar módulos desbloqueados:', error);
         return [];
       }
 
-      return (data as any[] || []).map((u: { module_id: string }) => u.module_id);
+      const modules = (data as any[] || []).map((u: { module_id: string }) => u.module_id);
+      console.log('✅ [useUnlockedModules] Módulos desbloqueados encontrados:', modules.length, modules);
+      return modules;
     },
     enabled: !!user,
+    staleTime: 0, // Sempre considerar stale para buscar dados atualizados
+    cacheTime: 0, // Não manter cache por muito tempo
   });
 
   const unlockModule = useMutation({
@@ -85,5 +91,6 @@ export function useUnlockedModules() {
     isUnlocked,
     unlockModule: unlockModule.mutate,
     lockModule: lockModule.mutate,
+    refetch,
   };
 }
