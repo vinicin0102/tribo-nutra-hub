@@ -9,9 +9,9 @@
 -- PASSO 1: Verificar quantos perfis estão sem dados
 SELECT 
   COUNT(*) as perfis_sem_email,
-  COUNT(*) FILTER (WHERE telefone IS NULL) as perfis_sem_telefone,
-  COUNT(*) FILTER (WHERE cpf IS NULL) as perfis_sem_cpf,
-  COUNT(*) FILTER (WHERE email IS NULL OR telefone IS NULL OR cpf IS NULL) as perfis_com_dados_faltantes
+  COUNT(*) FILTER (WHERE p.telefone IS NULL) as perfis_sem_telefone,
+  COUNT(*) FILTER (WHERE p.cpf IS NULL) as perfis_sem_cpf,
+  COUNT(*) FILTER (WHERE p.email IS NULL OR p.telefone IS NULL OR p.cpf IS NULL) as perfis_com_dados_faltantes
 FROM public.profiles p
 JOIN auth.users u ON u.id = p.user_id
 WHERE p.email IS NULL 
