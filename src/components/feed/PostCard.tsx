@@ -183,57 +183,59 @@ export function PostCard({ post }: PostCardProps) {
         </div>
         <div className="flex items-center gap-1">
           {(isOwnPost || isSupport) && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="h-8 w-8 flex-shrink-0 text-gray-400 hover:text-white"
-                >
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="bg-[#1a1a1a] border-[#2a2a2a]">
-                {(isOwnPost || isSupport) && (
-                  <DropdownMenuItem
-                    onClick={() => setShowDeleteDialog(true)}
-                    className="text-red-400 focus:text-red-300 focus:bg-red-500/10"
+            <>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-8 w-8 flex-shrink-0 text-gray-400 hover:text-white"
                   >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Excluir publicação
-                  </DropdownMenuItem>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="bg-[#1a1a1a] border-[#2a2a2a]">
+                  {(isOwnPost || isSupport) && (
+                    <DropdownMenuItem
+                      onClick={() => setShowDeleteDialog(true)}
+                      className="text-red-400 focus:text-red-300 focus:bg-red-500/10 cursor-pointer"
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Excluir publicação
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+              
+              <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+                <AlertDialogContent className="bg-[#1a1a1a] border-[#2a2a2a]">
+                  <AlertDialogHeader>
+                    <AlertDialogTitle className="text-white">
+                      Remover publicação
+                    </AlertDialogTitle>
+                    <AlertDialogDescription className="text-gray-400">
+                      Tem certeza que deseja remover esta publicação? Esta ação não pode ser desfeita.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel 
+                      onClick={() => setShowDeleteDialog(false)}
+                      className="bg-[#2a2a2a] text-white border-[#3a3a3a] hover:bg-[#3a3a3a]"
+                    >
+                      Cancelar
+                    </AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={handleDelete}
+                      className="bg-red-500 hover:bg-red-600 text-white"
+                      disabled={deleteOwnPost.isPending || deletePostSupport.isPending}
+                    >
+                      {deleteOwnPost.isPending || deletePostSupport.isPending ? 'Removendo...' : 'Remover'}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </>
           )}
-          
-          <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-            <AlertDialogContent className="bg-[#1a1a1a] border-[#2a2a2a]">
-              <AlertDialogHeader>
-                <AlertDialogTitle className="text-white">
-                  Remover publicação
-                </AlertDialogTitle>
-                <AlertDialogDescription className="text-gray-400">
-                  Tem certeza que deseja remover esta publicação? Esta ação não pode ser desfeita.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel 
-                  onClick={() => setShowDeleteDialog(false)}
-                  className="bg-[#2a2a2a] text-white border-[#3a3a3a]"
-                >
-                  Cancelar
-                </AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={handleDelete}
-                  className="bg-red-500 hover:bg-red-600"
-                  disabled={deleteOwnPost.isPending || deletePostSupport.isPending}
-                >
-                  Remover
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
         </div>
       </CardHeader>
 
