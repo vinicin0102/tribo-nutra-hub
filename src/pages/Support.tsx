@@ -734,10 +734,8 @@ export default function Support() {
                   <div className="border-t border-[#2a2a2a] p-2.5 sm:p-4 flex-shrink-0 bg-[#1a1a1a] relative z-20">
                     <div className="flex gap-1.5 sm:gap-2 items-end">
                       <div className="flex gap-1 flex-shrink-0 relative z-30">
-                        <Button
+                        <button
                           type="button"
-                          variant="ghost"
-                          size="icon"
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
@@ -749,13 +747,13 @@ export default function Support() {
                               toast.error('Erro: input de imagem não encontrado');
                             }
                           }}
-                          className="!text-white !bg-[#2a2a2a] hover:!bg-[#3a3a3a] active:!bg-[#4a4a4a] !h-10 !w-10 sm:!h-11 sm:!w-11 flex-shrink-0 !border !border-[#3a3a3a] hover:!border-[#4a4a4a] transition-all shadow-lg"
+                          className="flex items-center justify-center text-white bg-[#2a2a2a] hover:bg-[#3a3a3a] active:bg-[#4a4a4a] h-10 w-10 sm:h-11 sm:w-11 flex-shrink-0 border border-[#3a3a3a] hover:border-[#4a4a4a] rounded-lg transition-all shadow-lg cursor-pointer"
                           title="Enviar imagem"
                           aria-label="Enviar imagem"
                           style={{ display: 'flex', visibility: 'visible', opacity: 1 }}
                         >
                           <ImageIcon className="h-5 w-5 sm:h-6 sm:w-6" strokeWidth={2.5} />
-                        </Button>
+                        </button>
                         <Button
                           type="button"
                           variant="ghost"
@@ -1018,10 +1016,8 @@ export default function Support() {
               <form onSubmit={handleSubmit} className="space-y-2 sm:space-y-3">
                 <div className="flex gap-1.5 sm:gap-2 items-end">
                   <div className="flex gap-1 flex-shrink-0 relative z-30">
-                    <Button
+                    <button
                       type="button"
-                      variant="ghost"
-                      size="icon"
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
@@ -1033,13 +1029,13 @@ export default function Support() {
                           toast.error('Erro: input de imagem não encontrado');
                         }
                       }}
-                      className="!text-white !bg-[#2a2a2a] hover:!bg-[#3a3a3a] active:!bg-[#4a4a4a] !h-10 !w-10 sm:!h-11 sm:!w-11 flex-shrink-0 !border !border-[#3a3a3a] hover:!border-[#4a4a4a] transition-all shadow-lg"
+                      className="flex items-center justify-center text-white bg-[#2a2a2a] hover:bg-[#3a3a3a] active:bg-[#4a4a4a] h-10 w-10 sm:h-11 sm:w-11 flex-shrink-0 border border-[#3a3a3a] hover:border-[#4a4a4a] rounded-lg transition-all shadow-lg cursor-pointer"
                       title="Enviar imagem"
                       aria-label="Enviar imagem"
                       style={{ display: 'flex', visibility: 'visible', opacity: 1 }}
                     >
                       <ImageIcon className="h-5 w-5 sm:h-6 sm:w-6" strokeWidth={2.5} />
-                    </Button>
+                    </button>
                     <Button
                       type="button"
                       variant="ghost"
