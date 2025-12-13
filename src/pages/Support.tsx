@@ -167,7 +167,7 @@ export default function Support() {
     try {
       const { data: messagesData, error } = await supabase
         .from('support_chat')
-        .select('*')
+        .select('id, user_id, message, created_at, is_from_support, image_url, audio_url, audio_duration, support_user_id')
         .eq('user_id', user.id)
         .order('created_at', { ascending: true });
 
@@ -790,6 +790,7 @@ export default function Support() {
                       accept="image/*"
                       className="hidden"
                       onChange={async (e) => {
+                        console.log('📷 Input de imagem alterado (suporte)');
                         const file = e.target.files?.[0];
                         if (file && user && selectedUserId) {
                           try {
