@@ -13,6 +13,7 @@ import { useDeleteChatMessage, useIsSupport } from '@/hooks/useSupport';
 import { useAuth } from '@/contexts/AuthContext';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AudioPlayer } from '@/components/chat/AudioPlayer';
+import { isWithinOperatingHours, getOperatingHoursMessage } from '@/lib/schedule';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -135,6 +136,14 @@ export default function Chat() {
 
   const startRecording = async () => {
     try {
+      // Verificar horário de funcionamento (9h - 21h, horário de Brasília)
+      if (!isWithinOperatingHours()) {
+        toast.error(getOperatingHoursMessage(), {
+          duration: 6000
+        });
+        return;
+      }
+      
       // Limpar preview anterior se existir
       if (audioPreview?.url) {
         URL.revokeObjectURL(audioPreview.url);

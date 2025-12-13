@@ -10,6 +10,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useIsSupport } from '@/hooks/useSupport';
 import { uploadImage } from '@/lib/upload';
 import { toast } from 'sonner';
+import { isWithinOperatingHours, getOperatingHoursMessage, getOperatingHours } from '@/lib/schedule';
 
 export function CreatePostCard() {
   const { data: profile } = useProfile();
@@ -68,6 +69,14 @@ export function CreatePostCard() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Verificar horário de funcionamento (9h - 21h, horário de Brasília)
+    if (!isWithinOperatingHours()) {
+      toast.error(getOperatingHoursMessage(), {
+        duration: 6000
+      });
+      return;
+    }
     
     // Permitir publicar se tiver conteúdo OU imagem
     if (!content.trim() && !selectedImage) {
