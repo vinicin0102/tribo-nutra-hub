@@ -14,9 +14,9 @@ export function useUnlockedModules() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  const { data: unlockedModules = [], isLoading, refetch } = useQuery({
+  const { data: unlockedModules = [], isLoading, refetch } = useQuery<string[]>({
     queryKey: ['unlocked-modules', user?.id],
-    queryFn: async () => {
+    queryFn: async (): Promise<string[]> => {
       if (!user) return [];
       
       console.log('🔍 [useUnlockedModules] Buscando módulos desbloqueados para:', user.id);
@@ -31,13 +31,13 @@ export function useUnlockedModules() {
         return [];
       }
 
-      const modules = (data as any[] || []).map((u: { module_id: string }) => u.module_id);
+      const modules = ((data as unknown) as Array<{ module_id: string }> || []).map((u) => u.module_id);
       console.log('✅ [useUnlockedModules] Módulos desbloqueados encontrados:', modules.length, modules);
       return modules;
     },
     enabled: !!user,
-    staleTime: 0, // Sempre considerar stale para buscar dados atualizados
-    cacheTime: 0, // Não manter cache por muito tempo
+    staleTime: 0,
+    gcTime: 0,
   });
 
   const unlockModule = useMutation({
@@ -83,7 +83,7 @@ export function useUnlockedModules() {
     },
   });
 
-  const isUnlocked = (moduleId: string) => unlockedModules.includes(moduleId);
+  const isUnlocked = (moduleId: string): boolean => (unlockedModules as string[]).includes(moduleId);
 
   return {
     unlockedModules,

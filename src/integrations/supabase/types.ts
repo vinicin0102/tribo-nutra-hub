@@ -799,6 +799,7 @@ export type Database = {
         }[]
       }
       unban_user_admin: { Args: { p_user_id: string }; Returns: Json }
+      unlock_mentoria_for_user: { Args: { p_user_id: string }; Returns: Json }
       unmute_user_admin: { Args: { p_user_id: string }; Returns: Json }
       update_badge_admin: {
         Args: {
