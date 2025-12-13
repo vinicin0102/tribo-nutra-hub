@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Ban, CheckCircle, Trash2, Search, VolumeX, Volume2, Crown, Coins, MoreVertical } from 'lucide-react';
+import { Ban, CheckCircle, Trash2, Search, VolumeX, Volume2, Crown, Coins, MoreVertical, Unlock } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,7 +12,8 @@ import {
   useUnmuteUser,
   useDeleteUser,
   useChangeUserPlan,
-  useUpdateUserPoints
+  useUpdateUserPoints,
+  useUnlockMentoria
 } from '@/hooks/useSupport';
 import { useIsAdmin } from '@/hooks/useAdmin';
 import { toast } from 'sonner';
@@ -71,6 +72,7 @@ export function UserManagement() {
   const deleteUser = useDeleteUser();
   const changePlan = useChangeUserPlan();
   const updatePoints = useUpdateUserPoints();
+  const unlockMentoria = useUnlockMentoria();
   
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
@@ -495,6 +497,15 @@ export function UserManagement() {
                       >
                         <Coins className="h-4 w-4 mr-2" />
                         Alterar pontuação
+                      </DropdownMenuItem>
+                      
+                      <DropdownMenuItem
+                        onClick={() => handleUnlockMentoria(user.user_id, user.username)}
+                        className="text-cyan-400"
+                        disabled={unlockMentoria.isPending}
+                      >
+                        <Unlock className="h-4 w-4 mr-2" />
+                        {unlockMentoria.isPending ? 'Liberando...' : 'Liberar Mentoria'}
                       </DropdownMenuItem>
                       
                       <AlertDialog>

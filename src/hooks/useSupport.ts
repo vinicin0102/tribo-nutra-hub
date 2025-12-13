@@ -430,6 +430,43 @@ export function useChangeUserPlan() {
   });
 }
 
+export function useUnlockMentoria() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (userId: string) => {
+      // Buscar todos os módulos bloqueados
+      const { data: lockedModules, error: modulesError } = await supabase
+        .from('modules')
+        .select('id')
+        .eq('is_locked', true);
+
+      if (modulesError) throw modulesError;
+      if (!lockedModules || lockedModules.length === 0) {
+        throw new Error('Nenhum módulo bloqueado encontrado');
+      }
+
+      // Desbloquear todos os módulos bloqueados para o usuário
+      const unlocks = lockedModules.map(module => ({
+        user_id: userId,
+        module_id: module.id
+      }));
+
+      const { error: unlockError } = await supabase
+        .from('unlocked_modules')
+        .upsert(unlocks, { onConflict: 'user_id,module_id', ignoreDuplicates: true });
+
+      if (unlockError) throw unlockError;
+
+      return { unlocked: unlocks.length };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['support-users'] });
+      queryClient.invalidateQueries({ queryKey: ['unlocked-modules'] });
+    },
+  });
+}
+
 export function useUpdateUserPoints() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
