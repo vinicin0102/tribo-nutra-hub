@@ -23,12 +23,21 @@ BEGIN
 END $$;
 
 -- PASSO 2: Criar perfis para TODOS os usuários sem perfil
--- Usando SECURITY DEFINER para contornar RLS
-DO $$
+-- Usando função com SECURITY DEFINER para contornar RLS
+CREATE OR REPLACE FUNCTION public.criar_perfis_faltantes()
+RETURNS TABLE(
+  perfis_criados INTEGER,
+  perfis_com_erro INTEGER,
+  total_processados INTEGER
+)
+LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = public
+AS $$
 DECLARE
   v_user RECORD;
   v_perfis_criados INTEGER := 0;
   v_perfis_com_erro INTEGER := 0;
+  v_total_processados INTEGER := 0;
 BEGIN
   RAISE NOTICE '========================================';
   RAISE NOTICE 'CRIANDO PERFIS FALTANTES...';
@@ -46,7 +55,10 @@ BEGIN
     )
     ORDER BY u.created_at DESC
   LOOP
+    v_total_processados := v_total_processados + 1;
+    
     BEGIN
+      -- Garantir que a coluna email existe
       INSERT INTO public.profiles (
         user_id,
         username,
@@ -82,28 +94,33 @@ BEGIN
       )
       ON CONFLICT (user_id) DO NOTHING;
       
-      IF FOUND THEN
-        v_perfis_criados := v_perfis_criados + 1;
-      END IF;
+      GET DIAGNOSTICS v_perfis_criados = ROW_COUNT;
       
       -- Log a cada 10 perfis criados
-      IF v_perfis_criados % 10 = 0 THEN
-        RAISE NOTICE 'Perfis criados até agora: %', v_perfis_criados;
+      IF v_total_processados % 10 = 0 THEN
+        RAISE NOTICE 'Processados: %, Criados: %', v_total_processados, v_perfis_criados;
       END IF;
       
     EXCEPTION
       WHEN OTHERS THEN
         v_perfis_com_erro := v_perfis_com_erro + 1;
-        RAISE WARNING 'Erro ao criar perfil para usuário %: %', v_user.id, SQLERRM;
+        RAISE WARNING 'Erro ao criar perfil para usuário % (%): %', v_user.email, v_user.id, SQLERRM;
     END;
   END LOOP;
   
   RAISE NOTICE '========================================';
   RAISE NOTICE 'RESULTADO:';
+  RAISE NOTICE 'Total processados: %', v_total_processados;
   RAISE NOTICE 'Perfis criados com sucesso: %', v_perfis_criados;
   RAISE NOTICE 'Perfis com erro: %', v_perfis_com_erro;
   RAISE NOTICE '========================================';
-END $$;
+  
+  RETURN QUERY SELECT v_perfis_criados, v_perfis_com_erro, v_total_processados;
+END;
+$$;
+
+-- Executar a função
+SELECT * FROM public.criar_perfis_faltantes();
 
 -- PASSO 3: Verificar quantos perfis foram criados
 SELECT 
