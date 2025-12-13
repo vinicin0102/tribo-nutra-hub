@@ -81,6 +81,19 @@ export function PostCard({ post }: PostCardProps) {
   const profile = post.profiles;
   const isSupportPost = post.is_support_post || profile?.role === 'support' || profile?.role === 'admin';
   const isOwnPost = user?.id === post.user_id;
+  
+  // Debug: verificar se está detectando corretamente
+  if (process.env.NODE_ENV === 'development') {
+    if (user?.id && post.user_id) {
+      console.log('PostCard Debug:', {
+        userId: user.id,
+        postUserId: post.user_id,
+        isOwnPost,
+        isSupport,
+        showMenu: isOwnPost || isSupport
+      });
+    }
+  }
 
   const handleDelete = async () => {
     try {
