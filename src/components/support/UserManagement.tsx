@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Ban, CheckCircle, Trash2, Search, VolumeX, Volume2, Crown, Coins, MoreVertical, Unlock } from 'lucide-react';
+import { Ban, CheckCircle, Trash2, Search, VolumeX, Volume2, Crown, Coins, MoreVertical, Unlock, Mail, Phone } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -51,6 +51,7 @@ interface UserProfile {
   full_name?: string;
   avatar_url?: string;
   email?: string;
+  telefone?: string;
   points?: number;
   subscription_plan?: string;
   role?: string;
@@ -81,10 +82,26 @@ export function UserManagement() {
   const [newPlan, setNewPlan] = useState<'free' | 'diamond'>('free');
   const [newPoints, setNewPoints] = useState('');
 
+  // Função para formatar telefone para exibição
+  const formatPhoneDisplay = (phone: string) => {
+    if (!phone) return '';
+    // Remove tudo que não é número
+    const numbers = phone.replace(/\D/g, '');
+    // Formata: (00) 00000-0000 ou (00) 0000-0000
+    if (numbers.length === 11) {
+      return numbers.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+    } else if (numbers.length === 10) {
+      return numbers.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
+    }
+    return phone;
+  };
+
   const filteredUsers = users.filter(
     (user) =>
       user.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
+      user.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.telefone?.includes(searchTerm)
   );
 
   const handleBan3Days = async (userId: string, username: string) => {
@@ -388,9 +405,20 @@ export function UserManagement() {
                         {user.full_name || user.username || 'Usuário'}
                       </p>
                       <p className="text-xs text-gray-400 truncate">@{user.username}</p>
-                      {user.email && (
-                        <p className="text-xs text-gray-500 truncate">{user.email}</p>
-                      )}
+                      <div className="flex items-center gap-3 mt-1 flex-wrap">
+                        {user.email && (
+                          <div className="flex items-center gap-1 text-xs text-gray-500">
+                            <Mail className="h-3 w-3" />
+                            <span className="truncate">{user.email}</span>
+                          </div>
+                        )}
+                        {user.telefone && (
+                          <div className="flex items-center gap-1 text-xs text-gray-500">
+                            <Phone className="h-3 w-3" />
+                            <span className="truncate">{formatPhoneDisplay(user.telefone)}</span>
+                          </div>
+                        )}
+                      </div>
                       <div className="flex items-center gap-2 mt-1 flex-wrap">
                         <span className="text-xs text-gray-500">{user.points || 0} pontos</span>
                         {user.subscription_plan && (
