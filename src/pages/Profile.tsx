@@ -20,7 +20,8 @@ export default function Profile() {
   const { data: profile, isLoading } = useProfile();
   const updateProfile = useUpdateProfile();
   const hasDiamondAccess = useHasDiamondAccess();
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null); // Para galeria
+  const cameraInputRef = useRef<HTMLInputElement>(null); // Para câmera
   
   const [formData, setFormData] = useState({
     username: '',
@@ -121,11 +122,20 @@ export default function Profile() {
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
+    if (cameraInputRef.current) {
+      cameraInputRef.current.value = '';
+    }
     setHasChanges(true);
   };
 
   const handleFileButtonClick = () => {
+    // Abrir galeria (sem capture)
     fileInputRef.current?.click();
+  };
+
+  const handleCameraButtonClick = () => {
+    // Abrir câmera (com capture)
+    cameraInputRef.current?.click();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -173,6 +183,9 @@ export default function Profile() {
       setAvatarPreview(avatarUrl || null);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
+      }
+      if (cameraInputRef.current) {
+        cameraInputRef.current.value = '';
       }
       toast.success('Perfil atualizado!');
       setHasChanges(false);
@@ -246,11 +259,21 @@ export default function Profile() {
                   onClick={handleFileButtonClick}
                   className="absolute bottom-0 right-0 rounded-full bg-secondary p-2 text-secondary-foreground hover:bg-secondary/80 transition-colors"
                   disabled={isUploadingAvatar}
+                  title="Escolher foto"
                 >
                   <Camera className="h-4 w-4" />
                 </button>
+                {/* Input para galeria (sem capture) */}
                 <input
                   ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleAvatarSelect}
+                  className="hidden"
+                />
+                {/* Input para câmera (com capture) */}
+                <input
+                  ref={cameraInputRef}
                   type="file"
                   accept="image/*"
                   capture="user"
@@ -317,17 +340,12 @@ export default function Profile() {
                     disabled={isUploadingAvatar}
                   >
                     <FolderOpen className="h-4 w-4 mr-2" />
-                    Fototeca
+                    Escolher da Galeria
                   </Button>
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => {
-                      if (fileInputRef.current) {
-                        fileInputRef.current.setAttribute('capture', 'user');
-                        fileInputRef.current.click();
-                      }
-                    }}
+                    onClick={handleCameraButtonClick}
                     className="flex-1"
                     disabled={isUploadingAvatar}
                   >
