@@ -85,6 +85,10 @@ export default function Chat() {
   };
 
   useEffect(() => {
+    console.log('🔄 useEffect messages mudou, total:', messages?.length);
+    if (messages && messages.length > 0) {
+      console.log('📝 Última mensagem na lista:', messages[messages.length - 1]);
+    }
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 

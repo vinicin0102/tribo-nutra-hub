@@ -52,11 +52,13 @@ export function useChatMessages() {
     queryFn: async () => {
       console.log('📥 Buscando mensagens do chat...');
       
+      // Buscar mensagens ordenadas por data de criação (mais antigas primeiro)
+      // Usar limit maior para garantir que pegue mensagens recentes
       const { data: messages, error: messagesError } = await supabase
         .from('chat_messages')
         .select('*')
         .order('created_at', { ascending: true })
-        .limit(100);
+        .limit(200); // Aumentar limite para garantir que pegue todas
       
       if (messagesError) {
         console.error('❌ Erro ao buscar mensagens:', messagesError);
@@ -65,11 +67,20 @@ export function useChatMessages() {
       
       console.log(`✅ ${messages?.length || 0} mensagens encontradas`);
       console.log('📋 Primeiras 3 mensagens:', messages?.slice(0, 3));
+      console.log('📋 Últimas 3 mensagens:', messages?.slice(-3));
       
       if (!messages || messages.length === 0) {
         console.warn('⚠️ Nenhuma mensagem encontrada no banco!');
         return [];
       }
+      
+      // Verificar se há mensagens muito recentes (últimos 5 minutos)
+      const recentMessages = messages.filter(m => {
+        const msgDate = new Date(m.created_at);
+        const now = new Date();
+        return (now.getTime() - msgDate.getTime()) < 5 * 60 * 1000; // 5 minutos
+      });
+      console.log(`🕐 Mensagens dos últimos 5 minutos: ${recentMessages.length}`);
       
       // Get unique user IDs
       const userIds = [...new Set(messages.map(m => m.user_id))];
@@ -100,8 +111,9 @@ export function useChatMessages() {
       console.log('✅ Mensagens processadas:', result.length);
       return result;
     },
-    refetchInterval: 2000, // Refetch a cada 2 segundos como fallback
+    refetchInterval: 3000, // Refetch a cada 3 segundos como fallback
     staleTime: 0, // Sempre considerar stale para forçar refetch
+    cacheTime: 0, // Não cachear para sempre buscar dados frescos
   });
 }
 
