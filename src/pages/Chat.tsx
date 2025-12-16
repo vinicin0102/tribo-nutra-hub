@@ -41,6 +41,15 @@ interface AudioPreview {
 export default function Chat() {
   const { user } = useAuth();
   const { data: messages, isLoading } = useChatMessages();
+  
+  // Debug: verificar mensagens
+  useEffect(() => {
+    console.log('🔍 Mensagens no componente:', messages);
+    console.log('🔍 Total de mensagens:', messages?.length);
+    if (messages && messages.length > 0) {
+      console.log('🔍 Última mensagem:', messages[messages.length - 1]);
+    }
+  }, [messages]);
   const sendMessage = useSendMessage();
   const deleteMessage = useDeleteChatMessage();
   const isSupport = useIsSupport();
@@ -534,6 +543,7 @@ export default function Chat() {
                 </div>
               ) : messages && messages.length > 0 ? (
                 <>
+                  {console.log('🎨 Renderizando mensagens:', messages.length)}
                   {messages.map((message) => {
                     const isOwn = message.user_id === user?.id;
                     
