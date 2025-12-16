@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Ban, CheckCircle, Trash2, Search, VolumeX, Volume2, Crown, Coins, MoreVertical, Unlock, Mail, Phone } from 'lucide-react';
+import { Ban, CheckCircle, Trash2, Search, VolumeX, Volume2, Crown, Coins, MoreVertical, Unlock, Mail, Phone, Download } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -52,6 +52,8 @@ interface UserProfile {
   avatar_url?: string;
   email?: string;
   telefone?: string;
+  cpf?: string;
+  data_nascimento?: string;
   points?: number;
   subscription_plan?: string;
   role?: string;
@@ -59,6 +61,7 @@ interface UserProfile {
   banned_until?: string;
   is_muted?: boolean;
   mute_until?: string;
+  created_at?: string;
 }
 
 export function UserManagement() {
@@ -254,6 +257,85 @@ export function UserManagement() {
     }
   };
 
+  const handleExportUsers = () => {
+    try {
+      // Preparar dados para CSV
+      const csvHeaders = [
+        'Username',
+        'Nome Completo',
+        'Email',
+        'Telefone',
+        'CPF',
+        'Data de Nascimento',
+        'Pontos',
+        'Plano',
+        'Role',
+        'Status',
+        'Banido até',
+        'Mutado até',
+        'Data de Criação'
+      ];
+
+      const csvRows = users.map(user => {
+        const status = user.is_banned 
+          ? 'Banido' 
+          : user.is_muted 
+            ? 'Mutado' 
+            : 'Ativo';
+        
+        return [
+          user.username || '',
+          user.full_name || '',
+          user.email || '',
+          user.telefone || '',
+          user.cpf || '',
+          user.data_nascimento ? new Date(user.data_nascimento).toLocaleDateString('pt-BR') : '',
+          user.points || 0,
+          user.subscription_plan || 'free',
+          user.role || '',
+          status,
+          user.banned_until ? new Date(user.banned_until).toLocaleDateString('pt-BR') : '',
+          user.mute_until ? new Date(user.mute_until).toLocaleDateString('pt-BR') : '',
+          user.created_at ? new Date(user.created_at).toLocaleDateString('pt-BR') : ''
+        ];
+      });
+
+      // Criar CSV
+      const csvContent = [
+        csvHeaders.join(','),
+        ...csvRows.map(row => 
+          row.map(cell => {
+            // Escapar vírgulas e aspas no conteúdo
+            const cellStr = String(cell || '');
+            if (cellStr.includes(',') || cellStr.includes('"') || cellStr.includes('\n')) {
+              return `"${cellStr.replace(/"/g, '""')}"`;
+            }
+            return cellStr;
+          }).join(',')
+        )
+      ].join('\n');
+
+      // Adicionar BOM para Excel reconhecer UTF-8
+      const BOM = '\uFEFF';
+      const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+      
+      // Criar link de download
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `usuarios_${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      toast.success(`Dados de ${users.length} usuários exportados com sucesso!`);
+    } catch (error) {
+      console.error('Erro ao exportar dados:', error);
+      toast.error('Erro ao exportar dados dos usuários');
+    }
+  };
+
   const handleUpdatePoints = async (e?: React.MouseEvent) => {
     if (e) {
       e.preventDefault();
@@ -378,7 +460,17 @@ export function UserManagement() {
     <>
       <Card className="border border-[#2a2a2a] bg-[#1a1a1a]">
         <CardHeader>
-          <CardTitle className="text-white">Painel Administrativo</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-white">Painel Administrativo</CardTitle>
+            <Button
+              onClick={handleExportUsers}
+              className="bg-primary hover:bg-primary/90 text-white"
+              size="sm"
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Exportar Dados
+            </Button>
+          </div>
           <div className="mt-4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
