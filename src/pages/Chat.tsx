@@ -14,7 +14,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AudioPlayer } from '@/components/chat/AudioPlayer';
 import { isWithinOperatingHours, getOperatingHoursMessage } from '@/lib/schedule';
-import { useSupportSettings } from '@/hooks/useSupportSettings';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -47,7 +46,6 @@ export default function Chat() {
   const isSupport = useIsSupport();
   const hasDiamondAccess = useHasDiamondAccess();
   const navigate = useNavigate();
-  const { data: settings } = useSupportSettings(); // Buscar configurações para atualizar cache
   const [newMessage, setNewMessage] = useState('');
   const [viewportHeight, setViewportHeight] = useState(
     window.visualViewport?.height || window.innerHeight
