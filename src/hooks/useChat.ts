@@ -64,25 +64,44 @@ export function useChatMessages() {
       }
       
       console.log(`✅ ${messages?.length || 0} mensagens encontradas`);
+      console.log('📋 Primeiras 3 mensagens:', messages?.slice(0, 3));
+      
+      if (!messages || messages.length === 0) {
+        console.warn('⚠️ Nenhuma mensagem encontrada no banco!');
+        return [];
+      }
       
       // Get unique user IDs
       const userIds = [...new Set(messages.map(m => m.user_id))];
+      console.log(`👥 Buscando perfis para ${userIds.length} usuários:`, userIds);
       
       // Fetch profiles separately
-      const { data: profiles } = await supabase
+      const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('user_id, username, avatar_url')
         .in('user_id', userIds);
+      
+      if (profilesError) {
+        console.error('❌ Erro ao buscar perfis:', profilesError);
+        // Continuar mesmo sem perfis
+      }
+      
+      console.log(`👥 ${profiles?.length || 0} perfis encontrados`);
       
       // Create a map for quick lookup
       const profileMap = new Map(profiles?.map(p => [p.user_id, p]) || []);
       
       // Combine messages with profiles
-      return messages.map(message => ({
+      const result = messages.map(message => ({
         ...message,
         profiles: profileMap.get(message.user_id) || null
       })) as ChatMessage[];
+      
+      console.log('✅ Mensagens processadas:', result.length);
+      return result;
     },
+    refetchInterval: 2000, // Refetch a cada 2 segundos como fallback
+    staleTime: 0, // Sempre considerar stale para forçar refetch
   });
 }
 
