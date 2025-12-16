@@ -1,10 +1,24 @@
 /**
  * Utilitários para verificação de horário de funcionamento
- * Feed e Chat funcionam das 9h às 21h (horário de Brasília)
+ * Feed e Chat funcionam das 9h às 21h (horário de Brasília) por padrão
+ * Mas pode ser configurado no painel admin
  */
 
+// Cache das configurações (atualizado quando necessário)
+let cachedStartHour = 9;
+let cachedEndHour = 21;
+
 /**
- * Verifica se está dentro do horário de funcionamento (9h - 21h, horário de Brasília)
+ * Atualiza o cache das horas de funcionamento
+ */
+export function updateOperatingHours(startHour: number, endHour: number) {
+  cachedStartHour = startHour;
+  cachedEndHour = endHour;
+}
+
+/**
+ * Verifica se está dentro do horário de funcionamento
+ * Usa as configurações do banco de dados se disponíveis, senão usa padrão (9h-21h)
  * @returns true se está dentro do horário permitido, false caso contrário
  */
 export function isWithinOperatingHours(): boolean {
@@ -12,8 +26,8 @@ export function isWithinOperatingHours(): boolean {
   const brasiliaTime = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
   const currentHour = brasiliaTime.getHours();
   
-  // Horário de funcionamento: 9h às 21h (9 AM a 9 PM)
-  return currentHour >= 9 && currentHour < 21;
+  // Usar horas configuradas (ou padrão se não configurado)
+  return currentHour >= cachedStartHour && currentHour < cachedEndHour;
 }
 
 /**
@@ -33,7 +47,7 @@ export function getBrasiliaTime(): string {
  */
 export function getOperatingHoursMessage(): string {
   const currentTime = getBrasiliaTime();
-  return `O feed e o chat estão disponíveis apenas das 9h às 21h (horário de Brasília). Horário atual: ${currentTime}. Tente novamente durante o horário de funcionamento.`;
+  return `O feed e o chat estão disponíveis apenas das ${cachedStartHour}h às ${cachedEndHour}h (horário de Brasília). Horário atual: ${currentTime}. Tente novamente durante o horário de funcionamento.`;
 }
 
 /**
@@ -41,6 +55,6 @@ export function getOperatingHoursMessage(): string {
  * @returns String com as horas de funcionamento
  */
 export function getOperatingHours(): string {
-  return '9h às 21h (horário de Brasília)';
+  return `${cachedStartHour}h às ${cachedEndHour}h (horário de Brasília)`;
 }
 
