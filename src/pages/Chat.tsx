@@ -355,10 +355,16 @@ export default function Chat() {
     if (!checkDiamondAccess()) return;
 
     try {
+      console.log('📤 Tentando enviar mensagem:', newMessage);
       await sendMessage.mutateAsync(newMessage);
       setNewMessage('');
-    } catch (error) {
-      console.error('Error sending message:', error);
+      console.log('✅ Mensagem enviada, campo limpo');
+    } catch (error: any) {
+      console.error('❌ Erro ao enviar mensagem:', error);
+      toast.error('Erro ao enviar mensagem', {
+        description: error?.message || 'Tente novamente',
+        duration: 5000,
+      });
     }
   };
 

@@ -19,18 +19,30 @@ export function useChatMessages() {
   const queryClient = useQueryClient();
 
   useEffect(() => {
+    console.log('🔔 Configurando subscription realtime para chat_messages...');
+    
     const channel = supabase
       .channel('chat-messages')
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'chat_messages' },
-        () => {
+        (payload) => {
+          console.log('🔔 Evento realtime recebido:', payload);
           queryClient.invalidateQueries({ queryKey: ['chat_messages'] });
+          queryClient.refetchQueries({ queryKey: ['chat_messages'] });
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('📡 Status da subscription:', status);
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ Subscription ativa!');
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('❌ Erro na subscription!');
+        }
+      });
 
     return () => {
+      console.log('🔌 Removendo subscription...');
       supabase.removeChannel(channel);
     };
   }, [queryClient]);
@@ -38,13 +50,20 @@ export function useChatMessages() {
   return useQuery({
     queryKey: ['chat_messages'],
     queryFn: async () => {
+      console.log('📥 Buscando mensagens do chat...');
+      
       const { data: messages, error: messagesError } = await supabase
         .from('chat_messages')
         .select('*')
         .order('created_at', { ascending: true })
         .limit(100);
       
-      if (messagesError) throw messagesError;
+      if (messagesError) {
+        console.error('❌ Erro ao buscar mensagens:', messagesError);
+        throw messagesError;
+      }
+      
+      console.log(`✅ ${messages?.length || 0} mensagens encontradas`);
       
       // Get unique user IDs
       const userIds = [...new Set(messages.map(m => m.user_id))];
@@ -107,6 +126,8 @@ export function useSendMessage() {
         }
       }
       
+      console.log('📤 Enviando mensagem:', { user_id: user.id, content });
+      
       const { data, error } = await supabase
         .from('chat_messages')
         .insert({
@@ -116,11 +137,20 @@ export function useSendMessage() {
         .select()
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Erro ao enviar mensagem:', error);
+        throw error;
+      }
+      
+      console.log('✅ Mensagem enviada com sucesso:', data);
       return data;
     },
-    onSuccess: async () => {
-      queryClient.invalidateQueries({ queryKey: ['chat_messages'] });
+    onSuccess: async (data) => {
+      console.log('✅ onSuccess chamado, mensagem:', data);
+      
+      // Invalidar e refetch imediatamente
+      await queryClient.invalidateQueries({ queryKey: ['chat_messages'] });
+      await queryClient.refetchQueries({ queryKey: ['chat_messages'] });
       
       // Forçar atualização imediata do perfil
       await queryClient.refetchQueries({ queryKey: ['profile'] });
@@ -132,6 +162,13 @@ export function useSendMessage() {
           duration: 4000,
         });
       }, 500);
+    },
+    onError: (error: any) => {
+      console.error('❌ Erro no onError:', error);
+      toast.error('Erro ao enviar mensagem', {
+        description: error?.message || 'Tente novamente',
+        duration: 5000,
+      });
     },
   });
 }
