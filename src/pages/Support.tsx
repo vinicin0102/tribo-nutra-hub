@@ -407,25 +407,28 @@ export default function Support() {
               throw error;
             }
             
-            // Enviar mensagem automática após 1 segundo
-            setTimeout(async () => {
-              try {
-                const { error: autoMessageError } = await supabase
-                  .from('support_chat')
-                  .insert({
-                    user_id: user.id,
-                    message: 'Olá! Recebemos sua mensagem. Nossa equipe de suporte responderá em até 10 minutos. Obrigado pela paciência! 🙏',
-                    is_from_support: true,
-                    support_user_id: null, // Mensagem automática
-                  });
+            // Enviar mensagem automática após 1 segundo (se estiver ativada)
+            if (settings?.autoReplyEnabled) {
+              setTimeout(async () => {
+                try {
+                  const autoMessage = settings?.autoReplyMessage || 'Olá! Recebemos sua mensagem. Nossa equipe de suporte responderá em até 10 minutos. Obrigado pela paciência! 🙏';
+                  const { error: autoMessageError } = await supabase
+                    .from('support_chat')
+                    .insert({
+                      user_id: user.id,
+                      message: autoMessage,
+                      is_from_support: true,
+                      support_user_id: null, // Mensagem automática
+                    });
 
-                if (autoMessageError) {
-                  console.error('Erro ao enviar mensagem automática:', autoMessageError);
+                  if (autoMessageError) {
+                    console.error('Erro ao enviar mensagem automática:', autoMessageError);
+                  }
+                } catch (error) {
+                  console.error('Erro ao enviar mensagem automática:', error);
                 }
-              } catch (error) {
-                console.error('Erro ao enviar mensagem automática:', error);
-              }
-            }, 1000);
+              }, 1000);
+            }
             
             loadUserMessages();
             toast.success('Áudio enviado!');
@@ -488,25 +491,28 @@ export default function Support() {
 
       if (error) throw error;
 
-      // Enviar mensagem automática após 1 segundo
-      setTimeout(async () => {
-        try {
-          const { error: autoMessageError } = await supabase
-            .from('support_chat')
-            .insert({
-              user_id: user.id,
-              message: 'Olá! Recebemos sua mensagem. Nossa equipe de suporte responderá em até 10 minutos. Obrigado pela paciência! 🙏',
-              is_from_support: true,
-              support_user_id: null, // Mensagem automática
-            });
+      // Enviar mensagem automática após 1 segundo (se estiver ativada)
+      if (settings?.autoReplyEnabled) {
+        setTimeout(async () => {
+          try {
+            const autoMessage = settings?.autoReplyMessage || 'Olá! Recebemos sua mensagem. Nossa equipe de suporte responderá em até 10 minutos. Obrigado pela paciência! 🙏';
+            const { error: autoMessageError } = await supabase
+              .from('support_chat')
+              .insert({
+                user_id: user.id,
+                message: autoMessage,
+                is_from_support: true,
+                support_user_id: null, // Mensagem automática
+              });
 
-          if (autoMessageError) {
-            console.error('Erro ao enviar mensagem automática:', autoMessageError);
+            if (autoMessageError) {
+              console.error('Erro ao enviar mensagem automática:', autoMessageError);
+            }
+          } catch (error) {
+            console.error('Erro ao enviar mensagem automática:', error);
           }
-        } catch (error) {
-          console.error('Erro ao enviar mensagem automática:', error);
-        }
-      }, 1000);
+        }, 1000);
+      }
 
       toast.success('Mensagem enviada com sucesso!');
       setFormData({ subject: '', message: '' });

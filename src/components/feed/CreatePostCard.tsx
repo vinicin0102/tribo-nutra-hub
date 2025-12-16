@@ -11,12 +11,14 @@ import { useIsSupport } from '@/hooks/useSupport';
 import { uploadImage } from '@/lib/upload';
 import { toast } from 'sonner';
 import { isWithinOperatingHours, getOperatingHoursMessage, getOperatingHours } from '@/lib/schedule';
+import { useSupportSettings } from '@/hooks/useSupportSettings';
 
 export function CreatePostCard() {
   const { data: profile } = useProfile();
   const { user } = useAuth();
   const createPost = useCreatePost();
   const isSupport = useIsSupport();
+  const { data: settings } = useSupportSettings(); // Buscar configurações para atualizar cache
   const [content, setContent] = useState('');
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);

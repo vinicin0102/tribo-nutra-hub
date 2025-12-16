@@ -3,6 +3,7 @@ import { CreatePostCard } from '@/components/feed/CreatePostCard';
 import { PostCard } from '@/components/feed/PostCard';
 import { usePosts } from '@/hooks/usePosts';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useSupportSettings } from '@/hooks/useSupportSettings';
 
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -11,6 +12,7 @@ import { useState } from 'react';
 export default function Feed() {
   const { data: posts, isLoading } = usePosts();
   const [showCreateCard, setShowCreateCard] = useState(false);
+  const { data: settings } = useSupportSettings(); // Buscar configurações para atualizar cache
 
   return (
     <MainLayout>
