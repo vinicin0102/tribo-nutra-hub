@@ -6,10 +6,33 @@
 -- =====================================================
 
 -- 1. REMOVER a tabela da publicação realtime (se estiver)
-ALTER PUBLICATION supabase_realtime DROP TABLE IF EXISTS public.chat_messages;
+-- Usar DO block para evitar erro se não existir
+DO $$
+BEGIN
+  -- Tentar remover (pode falhar se não existir, mas não importa)
+  BEGIN
+    ALTER PUBLICATION supabase_realtime DROP TABLE public.chat_messages;
+    RAISE NOTICE '✅ Tabela removida da publicação realtime';
+  EXCEPTION
+    WHEN OTHERS THEN
+      RAISE NOTICE 'ℹ️ Tabela não estava na publicação (ou já foi removida)';
+  END;
+END $$;
 
 -- 2. ADICIONAR novamente para garantir que está ativo
-ALTER PUBLICATION supabase_realtime ADD TABLE public.chat_messages;
+DO $$
+BEGIN
+  -- Tentar adicionar (pode falhar se já existir, mas não importa)
+  BEGIN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.chat_messages;
+    RAISE NOTICE '✅ Tabela adicionada à publicação realtime';
+  EXCEPTION
+    WHEN duplicate_object THEN
+      RAISE NOTICE 'ℹ️ Tabela já estava na publicação';
+    WHEN OTHERS THEN
+      RAISE NOTICE '⚠️ Erro ao adicionar: %', SQLERRM;
+  END;
+END $$;
 
 -- 3. Verificar se foi adicionado corretamente
 SELECT 
