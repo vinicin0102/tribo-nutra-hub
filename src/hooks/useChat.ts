@@ -58,7 +58,7 @@ export function useChatMessages() {
         .from('chat_messages')
         .select('*')
         .order('created_at', { ascending: true })
-        .limit(200); // Aumentar limite para garantir que pegue todas
+        .limit(500); // Limite de 500 mensagens
       
       if (messagesError) {
         console.error('❌ Erro ao buscar mensagens:', messagesError);
