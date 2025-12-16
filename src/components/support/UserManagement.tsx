@@ -446,10 +446,19 @@ export function UserManagement() {
   }
 
   if (error) {
+    const errorMessage = error instanceof Error 
+      ? error.message 
+      : typeof error === 'object' && error !== null
+        ? JSON.stringify(error, null, 2)
+        : String(error);
+    
     return (
       <Card className="border border-[#2a2a2a] bg-[#1a1a1a]">
         <CardContent className="pt-6">
-          <p className="text-red-400 text-center">Erro ao carregar usuários: {String(error)}</p>
+          <p className="text-red-400 text-center mb-2">Erro ao carregar usuários:</p>
+          <pre className="text-xs text-red-300 bg-red-500/10 p-3 rounded mb-4 overflow-auto max-h-40">
+            {errorMessage}
+          </pre>
           <Button onClick={() => window.location.reload()} className="w-full mt-4">Recarregar</Button>
         </CardContent>
       </Card>

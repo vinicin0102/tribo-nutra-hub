@@ -43,14 +43,52 @@ export function useSupportUsers() {
 
       console.log('Buscando usuários...', { isSupport, isAdmin, canAccess, userEmail: user?.email });
 
-      const { data, error } = await supabase
+      // Buscar usuários - tentar com todas as colunas primeiro
+      let { data, error } = await supabase
         .from('profiles')
-        .select('user_id, username, full_name, avatar_url, email, telefone, cpf, data_nascimento, points, subscription_plan, role, is_banned, banned_until, is_muted, mute_until, created_at, updated_at')
+        .select('user_id, username, full_name, avatar_url, email, telefone, points, subscription_plan, role, is_banned, banned_until, is_muted, mute_until, created_at, updated_at')
         .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('Erro ao buscar usuários:', error);
+      // Se der erro por coluna não existir, tentar sem cpf e data_nascimento
+      if (error && (error.message?.includes('cpf') || error.message?.includes('data_nascimento'))) {
+        console.warn('⚠️ Colunas cpf/data_nascimento não encontradas, buscando sem elas:', error.message);
+        const { data: dataRetry, error: errorRetry } = await supabase
+          .from('profiles')
+          .select('user_id, username, full_name, avatar_url, email, telefone, points, subscription_plan, role, is_banned, banned_until, is_muted, mute_until, created_at, updated_at')
+          .order('created_at', { ascending: false });
+        
+        if (errorRetry) {
+          console.error('❌ Erro ao buscar usuários (retry):', errorRetry);
+          throw errorRetry;
+        }
+        
+        data = dataRetry;
+        error = null;
+      } else if (error) {
+        console.error('❌ Erro ao buscar usuários:', error);
         throw error;
+      }
+      
+      // Tentar buscar cpf e data_nascimento separadamente se as colunas existirem
+      if (data && data.length > 0) {
+        try {
+          const { data: extraData } = await supabase
+            .from('profiles')
+            .select('user_id, cpf, data_nascimento')
+            .in('user_id', data.map(u => (u as any).user_id));
+          
+          if (extraData) {
+            const extraMap = new Map(extraData.map((u: any) => [u.user_id, { cpf: u.cpf, data_nascimento: u.data_nascimento }]));
+            data = data.map((u: any) => ({
+              ...u,
+              cpf: extraMap.get(u.user_id)?.cpf,
+              data_nascimento: extraMap.get(u.user_id)?.data_nascimento
+            }));
+          }
+        } catch (extraError) {
+          console.warn('⚠️ Não foi possível buscar cpf/data_nascimento:', extraError);
+          // Continuar sem esses campos
+        }
       }
       
       console.log('Usuários encontrados:', data?.length || 0);
