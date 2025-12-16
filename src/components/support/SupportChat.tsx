@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Send } from 'lucide-react';
+import { Send, Image as ImageIcon, Paperclip } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,6 +10,8 @@ import { useProfile } from '@/hooks/useProfile';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { uploadImage } from '@/lib/upload';
+import { uploadPDF } from '@/lib/upload';
 
 interface SupportChatMessage {
   id: string;
@@ -18,6 +20,9 @@ interface SupportChatMessage {
   message: string;
   is_from_support: boolean;
   created_at: string;
+  image_url?: string | null;
+  audio_url?: string | null;
+  audio_duration?: number | null;
   profiles?: {
     username: string;
     avatar_url: string | null;
@@ -32,7 +37,11 @@ export function SupportChat() {
   const [messages, setMessages] = useState<SupportChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadingFile, setUploadingFile] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     loadConversations();
@@ -185,6 +194,167 @@ export function SupportChat() {
     }
   };
 
+  const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !selectedUserId || !user) return;
+
+    try {
+      // Validar arquivo
+      if (!file.type.startsWith('image/')) {
+        toast.error('Por favor, selecione uma imagem válida');
+        return;
+      }
+
+      setUploadingImage(true);
+      toast.info('Enviando imagem...');
+      
+      // Upload da imagem
+      let imageUrl: string;
+      try {
+        imageUrl = await uploadImage(file, 'posts', user.id);
+        console.log('✅ Imagem enviada com sucesso:', imageUrl);
+      } catch (uploadError: any) {
+        console.error('❌ Erro no upload:', uploadError);
+        const errorMsg = uploadError?.message || 'Erro desconhecido no upload';
+        
+        if (errorMsg.includes('Bucket not found') || errorMsg.includes('não configurado')) {
+          toast.error('Bucket de imagens não configurado. Configure o bucket "images" no Supabase Storage.');
+        } else if (errorMsg.includes('permission') || errorMsg.includes('policy')) {
+          toast.error('Erro de permissão. Verifique as políticas do Storage no Supabase.');
+        } else {
+          toast.error(`Erro ao fazer upload: ${errorMsg}`);
+        }
+        return;
+      }
+      
+      // Enviar mensagem com imagem
+      const { error, data } = await supabase
+        .from('support_chat')
+        .insert({
+          user_id: selectedUserId,
+          support_user_id: user.id,
+          message: '📷 Imagem',
+          image_url: imageUrl,
+          is_from_support: true,
+        })
+        .select();
+      
+      if (error) {
+        console.error('❌ Erro ao inserir mensagem:', error);
+        
+        // Mensagens de erro mais específicas
+        if (error.message?.includes('column') && error.message?.includes('image_url')) {
+          toast.error('Coluna image_url não existe. Execute ADICIONAR-COLUNA-IMAGE-URL-SUPPORT.sql no Supabase.');
+        } else if (error.message?.includes('permission') || error.message?.includes('policy') || error.code === '42501') {
+          toast.error('Erro de permissão. Verifique as políticas RLS da tabela support_chat.');
+        } else {
+          toast.error(`Erro ao enviar mensagem: ${error.message || 'Erro desconhecido'}`);
+        }
+        return;
+      }
+      
+      console.log('✅ Mensagem com imagem inserida:', data);
+      
+      loadMessages(selectedUserId);
+      loadConversations();
+      toast.success('Imagem enviada!');
+      
+      // Limpar input
+      if (imageInputRef.current) {
+        imageInputRef.current.value = '';
+      }
+    } catch (error: any) {
+      console.error('❌ Erro geral ao enviar imagem:', error);
+      toast.error(`Erro ao enviar imagem: ${error?.message || 'Erro desconhecido'}`);
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !selectedUserId || !user) return;
+
+    try {
+      setUploadingFile(true);
+      toast.info('Enviando arquivo...');
+      
+      let fileUrl: string;
+      
+      // Verificar se é PDF
+      if (file.type === 'application/pdf') {
+        try {
+          fileUrl = await uploadPDF(file, 'pdfs', user.id);
+          console.log('✅ PDF enviado com sucesso:', fileUrl);
+        } catch (uploadError: any) {
+          console.error('❌ Erro no upload do PDF:', uploadError);
+          const errorMsg = uploadError?.message || 'Erro desconhecido no upload';
+          
+          if (errorMsg.includes('Bucket not found') || errorMsg.includes('não configurado')) {
+            toast.error('Bucket de documentos não configurado. Configure o bucket "documents" ou "images" no Supabase Storage.');
+          } else if (errorMsg.includes('permission') || errorMsg.includes('policy')) {
+            toast.error('Erro de permissão. Verifique as políticas do Storage no Supabase.');
+          } else {
+            toast.error(`Erro ao fazer upload do PDF: ${errorMsg}`);
+          }
+          return;
+        }
+      } else {
+        // Para outros tipos de arquivo, usar uploadImage como fallback (se for imagem)
+        if (file.type.startsWith('image/')) {
+          try {
+            fileUrl = await uploadImage(file, 'posts', user.id);
+            console.log('✅ Arquivo (imagem) enviado com sucesso:', fileUrl);
+          } catch (uploadError: any) {
+            console.error('❌ Erro no upload:', uploadError);
+            toast.error(`Erro ao fazer upload: ${uploadError?.message || 'Erro desconhecido'}`);
+            return;
+          }
+        } else {
+          toast.error('Tipo de arquivo não suportado. Use PDF ou imagens.');
+          return;
+        }
+      }
+      
+      // Enviar mensagem com arquivo
+      const fileName = file.name;
+      const fileType = file.type === 'application/pdf' ? '📄 PDF' : '📷 Imagem';
+      
+      const { error, data } = await supabase
+        .from('support_chat')
+        .insert({
+          user_id: selectedUserId,
+          support_user_id: user.id,
+          message: `${fileType}: ${fileName}`,
+          image_url: file.type.startsWith('image/') ? fileUrl : null,
+          is_from_support: true,
+        })
+        .select();
+      
+      if (error) {
+        console.error('❌ Erro ao inserir mensagem:', error);
+        toast.error(`Erro ao enviar arquivo: ${error.message || 'Erro desconhecido'}`);
+        return;
+      }
+      
+      console.log('✅ Mensagem com arquivo inserida:', data);
+      
+      loadMessages(selectedUserId);
+      loadConversations();
+      toast.success('Arquivo enviado!');
+      
+      // Limpar input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    } catch (error: any) {
+      console.error('❌ Erro geral ao enviar arquivo:', error);
+      toast.error(`Erro ao enviar arquivo: ${error?.message || 'Erro desconhecido'}`);
+    } finally {
+      setUploadingFile(false);
+    }
+  };
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 h-[calc(100vh-200px)]">
       {/* Lista de conversas */}
@@ -258,7 +428,30 @@ export function SupportChat() {
                             : 'bg-[#2a2a2a] text-white'
                         }`}
                       >
-                        <p className="text-sm">{msg.message}</p>
+                        {msg.image_url && (
+                          <div className="mb-2">
+                            <img
+                              src={msg.image_url}
+                              alt="Imagem enviada"
+                              className="max-w-full max-h-64 rounded-lg object-contain"
+                              onClick={() => window.open(msg.image_url || '', '_blank')}
+                              style={{ cursor: 'pointer' }}
+                            />
+                          </div>
+                        )}
+                        {msg.message && (
+                          <p className="text-sm">{msg.message}</p>
+                        )}
+                        {msg.message?.includes('📄 PDF:') && !msg.image_url && (
+                          <a
+                            href={msg.message.split('📄 PDF: ')[1]}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm underline hover:opacity-80"
+                          >
+                            {msg.message.split('📄 PDF: ')[1]}
+                          </a>
+                        )}
                       </div>
                       <p className="text-xs text-gray-400 mt-1">
                         {formatDistanceToNow(new Date(msg.created_at), {
@@ -282,17 +475,57 @@ export function SupportChat() {
 
               {/* Input de mensagem */}
               <form onSubmit={handleSendMessage} className="border-t border-[#2a2a2a] p-4">
-                <div className="flex gap-2">
+                <div className="flex gap-2 items-center">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => imageInputRef.current?.click()}
+                    disabled={uploadingImage || uploadingFile}
+                    className="flex-shrink-0"
+                    title="Enviar imagem"
+                  >
+                    <ImageIcon className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploadingImage || uploadingFile}
+                    className="flex-shrink-0"
+                    title="Enviar arquivo"
+                  >
+                    <Paperclip className="h-4 w-4" />
+                  </Button>
                   <Input
                     placeholder="Digite sua mensagem..."
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
                     className="flex-1 bg-[#2a2a2a] border-[#3a3a3a] text-white placeholder:text-gray-500"
+                    disabled={uploadingImage || uploadingFile}
                   />
-                  <Button type="submit" disabled={loading || !newMessage.trim()}>
+                  <Button 
+                    type="submit" 
+                    disabled={loading || (!newMessage.trim() && !uploadingImage && !uploadingFile)}
+                  >
                     <Send className="h-4 w-4" />
                   </Button>
                 </div>
+                <input
+                  ref={imageInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleImageSelect}
+                />
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".pdf,image/*"
+                  className="hidden"
+                  onChange={handleFileSelect}
+                />
               </form>
             </CardContent>
           </Card>
