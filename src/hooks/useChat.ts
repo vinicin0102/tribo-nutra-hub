@@ -146,22 +146,36 @@ export function useSendMessage() {
       }
       
       console.log('📤 Enviando mensagem:', { user_id: user.id, content });
+      console.log('🔐 Usuário autenticado:', user.id);
+      
+      // Verificar se o usuário está realmente autenticado
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      if (!currentUser) {
+        console.error('❌ Usuário não autenticado!');
+        throw new Error('Usuário não autenticado');
+      }
+      console.log('✅ Usuário confirmado:', currentUser.id);
       
       const { data, error } = await supabase
         .from('chat_messages')
         .insert({
           user_id: user.id,
-          content,
+          content: content.trim(),
         })
         .select()
         .single();
       
       if (error) {
         console.error('❌ Erro ao enviar mensagem:', error);
+        console.error('❌ Código do erro:', error.code);
+        console.error('❌ Mensagem do erro:', error.message);
+        console.error('❌ Detalhes:', error.details);
+        console.error('❌ Hint:', error.hint);
         throw error;
       }
       
       console.log('✅ Mensagem enviada com sucesso:', data);
+      console.log('✅ ID da mensagem:', data.id);
       return data;
     },
     onSuccess: async (data) => {
