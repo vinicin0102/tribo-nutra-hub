@@ -14,6 +14,13 @@ CREATE TABLE IF NOT EXISTS public.push_subscriptions (
 -- Habilitar RLS
 ALTER TABLE public.push_subscriptions ENABLE ROW LEVEL SECURITY;
 
+-- Remover políticas existentes se houver (para permitir re-execução)
+DROP POLICY IF EXISTS "Users can view own subscriptions" ON public.push_subscriptions;
+DROP POLICY IF EXISTS "Users can insert own subscriptions" ON public.push_subscriptions;
+DROP POLICY IF EXISTS "Users can update own subscriptions" ON public.push_subscriptions;
+DROP POLICY IF EXISTS "Users can delete own subscriptions" ON public.push_subscriptions;
+DROP POLICY IF EXISTS "Admins can view all subscriptions" ON public.push_subscriptions;
+
 -- Políticas RLS
 CREATE POLICY "Users can view own subscriptions" ON public.push_subscriptions 
   FOR SELECT USING (auth.uid() = user_id);
