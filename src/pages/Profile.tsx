@@ -19,6 +19,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { uploadImage, deleteImage } from '@/lib/upload';
 import { useHasDiamondAccess } from '@/hooks/useSubscription';
 import { toast } from 'sonner';
+import { NotificationToggle } from '@/components/push/NotificationToggle';
 
 export default function Profile() {
   const navigate = useNavigate();
@@ -417,6 +418,9 @@ export default function Profile() {
             </form>
           </CardContent>
         </Card>
+
+        {/* Push Notifications */}
+        <NotificationToggle />
 
         {/* Logout */}
         <Card className="border-destructive/20">
