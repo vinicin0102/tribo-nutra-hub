@@ -21,11 +21,25 @@ Execute as migrations no Supabase SQL Editor:
 
 ### 2. Gerar Chaves VAPID
 
-As chaves VAPID são necessárias para autenticar as push notifications. Execute:
+As chaves VAPID são necessárias para autenticar as push notifications. 
+
+**Opção 1: Usar script local (Recomendado - sem permissões especiais)**
+
+```bash
+node scripts/generate-vapid-keys.js
+```
+
+**Opção 2: Usar web-push globalmente**
 
 ```bash
 npm install -g web-push
 web-push generate-vapid-keys
+```
+
+**Opção 3: Usar npx (sem instalar globalmente)**
+
+```bash
+npx web-push generate-vapid-keys
 ```
 
 Isso gerará duas chaves:
