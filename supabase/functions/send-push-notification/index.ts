@@ -79,20 +79,33 @@ serve(async (req) => {
     console.log(`📤 Enviando push notification: "${title}"`);
 
     // Buscar todas as subscriptions ativas
+    console.log('🔍 Buscando subscriptions no banco...');
     const { data: subscriptions, error: fetchError } = await supabase
       .from('push_subscriptions')
       .select('*');
 
     if (fetchError) {
-      console.error('Erro ao buscar subscriptions:', fetchError);
+      console.error('❌ Erro ao buscar subscriptions:', fetchError);
       return new Response(
         JSON.stringify({ success: false, error: fetchError.message }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
+    console.log(`📊 Subscriptions encontradas: ${subscriptions?.length || 0}`);
+    
+    if (subscriptions && subscriptions.length > 0) {
+      console.log('📋 Primeira subscription:', {
+        endpoint: subscriptions[0].endpoint?.substring(0, 60),
+        hasP256dh: !!subscriptions[0].p256dh,
+        hasAuth: !!subscriptions[0].auth,
+        p256dhLength: subscriptions[0].p256dh?.length || 0,
+        authLength: subscriptions[0].auth?.length || 0,
+      });
+    }
+
     if (!subscriptions || subscriptions.length === 0) {
-      console.log('Nenhuma subscription encontrada');
+      console.log('⚠️ Nenhuma subscription encontrada');
       
       // Registrar no log mesmo sem dispositivos
       await supabase
