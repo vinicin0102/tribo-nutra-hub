@@ -80,14 +80,45 @@ serve(async (req) => {
 
     // Buscar todas as subscriptions ativas
     console.log('🔍 Buscando subscriptions no banco...');
+    console.log('🔑 Service Role Key configurado?', !!supabaseServiceKey);
+    console.log('🔑 Supabase URL:', supabaseUrl);
+    
+    // Testar conexão primeiro
+    const { data: testData, error: testError } = await supabase
+      .from('push_subscriptions')
+      .select('id')
+      .limit(1);
+    
+    console.log('🧪 Teste de conexão:', {
+      success: !testError,
+      error: testError?.message,
+      foundRows: testData?.length || 0,
+    });
+    
+    if (testError) {
+      console.error('❌ Erro ao testar conexão:', testError);
+      console.error('❌ Código do erro:', testError.code);
+      console.error('❌ Detalhes:', testError.details);
+      console.error('❌ Hint:', testError.hint);
+    }
+    
     const { data: subscriptions, error: fetchError } = await supabase
       .from('push_subscriptions')
       .select('*');
 
     if (fetchError) {
       console.error('❌ Erro ao buscar subscriptions:', fetchError);
+      console.error('❌ Código:', fetchError.code);
+      console.error('❌ Mensagem:', fetchError.message);
+      console.error('❌ Detalhes:', fetchError.details);
+      console.error('❌ Hint:', fetchError.hint);
       return new Response(
-        JSON.stringify({ success: false, error: fetchError.message }),
+        JSON.stringify({ 
+          success: false, 
+          error: fetchError.message,
+          code: fetchError.code,
+          details: fetchError.details
+        }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -96,12 +127,20 @@ serve(async (req) => {
     
     if (subscriptions && subscriptions.length > 0) {
       console.log('📋 Primeira subscription:', {
+        id: subscriptions[0].id,
+        userId: subscriptions[0].user_id,
         endpoint: subscriptions[0].endpoint?.substring(0, 60),
         hasP256dh: !!subscriptions[0].p256dh,
         hasAuth: !!subscriptions[0].auth,
         p256dhLength: subscriptions[0].p256dh?.length || 0,
         authLength: subscriptions[0].auth?.length || 0,
       });
+    } else {
+      console.warn('⚠️ NENHUMA SUBSCRIPTION ENCONTRADA!');
+      console.warn('⚠️ Isso pode significar:');
+      console.warn('   1. RLS está bloqueando (service_role não tem permissão)');
+      console.warn('   2. Tabela está vazia');
+      console.warn('   3. Service Role Key está incorreta');
     }
 
     if (!subscriptions || subscriptions.length === 0) {
