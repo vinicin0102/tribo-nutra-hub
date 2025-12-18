@@ -1,1 +1,10 @@
 project_id = "oglakfbpuosrhhtbyprw"
+
+[functions.create-stripe-checkout]
+verify_jwt = false
+
+[functions.stripe-webhook]
+verify_jwt = false
+
+[functions.send-push-notification]
+verify_jwt = true
