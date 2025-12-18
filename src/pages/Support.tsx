@@ -63,6 +63,7 @@ export default function Support() {
   const { user } = useAuth();
   const isSupport = useIsSupport();
   const deleteSupportMessage = useDeleteSupportMessage();
+  const { data: settings } = useSupportSettings();
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({

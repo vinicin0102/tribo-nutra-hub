@@ -26,15 +26,15 @@ export function SettingsManagement() {
   const { data: settings, isLoading } = useQuery({
     queryKey: ['support-settings'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('support_settings')
+      const { data, error } = await (supabase
+        .from('support_settings') as any)
         .select('*')
         .order('key');
 
       if (error) throw error;
 
       const settingsMap: Record<string, string> = {};
-      data?.forEach((setting: any) => {
+      (data as any[])?.forEach((setting: any) => {
         settingsMap[setting.key] = setting.value;
       });
 
@@ -63,8 +63,8 @@ export function SettingsManagement() {
 
       // Usar upsert para cada configuração
       const promises = updatesArray.map(({ key, value }) =>
-        supabase
-          .from('support_settings')
+        (supabase
+          .from('support_settings') as any)
           .upsert({ key, value }, { onConflict: 'key' })
       );
 
