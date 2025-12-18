@@ -13,15 +13,23 @@ serve(async (req) => {
   }
 
   try {
+    console.log('📥 Recebida requisição:', req.method);
+    
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const vapidPublicKey = Deno.env.get('VAPID_PUBLIC_KEY');
     const vapidPrivateKey = Deno.env.get('VAPID_PRIVATE_KEY');
     const vapidSubject = Deno.env.get('VAPID_SUBJECT');
 
+    console.log('🔑 VAPID configurado?', {
+      publicKey: !!vapidPublicKey,
+      privateKey: !!vapidPrivateKey,
+      subject: !!vapidSubject,
+    });
+
     // Verificar se as chaves VAPID estão configuradas
     if (!vapidPublicKey || !vapidPrivateKey || !vapidSubject) {
-      console.error('Chaves VAPID não configuradas');
+      console.error('❌ Chaves VAPID não configuradas');
       return new Response(
         JSON.stringify({ 
           success: false, 
@@ -36,11 +44,34 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { title, body, url, sentBy } = await req.json();
+    // Tentar parse do JSON
+    let requestData;
+    try {
+      requestData = await req.json();
+      console.log('📋 Dados recebidos:', {
+        title: requestData.title,
+        body: requestData.body,
+        url: requestData.url,
+        hasSentBy: !!requestData.sentBy,
+      });
+    } catch (parseError) {
+      console.error('❌ Erro ao fazer parse do JSON:', parseError);
+      return new Response(
+        JSON.stringify({ success: false, error: 'Erro ao processar requisição JSON' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const { title, body, url, sentBy } = requestData;
 
     if (!title || !body) {
+      console.error('❌ Título ou corpo faltando:', { title: !!title, body: !!body });
       return new Response(
-        JSON.stringify({ success: false, error: 'Título e corpo são obrigatórios' }),
+        JSON.stringify({ 
+          success: false, 
+          error: 'Título e corpo são obrigatórios',
+          received: { title: !!title, body: !!body }
+        }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -109,14 +140,41 @@ serve(async (req) => {
 
     // Usar biblioteca web-push via npm
     // Importar dinamicamente para evitar problemas de compatibilidade
-    const webpush = await import('https://esm.sh/web-push@3.6.6');
+    console.log('📦 Importando biblioteca web-push...');
+    let webpush;
+    try {
+      webpush = await import('https://esm.sh/web-push@3.6.6');
+      console.log('✅ Biblioteca web-push importada com sucesso');
+    } catch (importError) {
+      console.error('❌ Erro ao importar web-push:', importError);
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: 'Erro ao carregar biblioteca web-push. Verifique os logs.' 
+        }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
     
     // Configurar web-push com chaves VAPID
-    webpush.setVapidDetails(
-      vapidSubject!,
-      vapidPublicKey!,
-      vapidPrivateKey!
-    );
+    console.log('🔧 Configurando VAPID details...');
+    try {
+      webpush.setVapidDetails(
+        vapidSubject!,
+        vapidPublicKey!,
+        vapidPrivateKey!
+      );
+      console.log('✅ VAPID details configurados');
+    } catch (vapidError) {
+      console.error('❌ Erro ao configurar VAPID:', vapidError);
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: 'Erro ao configurar chaves VAPID. Verifique se estão corretas.' 
+        }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     // Enviar para cada subscription usando web-push
     for (const sub of subscriptions) {
