@@ -249,7 +249,6 @@ export function usePushNotifications() {
       }
 
       // Criar subscription
-<<<<<<< HEAD
       let subscription;
       try {
         console.log('[Push] ========== CONVERSÃO DA CHAVE ==========');
@@ -285,23 +284,23 @@ export function usePushNotifications() {
           console.log('[Push] ✅ Nenhuma subscription antiga encontrada');
         }
         
-        // Tentar criar subscription - MÚLTIPLAS TENTATIVAS
+        // Tentar criar subscription
         console.log('[Push] ========== CRIANDO SUBSCRIPTION ==========');
         console.log('[Push] PushManager disponível?', !!registration.pushManager);
         console.log('[Push] Tipo do PushManager:', typeof registration.pushManager);
         
         // Criar cópia limpa do Uint8Array
         console.log('[Push] Criando cópia limpa do Uint8Array...');
-        const cleanKey = new Uint8Array(applicationServerKey);
+        const cleanKeyArray = new Uint8Array(applicationServerKey);
         console.log('[Push] Cópia criada:');
-        console.log('[Push] - Tamanho:', cleanKey.length, 'bytes');
-        console.log('[Push] - Primeiro byte:', cleanKey[0], '(esperado: 4)');
-        console.log('[Push] - É Uint8Array?', cleanKey instanceof Uint8Array);
-        console.log('[Push] - ByteLength:', cleanKey.byteLength);
+        console.log('[Push] - Tamanho:', cleanKeyArray.length, 'bytes');
+        console.log('[Push] - Primeiro byte:', cleanKeyArray[0], '(esperado: 4)');
+        console.log('[Push] - É Uint8Array?', cleanKeyArray instanceof Uint8Array);
+        console.log('[Push] - ByteLength:', cleanKeyArray.byteLength);
         
         // Validação final EXTREMA
-        if (cleanKey.length !== 65 || cleanKey[0] !== 4) {
-          const errorMsg = `Chave inválida: tamanho=${cleanKey.length}, primeiro byte=${cleanKey[0]}`;
+        if (cleanKeyArray.length !== 65 || cleanKeyArray[0] !== 4) {
+          const errorMsg = `Chave inválida: tamanho=${cleanKeyArray.length}, primeiro byte=${cleanKeyArray[0]}`;
           console.error('[Push] ❌ VALIDAÇÃO FINAL FALHOU:', errorMsg);
           throw new Error(errorMsg);
         }
@@ -310,7 +309,7 @@ export function usePushNotifications() {
         
         subscription = await registration.pushManager.subscribe({
           userVisibleOnly: true,
-          applicationServerKey: cleanKey,
+          applicationServerKey: cleanKeyArray,
         });
         
         console.log('[Push] ✅✅✅ SUBSCRIPTION CRIADA COM SUCESSO!');
@@ -350,13 +349,6 @@ export function usePushNotifications() {
         setIsLoading(false);
         return false;
       }
-=======
-      const applicationServerKey = urlBase64ToUint8Array(vapidPublicKey);
-      const subscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: applicationServerKey.buffer as ArrayBuffer,
-      });
->>>>>>> 0a382979dc4f2c1e20e52d6bb4875238a4d78c84
 
       // Converter subscription para formato salvável
       const subscriptionData: PushSubscriptionData = {
@@ -368,13 +360,8 @@ export function usePushNotifications() {
       };
 
       // Salvar no banco de dados
-<<<<<<< HEAD
       console.log('[Push] Tentando salvar subscription no banco...');
-      const { error, data } = await supabase
-        .from('push_subscriptions')
-=======
-      const { error } = await getPushSubscriptionsTable()
->>>>>>> 0a382979dc4f2c1e20e52d6bb4875238a4d78c84
+      const { error, data } = await getPushSubscriptionsTable()
         .upsert({
           user_id: user.id,
           endpoint: subscriptionData.endpoint,
