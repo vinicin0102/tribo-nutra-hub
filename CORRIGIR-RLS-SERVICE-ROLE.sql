@@ -1,10 +1,12 @@
 -- CORRIGIR RLS PARA PERMITIR SERVICE_ROLE ACESSAR SUBSCRIPTIONS
 -- Execute este script no Supabase SQL Editor
 
+-- Remover política existente se houver (para permitir re-execução)
+DROP POLICY IF EXISTS "Service role can read all subscriptions" ON public.push_subscriptions;
+
 -- Adicionar política para service_role poder ler todas as subscriptions
 -- Isso é ESSENCIAL para a Edge Function funcionar
-
-CREATE POLICY IF NOT EXISTS "Service role can read all subscriptions"
+CREATE POLICY "Service role can read all subscriptions"
 ON public.push_subscriptions 
 FOR SELECT
 TO service_role
