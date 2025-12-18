@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
-import { Send, Image as ImageIcon, Paperclip } from 'lucide-react';
+import { Send, Image as ImageIcon, Paperclip, AlertCircle, Filter } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/useProfile';
@@ -29,22 +30,53 @@ interface SupportChatMessage {
   } | null;
 }
 
+interface Conversation {
+  userId: string;
+  username: string;
+  avatar: string | null;
+  lastMessage: string;
+  lastMessageTime: string;
+  unread: number;
+  needsResponse: boolean; // Nova propriedade
+}
+
 export function SupportChat() {
   const { user } = useAuth();
   const { data: supportProfile } = useProfile();
-  const [conversations, setConversations] = useState<{ userId: string; username: string; avatar: string | null; lastMessage: string; unread: number }[]>([]);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [messages, setMessages] = useState<SupportChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [uploadingFile, setUploadingFile] = useState(false);
+  const [showOnlyUnanswered, setShowOnlyUnanswered] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     loadConversations();
+    
+    // Subscription para atualizar conversas em tempo real
+    const channel = supabase
+      .channel('support-chat-conversations')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'support_chat',
+        },
+        () => {
+          loadConversations();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   useEffect(() => {
@@ -63,9 +95,9 @@ export function SupportChat() {
 
   const loadConversations = async () => {
     try {
-      // Buscar mensagens do support_chat
+      // Buscar TODAS as mensagens do support_chat com is_from_support
       const { data: messagesData, error: messagesError } = await (supabase.from('support_chat') as any)
-        .select('user_id, message, created_at')
+        .select('user_id, message, created_at, is_from_support')
         .order('created_at', { ascending: false });
 
       if (messagesError) throw messagesError;
@@ -89,24 +121,37 @@ export function SupportChat() {
       // Criar mapa de perfis
       const profileMap = new Map(profiles?.map(p => [p.user_id, p]) || []);
 
-      // Agrupar por usuário
-      const grouped = new Map<string, { userId: string; username: string; avatar: string | null; lastMessage: string; unread: number }>();
+      // Agrupar por usuário e identificar última mensagem
+      const grouped = new Map<string, Conversation>();
       
       messagesData?.forEach((msg: any) => {
         const userId = msg.user_id;
         if (!grouped.has(userId)) {
           const profile = profileMap.get(userId);
+          // A última mensagem é a primeira do array (ordenado por created_at desc)
+          const needsResponse = !msg.is_from_support; // Se a última mensagem não é do suporte, precisa resposta
           grouped.set(userId, {
             userId,
             username: profile?.username || 'Usuário',
             avatar: profile?.avatar_url || null,
             lastMessage: msg.message,
-            unread: 0
+            lastMessageTime: msg.created_at,
+            unread: 0,
+            needsResponse
           });
         }
       });
 
-      setConversations(Array.from(grouped.values()));
+      // Ordenar: não respondidas primeiro, depois por data da última mensagem
+      const sortedConversations = Array.from(grouped.values()).sort((a, b) => {
+        // Primeiro: não respondidas primeiro
+        if (a.needsResponse && !b.needsResponse) return -1;
+        if (!a.needsResponse && b.needsResponse) return 1;
+        // Depois: por data (mais recente primeiro)
+        return new Date(b.lastMessageTime).getTime() - new Date(a.lastMessageTime).getTime();
+      });
+
+      setConversations(sortedConversations);
     } catch (error) {
       console.error('Erro ao carregar conversas:', error);
     }
@@ -186,6 +231,7 @@ export function SupportChat() {
 
       setNewMessage('');
       loadMessages(selectedUserId);
+      loadConversations(); // Recarregar conversas para atualizar status "não respondida"
     } catch (error: any) {
       toast.error('Erro ao enviar mensagem');
       console.error(error);
@@ -256,7 +302,7 @@ export function SupportChat() {
       console.log('✅ Mensagem com imagem inserida:', data);
       
       loadMessages(selectedUserId);
-      loadConversations();
+      loadConversations(); // Recarregar conversas para atualizar status "não respondida"
       toast.success('Imagem enviada!');
       
       // Limpar input
@@ -340,7 +386,7 @@ export function SupportChat() {
       console.log('✅ Mensagem com arquivo inserida:', data);
       
       loadMessages(selectedUserId);
-      loadConversations();
+      loadConversations(); // Recarregar conversas para atualizar status "não respondida"
       toast.success('Arquivo enviado!');
       
       // Limpar input
@@ -360,7 +406,26 @@ export function SupportChat() {
       {/* Lista de conversas */}
       <Card className="border border-[#2a2a2a] bg-[#1a1a1a]">
         <CardHeader>
-          <CardTitle className="text-white">Conversas</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-white">Conversas</CardTitle>
+            <Button
+              variant={showOnlyUnanswered ? "default" : "outline"}
+              size="sm"
+              onClick={() => setShowOnlyUnanswered(!showOnlyUnanswered)}
+              className="text-xs"
+            >
+              <Filter className="h-3 w-3 mr-1" />
+              {showOnlyUnanswered ? 'Todas' : 'Não Respondidas'}
+            </Button>
+          </div>
+          {conversations.filter(c => c.needsResponse).length > 0 && (
+            <div className="flex items-center gap-2 mt-2">
+              <Badge variant="destructive" className="text-xs">
+                <AlertCircle className="h-3 w-3 mr-1" />
+                {conversations.filter(c => c.needsResponse).length} não respondida(s)
+              </Badge>
+            </div>
+          )}
         </CardHeader>
         <CardContent className="p-0">
           <div className="divide-y divide-[#2a2a2a] max-h-[calc(100vh-300px)] overflow-y-auto">
@@ -369,27 +434,44 @@ export function SupportChat() {
                 <p>Nenhuma conversa ainda</p>
               </div>
             ) : (
-              conversations.map((conv) => (
-                <button
-                  key={conv.userId}
-                  onClick={() => setSelectedUserId(conv.userId)}
-                  className={`
-                    w-full p-4 flex items-center gap-3 hover:bg-[#2a2a2a] transition-colors text-left
-                    ${selectedUserId === conv.userId ? 'bg-[#2a2a2a]' : ''}
-                  `}
-                >
-                  <Avatar className="h-10 w-10">
-                    <AvatarImage src={conv.avatar || ''} />
-                    <AvatarFallback className="bg-primary text-white">
-                      {conv.username.charAt(0).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-white font-semibold truncate">{conv.username}</p>
-                    <p className="text-xs text-gray-400 truncate">{conv.lastMessage}</p>
-                  </div>
-                </button>
-              ))
+              conversations
+                .filter(conv => !showOnlyUnanswered || conv.needsResponse)
+                .map((conv) => (
+                  <button
+                    key={conv.userId}
+                    onClick={() => setSelectedUserId(conv.userId)}
+                    className={`
+                      w-full p-4 flex items-center gap-3 hover:bg-[#2a2a2a] transition-colors text-left relative
+                      ${selectedUserId === conv.userId ? 'bg-[#2a2a2a]' : ''}
+                      ${conv.needsResponse ? 'border-l-4 border-l-red-500' : ''}
+                    `}
+                  >
+                    <Avatar className="h-10 w-10">
+                      <AvatarImage src={conv.avatar || ''} />
+                      <AvatarFallback className="bg-primary text-white">
+                        {conv.username.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="text-white font-semibold truncate">{conv.username}</p>
+                        {conv.needsResponse && (
+                          <Badge variant="destructive" className="text-xs px-1.5 py-0">
+                            <AlertCircle className="h-2.5 w-2.5 mr-1" />
+                            Pendente
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-400 truncate">{conv.lastMessage}</p>
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        {formatDistanceToNow(new Date(conv.lastMessageTime), {
+                          addSuffix: true,
+                          locale: ptBR,
+                        })}
+                      </p>
+                    </div>
+                  </button>
+                ))
             )}
           </div>
         </CardContent>
