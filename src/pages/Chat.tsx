@@ -40,13 +40,14 @@ interface AudioPreview {
 
 export default function Chat() {
   const { user } = useAuth();
-  const { data: messages, isLoading } = useChatMessages();
+  const { data: messagesData, isLoading } = useChatMessages();
+  const messages = messagesData || [];
   
   // Debug: verificar mensagens
   useEffect(() => {
     console.log('🔍 Mensagens no componente:', messages);
-    console.log('🔍 Total de mensagens:', messages?.length);
-    if (messages && messages.length > 0) {
+    console.log('🔍 Total de mensagens:', messages.length);
+    if (messages.length > 0) {
       console.log('🔍 Última mensagem:', messages[messages.length - 1]);
     }
   }, [messages]);
@@ -85,8 +86,8 @@ export default function Chat() {
   };
 
   useEffect(() => {
-    console.log('🔄 useEffect messages mudou, total:', messages?.length);
-    if (messages && messages.length > 0) {
+    console.log('🔄 useEffect messages mudou, total:', messages.length);
+    if (messages.length > 0) {
       console.log('📝 Última mensagem na lista:', messages[messages.length - 1]);
     }
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });

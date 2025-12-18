@@ -113,7 +113,10 @@ export function useChatMessages() {
     },
     refetchInterval: 3000, // Refetch a cada 3 segundos como fallback
     staleTime: 0, // Sempre considerar stale para forçar refetch
-    cacheTime: 0, // Não cachear para sempre buscar dados frescos
+    gcTime: 0, // Não cachear para sempre buscar dados frescos
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
+    retry: 3,
   });
 }
 

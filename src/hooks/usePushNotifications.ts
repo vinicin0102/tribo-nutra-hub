@@ -11,6 +11,11 @@ interface PushSubscriptionData {
   };
 }
 
+// Helper para acessar tabela push_subscriptions (que será criada via migration)
+const getPushSubscriptionsTable = () => {
+  return (supabase as any).from('push_subscriptions');
+};
+
 export function usePushNotifications() {
   const { user } = useAuth();
   const [isSupported, setIsSupported] = useState(false);
@@ -41,8 +46,7 @@ export function usePushNotifications() {
 
       if (subscription) {
         // Verificar se está salvo no banco
-        const { data } = await supabase
-          .from('push_subscriptions')
+        const { data } = await getPushSubscriptionsTable()
           .select('id')
           .eq('user_id', user.id)
           .eq('endpoint', subscription.endpoint)
@@ -99,9 +103,10 @@ export function usePushNotifications() {
         'BEl62iUYgUivxIkv69yViEuiBIa40HI8nVz8J7b8K5Q';
 
       // Criar subscription
+      const applicationServerKey = urlBase64ToUint8Array(vapidPublicKey);
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
+        applicationServerKey: applicationServerKey.buffer as ArrayBuffer,
       });
 
       // Converter subscription para formato salvável
@@ -114,8 +119,7 @@ export function usePushNotifications() {
       };
 
       // Salvar no banco de dados
-      const { error } = await supabase
-        .from('push_subscriptions')
+      const { error } = await getPushSubscriptionsTable()
         .upsert({
           user_id: user.id,
           endpoint: subscriptionData.endpoint,
@@ -167,8 +171,7 @@ export function usePushNotifications() {
 
       if (subscription) {
         // Remover do banco
-        const { error } = await supabase
-          .from('push_subscriptions')
+        const { error } = await getPushSubscriptionsTable()
           .delete()
           .eq('user_id', user.id)
           .eq('endpoint', subscription.endpoint);
@@ -225,4 +228,3 @@ function arrayBufferToBase64(buffer: ArrayBuffer): string {
   }
   return window.btoa(binary);
 }
-
