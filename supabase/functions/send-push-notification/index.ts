@@ -1,6 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { webpush } from "https://deno.land/x/webpush@v1.0.0/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -108,6 +107,10 @@ serve(async (req) => {
       },
     });
 
+    // Usar biblioteca web-push via npm
+    // Importar dinamicamente para evitar problemas de compatibilidade
+    const webpush = await import('https://esm.sh/web-push@3.6.6');
+    
     // Configurar web-push com chaves VAPID
     webpush.setVapidDetails(
       vapidSubject!,
@@ -147,9 +150,10 @@ serve(async (req) => {
       } catch (err: unknown) {
         const error = err as Error;
         console.error(`❌ Erro ao enviar para ${sub.endpoint}:`, error.message);
+        console.error(`❌ Stack:`, error.stack);
         
         // Verificar se o endpoint expirou
-        if (error.message.includes('410') || error.message.includes('Gone') || error.message.includes('expired')) {
+        if (error.message.includes('410') || error.message.includes('Gone') || error.message.includes('expired') || error.message.includes('410')) {
           console.log(`⚠️ Endpoint expirado`);
           expiredEndpoints.push(sub.endpoint);
         }
