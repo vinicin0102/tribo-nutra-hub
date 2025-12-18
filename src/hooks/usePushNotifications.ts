@@ -12,6 +12,11 @@ interface PushSubscriptionData {
   };
 }
 
+// Helper para acessar tabela push_subscriptions (que será criada via migration)
+const getPushSubscriptionsTable = () => {
+  return (supabase as any).from('push_subscriptions');
+};
+
 export function usePushNotifications() {
   const { user } = useAuth();
   const [isSupported, setIsSupported] = useState(false);
@@ -106,8 +111,7 @@ export function usePushNotifications() {
 
       if (subscription) {
         // Verificar se está salvo no banco
-        const { data } = await supabase
-          .from('push_subscriptions')
+        const { data } = await getPushSubscriptionsTable()
           .select('id')
           .eq('user_id', user.id)
           .eq('endpoint', subscription.endpoint)
@@ -245,6 +249,7 @@ export function usePushNotifications() {
       }
 
       // Criar subscription
+<<<<<<< HEAD
       let subscription;
       try {
         console.log('[Push] ========== CONVERSÃO DA CHAVE ==========');
@@ -345,6 +350,13 @@ export function usePushNotifications() {
         setIsLoading(false);
         return false;
       }
+=======
+      const applicationServerKey = urlBase64ToUint8Array(vapidPublicKey);
+      const subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: applicationServerKey.buffer as ArrayBuffer,
+      });
+>>>>>>> 0a382979dc4f2c1e20e52d6bb4875238a4d78c84
 
       // Converter subscription para formato salvável
       const subscriptionData: PushSubscriptionData = {
@@ -356,9 +368,13 @@ export function usePushNotifications() {
       };
 
       // Salvar no banco de dados
+<<<<<<< HEAD
       console.log('[Push] Tentando salvar subscription no banco...');
       const { error, data } = await supabase
         .from('push_subscriptions')
+=======
+      const { error } = await getPushSubscriptionsTable()
+>>>>>>> 0a382979dc4f2c1e20e52d6bb4875238a4d78c84
         .upsert({
           user_id: user.id,
           endpoint: subscriptionData.endpoint,
@@ -426,8 +442,7 @@ export function usePushNotifications() {
 
       if (subscription) {
         // Remover do banco
-        const { error } = await supabase
-          .from('push_subscriptions')
+        const { error } = await getPushSubscriptionsTable()
           .delete()
           .eq('user_id', user.id)
           .eq('endpoint', subscription.endpoint);
@@ -545,4 +560,3 @@ function arrayBufferToBase64(buffer: ArrayBuffer): string {
   }
   return window.btoa(binary);
 }
-

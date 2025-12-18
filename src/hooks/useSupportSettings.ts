@@ -13,15 +13,15 @@ export function useSupportSettings() {
   return useQuery({
     queryKey: ['support-settings'],
     queryFn: async (): Promise<SupportSettings> => {
-      const { data, error } = await supabase
-        .from('support_settings')
+      const { data, error } = await (supabase
+        .from('support_settings') as any)
         .select('key, value')
         .in('key', ['chat_start_hour', 'chat_end_hour', 'auto_reply_enabled', 'auto_reply_message']);
 
       if (error) throw error;
 
       const settingsMap: Record<string, string> = {};
-      data?.forEach((setting: any) => {
+      (data as any[])?.forEach((setting: any) => {
         settingsMap[setting.key] = setting.value;
       });
 
