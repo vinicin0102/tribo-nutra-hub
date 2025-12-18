@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { webpush } from "https://deno.land/x/webpush@v1.0.0/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -107,40 +108,52 @@ serve(async (req) => {
       },
     });
 
-    // Enviar para cada subscription usando web-push protocol
+    // Configurar web-push com chaves VAPID
+    webpush.setVapidDetails(
+      vapidSubject!,
+      vapidPublicKey!,
+      vapidPrivateKey!
+    );
+
+    // Enviar para cada subscription usando web-push
     for (const sub of subscriptions) {
       try {
         console.log(`📨 Tentando enviar para: ${sub.endpoint.substring(0, 60)}...`);
         
-        // Fazer POST para o endpoint do push service
-        // Nota: Esta é uma implementação simplificada que pode não funcionar
-        // com todos os push services (FCM, Mozilla, etc.)
-        // Para produção, recomenda-se usar uma biblioteca como web-push
+        // Converter chaves de base64 para Uint8Array
+        const p256dh = Uint8Array.from(atob(sub.p256dh), c => c.charCodeAt(0));
+        const auth = Uint8Array.from(atob(sub.auth), c => c.charCodeAt(0));
         
-        const response = await fetch(sub.endpoint, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'TTL': '86400',
+        const subscription = {
+          endpoint: sub.endpoint,
+          keys: {
+            p256dh: p256dh,
+            auth: auth,
           },
-          body: payload,
-        });
+        };
 
-        if (response.ok || response.status === 201) {
-          console.log(`✅ Enviado com sucesso para endpoint`);
-          successCount++;
-        } else if (response.status === 404 || response.status === 410) {
-          // Endpoint não existe mais
-          console.log(`⚠️ Endpoint expirado: ${response.status}`);
-          expiredEndpoints.push(sub.endpoint);
-          failedCount++;
-        } else {
-          console.error(`❌ Falha ao enviar: ${response.status}`);
-          failedCount++;
-        }
+        // Enviar notificação usando web-push
+        await webpush.sendNotification(
+          subscription,
+          payload,
+          {
+            TTL: 86400, // 24 horas
+            urgency: 'normal',
+          }
+        );
+
+        console.log(`✅ Enviado com sucesso para endpoint`);
+        successCount++;
       } catch (err: unknown) {
         const error = err as Error;
         console.error(`❌ Erro ao enviar para ${sub.endpoint}:`, error.message);
+        
+        // Verificar se o endpoint expirou
+        if (error.message.includes('410') || error.message.includes('Gone') || error.message.includes('expired')) {
+          console.log(`⚠️ Endpoint expirado`);
+          expiredEndpoints.push(sub.endpoint);
+        }
+        
         failedCount++;
       }
     }
