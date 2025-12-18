@@ -530,6 +530,78 @@ export type Database = {
         }
         Relationships: []
       }
+      push_notifications_log: {
+        Row: {
+          body: string
+          created_at: string
+          failed_count: number | null
+          id: string
+          recipients_count: number | null
+          sent_by: string | null
+          sent_to_all: boolean | null
+          success_count: number | null
+          title: string
+          url: string | null
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          failed_count?: number | null
+          id?: string
+          recipients_count?: number | null
+          sent_by?: string | null
+          sent_to_all?: boolean | null
+          success_count?: number | null
+          title: string
+          url?: string | null
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          failed_count?: number | null
+          id?: string
+          recipients_count?: number | null
+          sent_by?: string | null
+          sent_to_all?: boolean | null
+          success_count?: number | null
+          title?: string
+          url?: string | null
+        }
+        Relationships: []
+      }
+      push_subscriptions: {
+        Row: {
+          auth: string
+          created_at: string
+          endpoint: string
+          id: string
+          p256dh: string
+          updated_at: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          auth: string
+          created_at?: string
+          endpoint: string
+          id?: string
+          p256dh: string
+          updated_at?: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          auth?: string
+          created_at?: string
+          endpoint?: string
+          id?: string
+          p256dh?: string
+          updated_at?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       redemptions: {
         Row: {
           created_at: string
