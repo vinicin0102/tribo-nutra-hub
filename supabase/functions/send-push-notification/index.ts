@@ -26,6 +26,19 @@ serve(async (req) => {
       privateKey: !!vapidPrivateKey,
       subject: !!vapidSubject,
     });
+    
+    // Logs detalhados das chaves (sem expor valores completos)
+    if (vapidPublicKey) {
+      console.log('🔑 VAPID Public Key (primeiros 20 chars):', vapidPublicKey.substring(0, 20) + '...');
+      console.log('🔑 VAPID Public Key (tamanho):', vapidPublicKey.length);
+    }
+    if (vapidPrivateKey) {
+      console.log('🔑 VAPID Private Key (primeiros 10 chars):', vapidPrivateKey.substring(0, 10) + '...');
+      console.log('🔑 VAPID Private Key (tamanho):', vapidPrivateKey.length);
+    }
+    if (vapidSubject) {
+      console.log('🔑 VAPID Subject:', vapidSubject);
+    }
 
     // Verificar se as chaves VAPID estão configuradas
     if (!vapidPublicKey || !vapidPrivateKey || !vapidSubject) {
