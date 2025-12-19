@@ -96,10 +96,10 @@ export function PushNotificationManagement() {
     },
   });
 
-  // Mutation para enviar notificação
+  // Mutation para enviar notificação via OneSignal
   const sendNotification = useMutation({
     mutationFn: async (payload: { title: string; body: string; url?: string }) => {
-      const { data, error } = await supabase.functions.invoke('send-push-notification', {
+      const { data, error } = await supabase.functions.invoke('send-push-notification-onesignal', {
         body: {
           title: payload.title,
           body: payload.body,
