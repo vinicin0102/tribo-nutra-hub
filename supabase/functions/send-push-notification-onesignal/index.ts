@@ -18,7 +18,7 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const onesignalAppId = Deno.env.get('ONESIGNAL_APP_ID') || 'e1e6712a-5457-4991-a922-f22b1f151c25';
-    const onesignalApiKey = Deno.env.get('ONESIGNAL_API_KEY');
+    const onesignalApiKey = Deno.env.get('ONESIGNAL_API_KEY') || 'os_v2_app_4hthcksuk5ezdkjc6ivr6fi4eu5erd5oblqegd4czyxbp3dgs6kjdctjki6hdifsd7ajfs26c7u37cw3kd6pkyxcevbmxzlttwdym3q';
 
     console.log('🔑 [OneSignal] Configuração:', {
       appId: onesignalAppId,

@@ -35,43 +35,86 @@ export function useOneSignal() {
   useEffect(() => {
     // Verificar se OneSignal está disponível
     const checkOneSignal = async () => {
+      console.log('[OneSignal] ========== INICIANDO CHECK ==========');
+      console.log('[OneSignal] Window disponível?', typeof window !== 'undefined');
+      console.log('[OneSignal] OneSignal disponível?', !!window.OneSignal);
+      console.log('[OneSignal] App ID:', ONESIGNAL_APP_ID);
+      
       // Verificar se o script do OneSignal foi carregado
-      if (typeof window === 'undefined' || !window.OneSignal) {
+      if (typeof window === 'undefined') {
+        console.error('[OneSignal] Window não disponível (SSR?)');
+        setIsSupported(false);
+        return;
+      }
+
+      if (!window.OneSignal) {
         console.log('[OneSignal] Script não carregado ainda, carregando...');
+        
+        // Verificar se já existe um script carregando
+        const existingScript = document.querySelector('script[src*="OneSignal"]');
+        if (existingScript) {
+          console.log('[OneSignal] Script já existe, aguardando carregamento...');
+          existingScript.addEventListener('load', () => {
+            console.log('[OneSignal] Script existente carregado');
+            initializeOneSignal();
+          });
+          return;
+        }
         
         // Carregar o script do OneSignal
         const script = document.createElement('script');
         script.src = 'https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js';
         script.async = true;
         script.onload = () => {
-          console.log('[OneSignal] Script carregado');
-          initializeOneSignal();
+          console.log('[OneSignal] ✅ Script carregado com sucesso');
+          // Aguardar um pouco para garantir que OneSignal está disponível
+          setTimeout(() => {
+            if (window.OneSignal) {
+              initializeOneSignal();
+            } else {
+              console.error('[OneSignal] ❌ OneSignal ainda não disponível após carregar script');
+              setIsSupported(false);
+            }
+          }, 100);
         };
-        script.onerror = () => {
-          console.error('[OneSignal] Erro ao carregar script');
+        script.onerror = (error) => {
+          console.error('[OneSignal] ❌ Erro ao carregar script:', error);
           setIsSupported(false);
+          toast.error('Erro ao carregar OneSignal. Verifique sua conexão.');
         };
         document.head.appendChild(script);
+        console.log('[OneSignal] Script adicionado ao head');
       } else {
+        console.log('[OneSignal] OneSignal já disponível, inicializando...');
         initializeOneSignal();
       }
     };
 
     const initializeOneSignal = async () => {
       try {
+        console.log('[OneSignal] ========== INICIALIZANDO ==========');
+        
         if (!window.OneSignal) {
-          console.error('[OneSignal] OneSignal não disponível');
+          console.error('[OneSignal] ❌ OneSignal não disponível após tentativa de carregar');
           setIsSupported(false);
           return;
         }
 
         console.log('[OneSignal] Inicializando com App ID:', ONESIGNAL_APP_ID);
+        console.log('[OneSignal] Tipo do OneSignal:', typeof window.OneSignal);
+        console.log('[OneSignal] Métodos disponíveis:', Object.keys(window.OneSignal));
         
         // Inicializar OneSignal
-        await window.OneSignal.init({
-          appId: ONESIGNAL_APP_ID,
-          allowLocalhostAsSecureOrigin: true, // Para desenvolvimento local
-        });
+        try {
+          await window.OneSignal.init({
+            appId: ONESIGNAL_APP_ID,
+            allowLocalhostAsSecureOrigin: true, // Para desenvolvimento local
+          });
+          console.log('[OneSignal] ✅ Init chamado com sucesso');
+        } catch (initError: any) {
+          console.error('[OneSignal] ❌ Erro no init:', initError);
+          throw initError;
+        }
 
         console.log('[OneSignal] ✅ Inicializado com sucesso');
         setIsInitialized(true);
