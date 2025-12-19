@@ -24,7 +24,7 @@ export default function SupportDashboard() {
   const isAdmin = useIsAdmin();
   const [activeTab, setActiveTab] = useState('chat');
 
-  // Apenas admin@gmail.com pode acessar o painel admin (aba Usuários)
+  // Apenas administradores podem acessar o painel admin (aba Usuários)
   // Suporte normal pode acessar Chat e Resgates
   const canAccessAdminPanel = isAdmin;
 

@@ -5,14 +5,21 @@ import { useProfile } from './useProfile';
 import { deleteImage } from '@/lib/upload';
 import { deleteAudio } from '@/lib/audioUpload';
 
-const ADMIN_EMAIL = 'admin@gmail.com';
+// Lista de emails admin
+const ADMIN_EMAILS = ['admin@gmail.com', 'admin02@gmail.com'];
+
+// Função helper para verificar se é admin por email
+function isAdminEmail(email: string | undefined | null): boolean {
+  if (!email) return false;
+  return ADMIN_EMAILS.includes(email.toLowerCase());
+}
 
 export function useIsSupport() {
   const { data: profile } = useProfile();
   const { user } = useAuth();
   
-  // Se for admin@gmail.com, sempre retorna true
-  if (user?.email === ADMIN_EMAIL) {
+  // Se for um dos emails admin, sempre retorna true
+  if (user?.email && isAdminEmail(user.email)) {
     return true;
   }
   
@@ -30,13 +37,13 @@ export function useSupportUsers() {
   const { user } = useAuth();
   const profileData = profile as { role?: string } | undefined;
   const isSupport = profileData?.role === 'support' || profileData?.role === 'admin';
-  const isAdmin = user?.email === ADMIN_EMAIL;
+  const isAdmin = user?.email && isAdminEmail(user.email);
   const canAccess = isSupport || isAdmin;
 
   return useQuery({
     queryKey: ['support-users', user?.email],
     queryFn: async () => {
-      if (!canAccess && user?.email !== ADMIN_EMAIL) {
+      if (!canAccess && !isAdminEmail(user?.email)) {
         console.log('Acesso negado - não é suporte nem admin');
         return [];
       }
@@ -111,7 +118,7 @@ export function useSupportUsers() {
       
       return data || [];
     },
-    enabled: !!user && (canAccess || user?.email === ADMIN_EMAIL),
+    enabled: !!user && (canAccess || isAdminEmail(user?.email)),
     retry: 1,
   });
 }
@@ -233,7 +240,7 @@ export function useDeleteSupportMessage() {
   const { data: profile } = useProfile();
   const { user } = useAuth();
   const profileData = profile as { role?: string } | undefined;
-  const isSupport = profileData?.role === 'support' || profileData?.role === 'admin' || user?.email === ADMIN_EMAIL;
+  const isSupport = profileData?.role === 'support' || profileData?.role === 'admin' || isAdminEmail(user?.email);
 
   return useMutation({
     mutationFn: async (messageId: string) => {
@@ -278,11 +285,11 @@ export function useDeleteSupportMessage() {
 export function useBanUserTemporary() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
-  const isAdmin = user?.email === ADMIN_EMAIL;
+  const isAdmin = user?.email && isAdminEmail(user.email);
 
   return useMutation({
     mutationFn: async ({ userId, days = 3 }: { userId: string; days?: number }) => {
-      if (!isAdmin) throw new Error('Sem permissão. Apenas admin@gmail.com pode executar esta ação.');
+      if (!isAdmin) throw new Error('Sem permissão. Apenas administradores podem executar esta ação.');
 
       console.log('Banindo usuário:', { userId, days, isAdmin, userEmail: user?.email });
 
@@ -321,11 +328,11 @@ export function useBanUserTemporary() {
 export function useMuteUser() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
-  const isAdmin = user?.email === ADMIN_EMAIL;
+  const isAdmin = user?.email && isAdminEmail(user.email);
 
   return useMutation({
     mutationFn: async ({ userId, days }: { userId: string; days?: number }) => {
-      if (!isAdmin) throw new Error('Sem permissão. Apenas admin@gmail.com pode executar esta ação.');
+      if (!isAdmin) throw new Error('Sem permissão. Apenas administradores podem executar esta ação.');
 
       console.log('Mutando usuário:', { userId, days, isAdmin, userEmail: user?.email });
 
@@ -402,11 +409,11 @@ export function useUnmuteUser() {
 export function useDeleteUser() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
-  const isAdmin = user?.email === ADMIN_EMAIL;
+  const isAdmin = user?.email && isAdminEmail(user.email);
 
   return useMutation({
     mutationFn: async (userId: string) => {
-      if (!isAdmin) throw new Error('Sem permissão. Apenas admin@gmail.com pode executar esta ação.');
+      if (!isAdmin) throw new Error('Sem permissão. Apenas administradores podem executar esta ação.');
 
       // Delete user profile (cascade will handle related records)
       const { error } = await supabase
@@ -428,7 +435,7 @@ export function useChangeUserPlan() {
   const { user } = useAuth();
   const { data: profile } = useProfile();
   const profileData = profile as { role?: string } | undefined;
-  const isAdmin = user?.email === ADMIN_EMAIL || profileData?.role === 'admin';
+  const isAdmin = isAdminEmail(user?.email) || profileData?.role === 'admin';
 
   return useMutation({
     mutationFn: async ({ 
@@ -616,7 +623,7 @@ export function useUpdateUserPoints() {
   const { user } = useAuth();
   const { data: profile } = useProfile();
   const profileData = profile as { role?: string } | undefined;
-  const isAdmin = user?.email === ADMIN_EMAIL || profileData?.role === 'admin';
+  const isAdmin = isAdminEmail(user?.email) || profileData?.role === 'admin';
 
   return useMutation({
     mutationFn: async ({ 
@@ -629,7 +636,7 @@ export function useUpdateUserPoints() {
     }) => {
       if (!isAdmin) {
         console.error('Acesso negado - não é admin:', { userEmail: user?.email, role: profileData?.role });
-        throw new Error('Sem permissão. Apenas admin@gmail.com pode executar esta ação.');
+        throw new Error('Sem permissão. Apenas administradores podem executar esta ação.');
       }
 
       console.log('Atualizando pontos:', { userId, points, isAdmin, userEmail: user?.email });

@@ -429,7 +429,7 @@ export function UserManagement() {
     return (
       <Card className="border border-[#2a2a2a] bg-[#1a1a1a]">
         <CardContent className="pt-6">
-          <p className="text-white text-center">Acesso negado. Apenas admin@gmail.com pode acessar esta área.</p>
+          <p className="text-white text-center">Acesso negado. Apenas administradores podem acessar esta área.</p>
         </CardContent>
       </Card>
     );
