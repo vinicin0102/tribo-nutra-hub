@@ -10,6 +10,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 import Auth from "./pages/Auth";
+import ResetPassword from "./pages/ResetPassword";
 import Feed from "./pages/Feed";
 import Chat from "./pages/Chat";
 import Ranking from "./pages/Ranking";
@@ -184,6 +185,7 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/auth" element={<Auth />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/support/login" element={<SupportLogin />} />
       <Route path="/support/dashboard" element={<SupportRoute><SupportDashboard /></SupportRoute>} />
       <Route path="/" element={<ProtectedRoute><Feed /></ProtectedRoute>} />

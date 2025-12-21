@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Eye, EyeOff, Mail, Lock, User, Calendar, CreditCard, Phone } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, User, Calendar, CreditCard, Phone, ArrowLeft } from 'lucide-react';
 
 export default function Auth() {
   const navigate = useNavigate();
@@ -15,6 +15,9 @@ export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetLoading, setResetLoading] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -82,6 +85,44 @@ export default function Auth() {
     if (digit !== parseInt(numbers.charAt(10))) return false;
     
     return true;
+  };
+
+  // Função para recuperar senha
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!resetEmail.trim()) {
+      toast.error('Por favor, insira seu email');
+      return;
+    }
+
+    // Validar formato de email básico
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(resetEmail)) {
+      toast.error('Por favor, insira um email válido');
+      return;
+    }
+
+    setResetLoading(true);
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+
+      if (error) {
+        toast.error('Erro ao enviar email de recuperação: ' + error.message);
+      } else {
+        toast.success('Email de recuperação enviado! Verifique sua caixa de entrada.');
+        setShowForgotPassword(false);
+        setResetEmail('');
+      }
+    } catch (err: any) {
+      toast.error('Erro ao enviar email de recuperação. Tente novamente.');
+      console.error('Erro ao recuperar senha:', err);
+    } finally {
+      setResetLoading(false);
+    }
   };
 
   // Redirect if already logged in
@@ -278,16 +319,65 @@ export default function Auth() {
         <Card className="border border-[#2a2a2a] bg-[#1a1a1a] shadow-lg">
           <CardHeader className="space-y-1 pb-4">
             <CardTitle className="text-2xl font-display text-center text-white">
-              {isLogin ? 'Entrar' : 'Criar conta'}
+              {showForgotPassword 
+                ? 'Recuperar senha' 
+                : isLogin 
+                ? 'Entrar' 
+                : 'Criar conta'}
             </CardTitle>
             <CardDescription className="text-center text-gray-400">
-              {isLogin 
+              {showForgotPassword
+                ? 'Digite seu email para receber um link de recuperação'
+                : isLogin 
                 ? 'Entre para acessar a comunidade'
                 : 'Junte-se à tribo e alcance seus objetivos'
               }
             </CardDescription>
           </CardHeader>
           <CardContent>
+            {showForgotPassword ? (
+              // Formulário de recuperação de senha
+              <form onSubmit={handleForgotPassword} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="reset-email" className="text-white">Email</Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Input
+                      id="reset-email"
+                      type="email"
+                      placeholder="seu@email.com"
+                      className="pl-10 bg-[#2a2a2a] border-[#3a3a3a] text-white placeholder:text-gray-500"
+                      value={resetEmail}
+                      onChange={(e) => setResetEmail(e.target.value)}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <Button 
+                  type="submit" 
+                  className="w-full bg-primary hover:bg-primary/90 text-white" 
+                  disabled={resetLoading}
+                >
+                  {resetLoading ? 'Enviando...' : 'Enviar link de recuperação'}
+                </Button>
+
+                <div className="mt-4 text-center">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowForgotPassword(false);
+                      setResetEmail('');
+                    }}
+                    className="text-sm text-gray-400 hover:text-primary transition-colors flex items-center justify-center gap-2 mx-auto"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                    Voltar para login
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <>
             <form onSubmit={handleSubmit} className="space-y-4">
               {!isLogin && (
                 <>
@@ -423,6 +513,18 @@ export default function Auth() {
               <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-white" disabled={loading}>
                 {loading ? 'Carregando...' : isLogin ? 'Entrar' : 'Criar conta'}
               </Button>
+
+              {isLogin && (
+                <div className="text-center">
+                  <button
+                    type="button"
+                    onClick={() => setShowForgotPassword(true)}
+                    className="text-sm text-gray-400 hover:text-primary transition-colors"
+                  >
+                    Esqueci minha senha
+                  </button>
+                </div>
+              )}
             </form>
 
             <div className="mt-6 text-center">
@@ -437,6 +539,8 @@ export default function Auth() {
                 }
               </button>
             </div>
+              </>
+            )}
           </CardContent>
         </Card>
       </div>
