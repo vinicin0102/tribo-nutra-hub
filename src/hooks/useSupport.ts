@@ -132,7 +132,7 @@ export function useUnbanUser() {
   const { user } = useAuth();
   const { data: profile } = useProfile();
   const profileData = profile as { role?: string } | undefined;
-  const isAdmin = user?.email === ADMIN_EMAIL || profileData?.role === 'admin' || profileData?.role === 'support';
+  const isAdmin = isAdminEmail(user?.email) || profileData?.role === 'admin' || profileData?.role === 'support';
 
   return useMutation({
     mutationFn: async (userId: string) => {
@@ -373,7 +373,7 @@ export function useUnmuteUser() {
   const { user } = useAuth();
   const { data: profile } = useProfile();
   const profileData = profile as { role?: string } | undefined;
-  const isAdmin = user?.email === ADMIN_EMAIL || profileData?.role === 'admin' || profileData?.role === 'support';
+  const isAdmin = isAdminEmail(user?.email) || profileData?.role === 'admin' || profileData?.role === 'support';
 
   return useMutation({
     mutationFn: async (userId: string) => {
