@@ -13,6 +13,10 @@ declare global {
       init: (options: {
         appId: string;
         allowLocalhostAsSecureOrigin?: boolean;
+        autoResubscribe?: boolean;
+        notifyButton?: {
+          enable?: boolean;
+        };
         promptOptions?: {
           slidedown?: {
             prompts?: Array<{
@@ -134,12 +138,16 @@ export function useOneSignal() {
           await window.OneSignal.init({
             appId: ONESIGNAL_APP_ID,
             allowLocalhostAsSecureOrigin: true, // Para desenvolvimento local
+            autoResubscribe: true,
+            notifyButton: {
+              enable: false, // Desabilitar botão de notificação flutuante
+            },
             promptOptions: {
               slidedown: {
                 prompts: [
                   {
                     type: "push",
-                    autoPrompt: true,
+                    autoPrompt: false, // Desabilitar prompt automático - usamos nosso prompt customizado
                     text: {
                       actionMessage: "Receba notificações sobre novos conteúdos, promoções exclusivas e atualizações. Você pode desativar a qualquer momento.",
                       acceptButton: "Ativar",
