@@ -32,6 +32,7 @@ export interface Module {
   order_index: number;
   is_published: boolean;
   is_locked: boolean;
+  unlock_after_days?: number; // Dias após assinatura Diamond para liberar (0 = imediato)
   cover_url: string | null;
   created_at: string;
   updated_at: string;
@@ -72,7 +73,7 @@ export function useLessons(moduleId?: string) {
 
       const { data, error } = await query;
       if (error) throw error;
-      
+
       return data.map(lesson => ({
         ...lesson,
         external_links: (lesson.external_links as unknown as ExternalLink[]) || []

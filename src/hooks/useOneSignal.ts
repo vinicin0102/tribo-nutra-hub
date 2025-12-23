@@ -94,6 +94,10 @@ export function useOneSignal() {
       try {
         console.log('[OneSignal] ========== INICIALIZANDO ==========');
         
+        // Verificar se está em localhost - OneSignal pode não funcionar em dev
+        const isLocalhost = window.location.hostname === 'localhost' || 
+                           window.location.hostname === '127.0.0.1';
+        
         if (!window.OneSignal) {
           console.error('[OneSignal] ❌ OneSignal não disponível após tentativa de carregar');
           setIsSupported(false);
@@ -101,6 +105,7 @@ export function useOneSignal() {
         }
 
         console.log('[OneSignal] Inicializando com App ID:', ONESIGNAL_APP_ID);
+        console.log('[OneSignal] Ambiente:', isLocalhost ? 'LOCALHOST (dev)' : 'PRODUÇÃO');
         console.log('[OneSignal] Tipo do OneSignal:', typeof window.OneSignal);
         console.log('[OneSignal] Métodos disponíveis:', Object.keys(window.OneSignal));
         
@@ -112,6 +117,19 @@ export function useOneSignal() {
           });
           console.log('[OneSignal] ✅ Init chamado com sucesso');
         } catch (initError: any) {
+          // Se o erro for de domínio não permitido, apenas desabilitar silenciosamente
+          const errorMessage = initError?.message || String(initError) || '';
+          if (errorMessage.includes('Can only be used on') || 
+              errorMessage.includes('not allowed') ||
+              errorMessage.includes('domain')) {
+            console.warn('[OneSignal] ⚠️ OneSignal não está configurado para este domínio. Notificações push desabilitadas.');
+            if (isLocalhost) {
+              console.log('[OneSignal] 💡 Dica: No localhost, as notificações funcionarão apenas em produção.');
+            }
+            setIsSupported(false);
+            setIsInitialized(true); // Marcar como inicializado para não ficar "carregando"
+            return;
+          }
           console.error('[OneSignal] ❌ Erro no init:', initError);
           throw initError;
         }
@@ -166,7 +184,12 @@ export function useOneSignal() {
       } catch (error: any) {
         console.error('[OneSignal] Erro ao inicializar:', error);
         setIsSupported(false);
-        toast.error('Erro ao inicializar OneSignal: ' + (error.message || 'Erro desconhecido'));
+        setIsInitialized(true); // Marcar como inicializado mesmo com erro
+        // Não mostrar toast de erro se for problema de domínio
+        const errorMessage = error?.message || '';
+        if (!errorMessage.includes('Can only be used on')) {
+          console.warn('[OneSignal] Notificações push não disponíveis neste ambiente');
+        }
       }
     };
 

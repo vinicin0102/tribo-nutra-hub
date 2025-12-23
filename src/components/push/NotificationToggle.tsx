@@ -23,6 +23,9 @@ export function NotificationToggle() {
   }
 
   if (!isSupported) {
+    const isLocalhost = typeof window !== 'undefined' &&
+      (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+
     return (
       <Card className="border border-[#2a2a2a] bg-[#1a1a1a]">
         <CardHeader>
@@ -31,7 +34,9 @@ export function NotificationToggle() {
             Notificações Push
           </CardTitle>
           <CardDescription>
-            OneSignal não está disponível. Verifique sua conexão e tente novamente.
+            {isLocalhost
+              ? 'Notificações push disponíveis apenas em produção.'
+              : 'Notificações push não disponíveis neste navegador.'}
           </CardDescription>
         </CardHeader>
       </Card>
@@ -65,9 +70,9 @@ export function NotificationToggle() {
           onClick={async (e) => {
             e.preventDefault();
             e.stopPropagation();
-            
+
             if (isLoading) return;
-            
+
             if (isSubscribed) {
               await unsubscribe();
             } else {
@@ -82,8 +87,8 @@ export function NotificationToggle() {
           {isLoading
             ? 'Carregando...'
             : isSubscribed
-            ? 'Desativar Notificações'
-            : 'Ativar Notificações'}
+              ? 'Desativar Notificações'
+              : 'Ativar Notificações'}
         </Button>
       </CardContent>
     </Card>

@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import { 
-  useModulesWithLessons, 
-  useCreateModule, 
-  useUpdateModule, 
+import {
+  useModulesWithLessons,
+  useCreateModule,
+  useUpdateModule,
   useDeleteModule,
   useCreateLesson,
   useUpdateLesson,
@@ -52,12 +52,12 @@ import {
 import { SortableModuleItem } from './SortableModuleItem';
 import { SortableLessonItem } from './SortableLessonItem';
 
-function CourseForm({ 
-  course, 
-  onSubmit, 
-  onCancel 
-}: { 
-  course?: Course; 
+function CourseForm({
+  course,
+  onSubmit,
+  onCancel
+}: {
+  course?: Course;
   onSubmit: (data: Partial<Course>) => void;
   onCancel: () => void;
 }) {
@@ -69,10 +69,10 @@ function CourseForm({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit({ 
-      title, 
-      description, 
-      order_index: orderIndex, 
+    onSubmit({
+      title,
+      description,
+      order_index: orderIndex,
       is_published: isPublished,
       cover_url: coverUrl || null
     });
@@ -143,13 +143,13 @@ function CourseForm({
   );
 }
 
-function ModuleForm({ 
-  module, 
+function ModuleForm({
+  module,
   courses,
-  onSubmit, 
-  onCancel 
-}: { 
-  module?: Module; 
+  onSubmit,
+  onCancel
+}: {
+  module?: Module;
   courses: Course[];
   onSubmit: (data: Partial<Module>) => void;
   onCancel: () => void;
@@ -160,6 +160,7 @@ function ModuleForm({
   const [orderIndex, setOrderIndex] = useState(module?.order_index || 0);
   const [isPublished, setIsPublished] = useState(module?.is_published || false);
   const [isLocked, setIsLocked] = useState(module?.is_locked || false);
+  const [unlockAfterDays, setUnlockAfterDays] = useState(module?.unlock_after_days || 0);
   const [coverUrl, setCoverUrl] = useState(module?.cover_url || '');
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -168,13 +169,14 @@ function ModuleForm({
       alert('Por favor, selecione um curso');
       return;
     }
-    onSubmit({ 
-      title, 
-      description, 
+    onSubmit({
+      title,
+      description,
       course_id: courseId,
-      order_index: orderIndex, 
+      order_index: orderIndex,
       is_published: isPublished,
       is_locked: isLocked,
+      unlock_after_days: isLocked ? unlockAfterDays : 0,
       cover_url: coverUrl || null
     });
   };
@@ -258,9 +260,30 @@ function ModuleForm({
           />
         </div>
         {isLocked && (
-          <p className="text-xs text-muted-foreground bg-destructive/10 p-2 rounded">
-            Módulos bloqueados aparecem em preto e branco com um cadeado para os alunos.
-          </p>
+          <>
+            <p className="text-xs text-muted-foreground bg-destructive/10 p-2 rounded">
+              Módulos bloqueados aparecem em preto e branco com um cadeado para os alunos.
+            </p>
+            <div>
+              <Label htmlFor="unlockAfterDays" className="flex items-center gap-2">
+                Liberar após quantos dias da assinatura Diamond?
+              </Label>
+              <Input
+                id="unlockAfterDays"
+                type="number"
+                value={unlockAfterDays}
+                onChange={e => setUnlockAfterDays(parseInt(e.target.value) || 0)}
+                min={0}
+                placeholder="0 = imediato"
+                className="mt-1"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                {unlockAfterDays === 0
+                  ? 'Liberado imediatamente após assinatura'
+                  : `Liberado ${unlockAfterDays} dia(s) após assinatura Diamond`}
+              </p>
+            </div>
+          </>
         )}
       </div>
       <div className="flex gap-2 pt-2">
@@ -275,14 +298,15 @@ function ModuleForm({
   );
 }
 
-function LessonForm({ 
-  lesson, 
+
+function LessonForm({
+  lesson,
   modules,
   defaultModuleId,
-  onSubmit, 
-  onCancel 
-}: { 
-  lesson?: Lesson; 
+  onSubmit,
+  onCancel
+}: {
+  lesson?: Lesson;
   modules: Module[];
   defaultModuleId?: string;
   onSubmit: (data: Partial<Lesson>) => void;
@@ -314,12 +338,12 @@ function LessonForm({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit({ 
+    onSubmit({
       module_id: moduleId,
-      title, 
-      description, 
+      title,
+      description,
       vturb_code: vturbCode,
-      order_index: orderIndex, 
+      order_index: orderIndex,
       duration_minutes: durationMinutes,
       is_published: isPublished,
       cover_url: coverUrl || null,
@@ -505,7 +529,7 @@ export function ContentManagement() {
   const [lessonsByModule, setLessonsByModule] = useState<Record<string, Lesson[]>>({});
 
   // Filtrar módulos por curso selecionado
-  const filteredModules = selectedCourseId 
+  const filteredModules = selectedCourseId
     ? modulesList.filter(m => (m as any).course_id === selectedCourseId)
     : modulesList;
 
@@ -696,12 +720,12 @@ export function ContentManagement() {
   // Handler para drag end (módulos e aulas)
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
-    
+
     if (!over || active.id === over.id) return;
 
     // Verificar se é um módulo ou uma aula
     const isModule = modulesList.some(m => m.id === active.id);
-    
+
     if (isModule) {
       // Reordenar módulos
       if (!modulesList) return;
@@ -773,8 +797,8 @@ export function ContentManagement() {
         <div className="flex gap-2 flex-wrap">
           <Dialog open={moduleDialogOpen} onOpenChange={setModuleDialogOpen}>
             <DialogTrigger asChild>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 size="sm"
                 onClick={() => setEditingModule(null)}
               >
@@ -800,7 +824,7 @@ export function ContentManagement() {
 
           <Dialog open={lessonDialogOpen} onOpenChange={setLessonDialogOpen}>
             <DialogTrigger asChild>
-              <Button 
+              <Button
                 size="sm"
                 onClick={() => {
                   setEditingLesson(null);
@@ -832,8 +856,8 @@ export function ContentManagement() {
 
           <Dialog open={bannerDialogOpen} onOpenChange={setBannerDialogOpen}>
             <DialogTrigger asChild>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 size="sm"
               >
                 <Image className="w-4 h-4 mr-2" />
@@ -892,26 +916,26 @@ export function ContentManagement() {
                 </div>
                 <div className="flex gap-2 pt-2">
                   <Button
-                    type="button" 
-                    variant="outline" 
-                    onClick={() => setBannerDialogOpen(false)} 
+                    type="button"
+                    variant="outline"
+                    onClick={() => setBannerDialogOpen(false)}
                     className="flex-1"
                   >
                     Cancelar
                   </Button>
                   {bannerImageUrl && (
                     <Button
-                      type="button" 
-                      variant="destructive" 
-                      onClick={handleDeleteBanner} 
+                      type="button"
+                      variant="destructive"
+                      onClick={handleDeleteBanner}
                       className="flex-1"
                     >
                       Remover
                     </Button>
                   )}
                   <Button
-                    type="button" 
-                    onClick={handleSaveBanner} 
+                    type="button"
+                    onClick={handleSaveBanner}
                     className="flex-1"
                   >
                     Salvar Banner

@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { ChevronLeft, ChevronRight, Lock, Image as ImageIcon } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Lock, Clock, Image as ImageIcon } from 'lucide-react';
 import { Module } from '@/hooks/useCourses';
 import { useLessonProgress } from '@/hooks/useLessonProgress';
 import { useIsAdmin } from '@/hooks/useAdmin';
@@ -11,53 +11,81 @@ interface ModuleCardProps {
   module: Module;
   progress: number;
   isLocked?: boolean;
+  daysRemaining?: number; // -1 = sem plano, 0 = desbloqueado, >0 = dias restantes
   onClick: () => void;
 }
 
-function ModuleCard({ module, progress, isLocked = false, onClick }: ModuleCardProps) {
+function ModuleCard({ module, progress, isLocked = false, daysRemaining = 0, onClick }: ModuleCardProps) {
+  // Determina a mensagem a ser exibida
+  const getLockMessage = () => {
+    if (daysRemaining === -1) {
+      return 'Plano Diamond';
+    }
+    if (daysRemaining > 0) {
+      return `${daysRemaining} dia${daysRemaining > 1 ? 's' : ''}`;
+    }
+    return null;
+  };
+
+  const lockMessage = getLockMessage();
+
   return (
     <button
       onClick={onClick}
       className={cn(
         "flex-shrink-0 w-[160px] md:w-[200px] rounded-2xl overflow-hidden transition-all duration-300 relative",
         "bg-card text-left cursor-pointer",
-        isLocked 
-          ? "grayscale border-2 border-border hover:border-cyan-500/50 hover:grayscale-0" 
+        isLocked
+          ? "grayscale border-2 border-border hover:border-cyan-500/50 hover:grayscale-0"
           : "border-2 border-primary/60 shadow-[0_0_20px_rgba(251,146,60,0.3),inset_0_0_20px_rgba(251,146,60,0.05)]"
       )}
     >
       {/* Card image - vertical phone-like aspect ratio */}
       <div className="relative aspect-[9/16] overflow-hidden">
         {module.cover_url ? (
-          <img 
-            src={module.cover_url} 
-            alt={module.title} 
+          <img
+            src={module.cover_url}
+            alt={module.title}
             className={cn(
               "w-full h-full object-cover",
               isLocked && "grayscale"
-            )} 
+            )}
           />
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-primary/20 to-orange-500/10 flex items-center justify-center">
             <ImageIcon className="w-12 h-12 text-muted-foreground/50" />
           </div>
         )}
-        
+
         {/* Gradient overlay for text readability */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
-        
+
         {/* Progress badge - top left */}
         <div className="absolute top-3 left-3 px-3 py-1.5 rounded-md bg-black/70 backdrop-blur-sm">
           <span className="text-xs font-bold text-white">{progress} %</span>
         </div>
-        
-        {/* Lock icon - top right (only for locked modules) */}
+
+        {/* Lock icon with timer - top right (only for locked modules) */}
         {isLocked && (
-          <div className="absolute top-3 right-3 p-2 rounded-full bg-black/70 backdrop-blur-sm">
-            <Lock className="w-4 h-4 text-white" />
+          <div className="absolute top-3 right-3 flex flex-col items-end gap-1">
+            <div className="p-2 rounded-full bg-black/70 backdrop-blur-sm">
+              {daysRemaining > 0 ? (
+                <Clock className="w-4 h-4 text-cyan-400" />
+              ) : (
+                <Lock className="w-4 h-4 text-white" />
+              )}
+            </div>
+            {/* Badge de tempo restante */}
+            {lockMessage && (
+              <div className="px-2 py-1 rounded-md bg-black/70 backdrop-blur-sm">
+                <span className="text-[10px] font-medium text-cyan-400 whitespace-nowrap">
+                  {lockMessage}
+                </span>
+              </div>
+            )}
           </div>
         )}
-        
+
         {/* Module title - bottom */}
         <div className="absolute bottom-0 left-0 right-0 p-3">
           <h3 className="font-bold text-white text-sm leading-tight line-clamp-2 uppercase tracking-wide">
@@ -80,13 +108,13 @@ export function ModuleCarousel({ modules, onModuleSelect }: ModuleCarouselProps)
   const [showDiamondOffer, setShowDiamondOffer] = useState(false);
   const { completedLessons } = useLessonProgress();
   const isAdmin = useIsAdmin();
-  const { isUnlocked } = useUnlockedModules();
+  const { isUnlocked, isModuleFullyAvailable, getDaysRemaining } = useUnlockedModules();
   const publishedModules = modules.filter(m => m.is_published);
 
   const scroll = (direction: 'left' | 'right') => {
     if (!scrollRef.current) return;
     const cardWidth = window.innerWidth < 768 ? 176 : 216; // card width + gap
-    const newIndex = direction === 'left' 
+    const newIndex = direction === 'left'
       ? Math.max(0, currentIndex - 1)
       : Math.min(publishedModules.length - 1, currentIndex + 1);
     setCurrentIndex(newIndex);
@@ -100,13 +128,15 @@ export function ModuleCarousel({ modules, onModuleSelect }: ModuleCarouselProps)
     return Math.round((completed / lessons.length) * 100);
   };
 
-  const isModuleLocked = (module: Module, index: number) => {
+  const isModuleLocked = (module: Module) => {
     // Admins can always access all modules
     if (isAdmin) return false;
     // Check if module is explicitly locked in database
     if (module.is_locked) {
       // Check if module is manually unlocked for this user
       if (isUnlocked(module.id)) return false;
+      // Check time-based unlock
+      if (isModuleFullyAvailable(module)) return false;
       return true;
     }
     return false;
@@ -122,43 +152,45 @@ export function ModuleCarousel({ modules, onModuleSelect }: ModuleCarouselProps)
           <div className="w-1 h-6 bg-primary rounded-full" />
           <h2 className="text-xl font-bold text-foreground">Módulos do Curso</h2>
         </div>
-        
+
         {/* Navigation arrows - square orange style */}
         <div className="flex gap-2">
-          <button 
-            onClick={() => scroll('left')} 
+          <button
+            onClick={() => scroll('left')}
             className={cn(
               "w-10 h-10 rounded-lg flex items-center justify-center transition-all",
-              currentIndex > 0 
-                ? "bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer" 
+              currentIndex > 0
+                ? "bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer"
                 : "bg-muted text-muted-foreground cursor-not-allowed"
-            )} 
+            )}
             disabled={currentIndex === 0}
           >
             <ChevronLeft className="w-5 h-5" />
           </button>
-          <button 
-            onClick={() => scroll('right')} 
+          <button
+            onClick={() => scroll('right')}
             className={cn(
               "w-10 h-10 rounded-lg flex items-center justify-center transition-all",
-              currentIndex < publishedModules.length - 1 
-                ? "bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer" 
+              currentIndex < publishedModules.length - 1
+                ? "bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer"
                 : "bg-muted text-muted-foreground cursor-not-allowed"
-            )} 
+            )}
             disabled={currentIndex >= publishedModules.length - 1}
           >
             <ChevronRight className="w-5 h-5" />
           </button>
         </div>
       </div>
-      
+
       {/* Cards carousel */}
-      <div 
-        ref={scrollRef} 
+      <div
+        ref={scrollRef}
         className="flex gap-4 overflow-x-auto pb-4 px-4 md:px-6 scrollbar-hide scroll-smooth"
       >
-        {publishedModules.map((module, index) => {
-          const locked = isModuleLocked(module, index);
+        {publishedModules.map((module) => {
+          const locked = isModuleLocked(module);
+          const daysRemaining = locked ? getDaysRemaining(module) : 0;
+
           const handleModuleClick = () => {
             if (locked) {
               // Se estiver bloqueado, mostrar oferta Diamond
@@ -168,24 +200,26 @@ export function ModuleCarousel({ modules, onModuleSelect }: ModuleCarouselProps)
               onModuleSelect(module);
             }
           };
-          
+
           return (
-            <ModuleCard 
-              key={module.id} 
-              module={module} 
-              progress={getModuleProgress(module)} 
+            <ModuleCard
+              key={module.id}
+              module={module}
+              progress={getModuleProgress(module)}
               isLocked={locked}
-              onClick={handleModuleClick} 
+              daysRemaining={daysRemaining}
+              onClick={handleModuleClick}
             />
           );
         })}
       </div>
 
       {/* Modal de oferta Diamond */}
-      <DiamondOfferModal 
-        open={showDiamondOffer} 
-        onOpenChange={setShowDiamondOffer} 
+      <DiamondOfferModal
+        open={showDiamondOffer}
+        onOpenChange={setShowDiamondOffer}
       />
     </div>
   );
 }
+
