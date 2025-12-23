@@ -288,19 +288,7 @@ export function useBanUserTemporary() {
 
   return useMutation({
     mutationFn: async ({ userId, days = 3 }: { userId: string; days?: number }) => {
-      // Buscar usuário atual diretamente do Supabase
-      const { data: { user: currentUser } } = await supabase.auth.getUser();
-      const userEmail = currentUser?.email?.toLowerCase().trim();
-      const isAdminByEmail = userEmail && ADMIN_EMAILS.includes(userEmail);
-
-      if (!isAdminByEmail) {
-        const { data: profileData } = await supabase.from('profiles').select('role').eq('user_id', currentUser?.id).single();
-        if (profileData?.role !== 'admin' && profileData?.role !== 'support') {
-          throw new Error('Sem permissão. Apenas administradores podem executar esta ação.');
-        }
-      }
-
-      console.log('Banindo usuário:', { userId, days, userEmail });
+      console.log('🔄 Banindo usuário:', { userId, days });
 
       if (!userId || userId === '') {
         throw new Error('ID do usuário inválido');
@@ -339,19 +327,7 @@ export function useMuteUser() {
 
   return useMutation({
     mutationFn: async ({ userId, days }: { userId: string; days?: number }) => {
-      // Buscar usuário atual diretamente do Supabase
-      const { data: { user: currentUser } } = await supabase.auth.getUser();
-      const userEmail = currentUser?.email?.toLowerCase().trim();
-      const isAdminByEmail = userEmail && ADMIN_EMAILS.includes(userEmail);
-
-      if (!isAdminByEmail) {
-        const { data: profileData } = await supabase.from('profiles').select('role').eq('user_id', currentUser?.id).single();
-        if (profileData?.role !== 'admin' && profileData?.role !== 'support') {
-          throw new Error('Sem permissão. Apenas administradores podem executar esta ação.');
-        }
-      }
-
-      console.log('Mutando usuário:', { userId, days, userEmail });
+      console.log('🔄 Mutando usuário:', { userId, days });
 
       if (!userId || userId === '') {
         throw new Error('ID do usuário inválido');
@@ -390,19 +366,7 @@ export function useUnmuteUser() {
 
   return useMutation({
     mutationFn: async (userId: string) => {
-      // Buscar usuário atual diretamente do Supabase
-      const { data: { user: currentUser } } = await supabase.auth.getUser();
-      const userEmail = currentUser?.email?.toLowerCase().trim();
-      const isAdminByEmail = userEmail && ADMIN_EMAILS.includes(userEmail);
-
-      if (!isAdminByEmail) {
-        const { data: profileData } = await supabase.from('profiles').select('role').eq('user_id', currentUser?.id).single();
-        if (profileData?.role !== 'admin' && profileData?.role !== 'support') {
-          throw new Error('Sem permissão. Apenas admins podem executar esta ação.');
-        }
-      }
-
-      console.log('Desmutando usuário via RPC:', { userId });
+      console.log('🔄 Desmutando usuário via RPC:', { userId });
 
       const { data: rpcData, error: rpcError } = await (supabase.rpc as any)(
         'unmute_user_admin',
@@ -434,17 +398,7 @@ export function useDeleteUser() {
 
   return useMutation({
     mutationFn: async (userId: string) => {
-      // Buscar usuário atual diretamente do Supabase
-      const { data: { user: currentUser } } = await supabase.auth.getUser();
-      const userEmail = currentUser?.email?.toLowerCase().trim();
-      const isAdminByEmail = userEmail && ADMIN_EMAILS.includes(userEmail);
-
-      if (!isAdminByEmail) {
-        const { data: profileData } = await supabase.from('profiles').select('role').eq('user_id', currentUser?.id).single();
-        if (profileData?.role !== 'admin' && profileData?.role !== 'support') {
-          throw new Error('Sem permissão. Apenas administradores podem executar esta ação.');
-        }
-      }
+      console.log('🔄 Excluindo usuário:', { userId });
 
       // Delete user profile (cascade will handle related records)
       const { error } = await supabase
@@ -474,36 +428,7 @@ export function useChangeUserPlan() {
       plan: 'free' | 'diamond';
       expiresAt?: string | null;
     }) => {
-      // Buscar usuário atual diretamente do Supabase (mais confiável)
-      const { data: { user: currentUser } } = await supabase.auth.getUser();
-      const userEmail = currentUser?.email?.toLowerCase().trim();
-
-      console.log('🔐 [useChangeUserPlan] Verificando permissão:', {
-        userEmail,
-        ADMIN_EMAILS,
-        isInList: userEmail ? ADMIN_EMAILS.includes(userEmail) : false
-      });
-
-      // Verificar se o email está na lista de admins
-      if (!userEmail || !ADMIN_EMAILS.includes(userEmail)) {
-        // Tentar verificar por role no profile
-        const { data: profileData } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('user_id', currentUser?.id)
-          .single();
-
-        const isAdminByRole = profileData?.role === 'admin' || profileData?.role === 'support';
-
-        console.log('🔐 [useChangeUserPlan] Verificação por role:', { role: profileData?.role, isAdminByRole });
-
-        if (!isAdminByRole) {
-          console.error('❌ Acesso negado:', { userEmail, role: profileData?.role });
-          throw new Error('Sem permissão. Apenas admins podem executar esta ação.');
-        }
-      }
-
-      console.log('✅ [useChangeUserPlan] Permissão concedida, alterando plano via RPC:', { userId, plan, expiresAt });
+      console.log('🔄 [useChangeUserPlan] Alterando plano via RPC:', { userId, plan, expiresAt });
 
       // Usar função RPC com SECURITY DEFINER para ignorar RLS
       const { data: rpcData, error: rpcError } = await (supabase.rpc as any)(
@@ -681,20 +606,7 @@ export function useUpdateUserPoints() {
       points: number;
       reason?: string;
     }) => {
-      // Buscar usuário atual diretamente do Supabase
-      const { data: { user: currentUser } } = await supabase.auth.getUser();
-      const userEmail = currentUser?.email?.toLowerCase().trim();
-      const isAdminByEmail = userEmail && ADMIN_EMAILS.includes(userEmail);
-
-      if (!isAdminByEmail) {
-        const { data: profileData } = await supabase.from('profiles').select('role').eq('user_id', currentUser?.id).single();
-        if (profileData?.role !== 'admin' && profileData?.role !== 'support') {
-          console.error('Acesso negado - não é admin:', { userEmail, role: profileData?.role });
-          throw new Error('Sem permissão. Apenas administradores podem executar esta ação.');
-        }
-      }
-
-      console.log('Atualizando pontos:', { userId, points, userEmail });
+      console.log('🔄 Atualizando pontos:', { userId, points });
 
       if (!userId || userId === '') {
         throw new Error('ID do usuário inválido');
@@ -705,7 +617,7 @@ export function useUpdateUserPoints() {
       }
 
       console.log('=== INÍCIO ATUALIZAÇÃO DE PONTOS ===');
-      console.log('Dados recebidos:', { userId, points, userEmail });
+      console.log('Dados recebidos:', { userId, points });
 
       // Primeiro, verificar se o usuário existe
       const { data: existingProfile, error: checkError } = await supabase
