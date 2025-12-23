@@ -21,7 +21,7 @@ CREATE TABLE public.app_popups (
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now(),
   created_by UUID
-);
+); 
 
 -- 3. Criar tabela popup_views
 CREATE TABLE public.popup_views (
