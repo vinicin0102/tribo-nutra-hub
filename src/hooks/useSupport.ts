@@ -290,13 +290,15 @@ export function useBanUserTemporary() {
 
   return useMutation({
     mutationFn: async ({ userId, days = 3 }: { userId: string; days?: number }) => {
-      // Verificar permissão no momento da execução
+      // Verificar permissão - primeiro por email (mais confiável)
+      const userEmail = user?.email?.toLowerCase().trim();
+      const isAdminByEmail = userEmail && ADMIN_EMAILS.includes(userEmail);
       const profileData = profile as { role?: string } | undefined;
-      const isAdmin = isAdminEmail(user?.email) || profileData?.role === 'admin' || profileData?.role === 'support';
+      const isAdmin = isAdminByEmail || profileData?.role === 'admin' || profileData?.role === 'support';
 
       if (!isAdmin) throw new Error('Sem permissão. Apenas administradores podem executar esta ação.');
 
-      console.log('Banindo usuário:', { userId, days, isAdmin, userEmail: user?.email });
+      console.log('Banindo usuário:', { userId, days, isAdmin, userEmail });
 
       if (!userId || userId === '') {
         throw new Error('ID do usuário inválido');
@@ -337,13 +339,15 @@ export function useMuteUser() {
 
   return useMutation({
     mutationFn: async ({ userId, days }: { userId: string; days?: number }) => {
-      // Verificar permissão no momento da execução
+      // Verificar permissão - primeiro por email (mais confiável)
+      const userEmail = user?.email?.toLowerCase().trim();
+      const isAdminByEmail = userEmail && ADMIN_EMAILS.includes(userEmail);
       const profileData = profile as { role?: string } | undefined;
-      const isAdmin = isAdminEmail(user?.email) || profileData?.role === 'admin' || profileData?.role === 'support';
+      const isAdmin = isAdminByEmail || profileData?.role === 'admin' || profileData?.role === 'support';
 
       if (!isAdmin) throw new Error('Sem permissão. Apenas administradores podem executar esta ação.');
 
-      console.log('Mutando usuário:', { userId, days, isAdmin, userEmail: user?.email });
+      console.log('Mutando usuário:', { userId, days, isAdmin, userEmail });
 
       if (!userId || userId === '') {
         throw new Error('ID do usuário inválido');
@@ -384,9 +388,11 @@ export function useUnmuteUser() {
 
   return useMutation({
     mutationFn: async (userId: string) => {
-      // Verificar permissão no momento da execução
+      // Verificar permissão - primeiro por email (mais confiável)
+      const userEmail = user?.email?.toLowerCase().trim();
+      const isAdminByEmail = userEmail && ADMIN_EMAILS.includes(userEmail);
       const profileData = profile as { role?: string } | undefined;
-      const isAdmin = isAdminEmail(user?.email) || profileData?.role === 'admin' || profileData?.role === 'support';
+      const isAdmin = isAdminByEmail || profileData?.role === 'admin' || profileData?.role === 'support';
 
       if (!isAdmin) throw new Error('Sem permissão. Apenas admins podem executar esta ação.');
 
@@ -424,9 +430,11 @@ export function useDeleteUser() {
 
   return useMutation({
     mutationFn: async (userId: string) => {
-      // Verificar permissão no momento da execução
+      // Verificar permissão - primeiro por email (mais confiável)
+      const userEmail = user?.email?.toLowerCase().trim();
+      const isAdminByEmail = userEmail && ADMIN_EMAILS.includes(userEmail);
       const profileData = profile as { role?: string } | undefined;
-      const isAdmin = isAdminEmail(user?.email) || profileData?.role === 'admin' || profileData?.role === 'support';
+      const isAdmin = isAdminByEmail || profileData?.role === 'admin' || profileData?.role === 'support';
 
       if (!isAdmin) throw new Error('Sem permissão. Apenas administradores podem executar esta ação.');
 
@@ -460,19 +468,26 @@ export function useChangeUserPlan() {
       plan: 'free' | 'diamond';
       expiresAt?: string | null;
     }) => {
-      // Verificar permissão no momento da execução
+      // Verificar permissão - primeiro por email (mais confiável)
+      const userEmail = user?.email?.toLowerCase().trim();
+      const isAdminByEmail = userEmail && ADMIN_EMAILS.includes(userEmail);
+
+      // Depois verificar por role no profile
       const profileData = profile as { role?: string } | undefined;
-      const isAdmin = isAdminEmail(user?.email) || profileData?.role === 'admin' || profileData?.role === 'support';
+      const isAdminByRole = profileData?.role === 'admin' || profileData?.role === 'support';
+
+      const isAdmin = isAdminByEmail || isAdminByRole;
 
       console.log('🔐 [useChangeUserPlan] Verificando permissão:', {
-        userEmail: user?.email,
-        role: profileData?.role,
-        isAdminByEmail: isAdminEmail(user?.email),
+        userEmail,
+        isAdminByEmail,
+        profileRole: profileData?.role,
+        isAdminByRole,
         isAdmin
       });
 
       if (!isAdmin) {
-        console.error('❌ Acesso negado - não é admin:', { userEmail: user?.email, role: profileData?.role });
+        console.error('❌ Acesso negado - não é admin:', { userEmail, role: profileData?.role });
         throw new Error('Sem permissão. Apenas admins podem executar esta ação.');
       }
 
@@ -656,16 +671,18 @@ export function useUpdateUserPoints() {
       points: number;
       reason?: string;
     }) => {
-      // Verificar permissão no momento da execução
+      // Verificar permissão - primeiro por email (mais confiável)
+      const userEmail = user?.email?.toLowerCase().trim();
+      const isAdminByEmail = userEmail && ADMIN_EMAILS.includes(userEmail);
       const profileData = profile as { role?: string } | undefined;
-      const isAdmin = isAdminEmail(user?.email) || profileData?.role === 'admin' || profileData?.role === 'support';
+      const isAdmin = isAdminByEmail || profileData?.role === 'admin' || profileData?.role === 'support';
 
       if (!isAdmin) {
-        console.error('Acesso negado - não é admin:', { userEmail: user?.email, role: profileData?.role });
+        console.error('Acesso negado - não é admin:', { userEmail, role: profileData?.role });
         throw new Error('Sem permissão. Apenas administradores podem executar esta ação.');
       }
 
-      console.log('Atualizando pontos:', { userId, points, isAdmin, userEmail: user?.email });
+      console.log('Atualizando pontos:', { userId, points, isAdmin, userEmail });
 
       if (!userId || userId === '') {
         throw new Error('ID do usuário inválido');
