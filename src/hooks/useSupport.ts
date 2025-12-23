@@ -6,28 +6,29 @@ import { deleteImage } from '@/lib/upload';
 import { deleteAudio } from '@/lib/audioUpload';
 
 // Lista de emails admin
-const ADMIN_EMAILS = ['admin@gmail.com', 'admin02@gmail.com'];
+const ADMIN_EMAILS = ['admin@gmail.com', 'admin02@gmail.com', 'auxiliodp1@gmail.com'];
 
 // Função helper para verificar se é admin por email
 function isAdminEmail(email: string | undefined | null): boolean {
   if (!email) return false;
-  return ADMIN_EMAILS.includes(email.toLowerCase());
+  const normalizedEmail = email.toLowerCase().trim();
+  return ADMIN_EMAILS.includes(normalizedEmail);
 }
 
 export function useIsSupport() {
   const { data: profile } = useProfile();
   const { user } = useAuth();
-  
+
   // Se for um dos emails admin, sempre retorna true
   if (user?.email && isAdminEmail(user.email)) {
     return true;
   }
-  
+
   // Se o perfil não carregou ainda, retorna false temporariamente
   if (!profile) {
     return false;
   }
-  
+
   const profileData = profile as { role?: string } | undefined;
   return profileData?.role === 'support' || profileData?.role === 'admin';
 }
@@ -63,19 +64,19 @@ export function useSupportUsers() {
           .from('profiles')
           .select('user_id, username, full_name, avatar_url, email, telefone, points, subscription_plan, role, is_banned, banned_until, is_muted, mute_until, created_at, updated_at')
           .order('created_at', { ascending: false });
-        
+
         if (errorRetry) {
           console.error('❌ Erro ao buscar usuários (retry):', errorRetry);
           throw errorRetry;
         }
-        
+
         data = dataRetry;
         error = null;
       } else if (error) {
         console.error('❌ Erro ao buscar usuários:', error);
         throw error;
       }
-      
+
       // Tentar buscar cpf e data_nascimento separadamente se as colunas existirem
       if (data && data.length > 0) {
         try {
@@ -83,7 +84,7 @@ export function useSupportUsers() {
             .from('profiles')
             .select('user_id, cpf, data_nascimento')
             .in('user_id', data.map(u => (u as any).user_id));
-          
+
           if (extraData) {
             const extraMap = new Map(extraData.map((u: any) => [u.user_id, { cpf: u.cpf, data_nascimento: u.data_nascimento }]));
             data = data.map((u: any) => ({
@@ -97,9 +98,9 @@ export function useSupportUsers() {
           // Continuar sem esses campos
         }
       }
-      
+
       console.log('Usuários encontrados:', data?.length || 0);
-      
+
       // Debug: verificar se telefone está sendo retornado
       if (data && data.length > 0) {
         const firstUser = data[0] as any;
@@ -110,12 +111,12 @@ export function useSupportUsers() {
           hasTelefone: !!firstUser.telefone,
           telefoneType: typeof firstUser.telefone
         });
-        
+
         // Contar quantos têm telefone
         const withTelefone = data.filter((u: any) => u.telefone && u.telefone.trim() !== '').length;
         console.log(`📊 [useSupportUsers] Usuários com telefone: ${withTelefone} de ${data.length}`);
       }
-      
+
       return data || [];
     },
     enabled: !!user && (canAccess || isAdminEmail(user?.email)),
@@ -310,7 +311,7 @@ export function useBanUserTemporary() {
       }
 
       console.log('Usuário banido com sucesso:', data);
-      
+
       if (data && Array.isArray(data) && data.length > 0) {
         const result = data[0] as { success?: boolean; error?: string };
         if (result.success === false) {
@@ -353,7 +354,7 @@ export function useMuteUser() {
       }
 
       console.log('Usuário mutado com sucesso:', data);
-      
+
       if (data && Array.isArray(data) && data.length > 0) {
         const result = data[0] as { success?: boolean; error?: string };
         if (result.success === false) {
@@ -438,13 +439,13 @@ export function useChangeUserPlan() {
   const isAdmin = isAdminEmail(user?.email) || profileData?.role === 'admin';
 
   return useMutation({
-    mutationFn: async ({ 
-      userId, 
-      plan, 
-      expiresAt 
-    }: { 
-      userId: string; 
-      plan: 'free' | 'diamond'; 
+    mutationFn: async ({
+      userId,
+      plan,
+      expiresAt
+    }: {
+      userId: string;
+      plan: 'free' | 'diamond';
       expiresAt?: string | null;
     }) => {
       if (!isAdmin) {
@@ -476,7 +477,7 @@ export function useChangeUserPlan() {
         if (rpcData.success === false) {
           throw new Error(rpcData.error || 'Erro ao alterar plano');
         }
-        
+
         if (rpcData.success === true) {
           console.log('✅ Plano alterado com sucesso:', rpcData.message);
           return { success: true, message: rpcData.message };
@@ -498,7 +499,7 @@ export function useUnlockMentoria() {
   return useMutation({
     mutationFn: async (userId: string) => {
       console.log('🔓 [useUnlockMentoria] Iniciando liberação de mentoria para:', userId);
-      
+
       try {
         // Primeiro, tentar usar a função RPC
         const { data: rpcData, error: rpcError } = await (supabase.rpc as any)('unlock_mentoria_for_user', {
@@ -509,13 +510,13 @@ export function useUnlockMentoria() {
 
         if (rpcError) {
           console.error('❌ [useUnlockMentoria] Erro na RPC:', rpcError);
-          
+
           // Se a função RPC não existir, tentar método direto como fallback
           if (rpcError.message?.includes('function') || rpcError.code === '42883') {
             console.warn('⚠️ [useUnlockMentoria] Função RPC não encontrada, tentando método direto...');
             return await unlockMentoriaDirect(userId);
           }
-          
+
           throw rpcError;
         }
 
@@ -527,7 +528,7 @@ export function useUnlockMentoria() {
             console.error('❌ [useUnlockMentoria] Função RPC retornou erro:', errorMsg);
             throw new Error(errorMsg);
           }
-          
+
           console.log('✅ [useUnlockMentoria] Mentoria liberada com sucesso via RPC');
           return typedRpcData;
         }
@@ -535,7 +536,7 @@ export function useUnlockMentoria() {
         // Fallback para método direto se RPC não retornar resultado esperado
         console.warn('⚠️ [useUnlockMentoria] RPC não retornou resultado esperado, tentando método direto...');
         return await unlockMentoriaDirect(userId);
-        
+
       } catch (error: any) {
         console.error('❌ [useUnlockMentoria] Erro geral:', error);
         throw error;
@@ -543,19 +544,19 @@ export function useUnlockMentoria() {
     },
     onSuccess: (data, userId) => {
       console.log('✅ [useUnlockMentoria] Sucesso, invalidando queries para usuário:', userId);
-      
+
       // Invalidar queries gerais
       queryClient.invalidateQueries({ queryKey: ['support-users'] });
       queryClient.invalidateQueries({ queryKey: ['modules'] });
       queryClient.invalidateQueries({ queryKey: ['courses'] });
-      
+
       // Invalidar especificamente a query do usuário alvo que teve a mentoria liberada
       queryClient.invalidateQueries({ queryKey: ['unlocked-modules', userId] });
       queryClient.invalidateQueries({ queryKey: ['unlocked-modules'] });
-      
+
       // Remover do cache para forçar refetch
       queryClient.removeQueries({ queryKey: ['unlocked-modules', userId] });
-      
+
       console.log('✅ [useUnlockMentoria] Queries invalidadas');
     },
     onError: (error: any) => {
@@ -567,7 +568,7 @@ export function useUnlockMentoria() {
 // Função auxiliar para método direto (fallback)
 async function unlockMentoriaDirect(userId: string) {
   console.log('🔧 [unlockMentoriaDirect] Usando método direto para usuário:', userId);
-  
+
   // Buscar todos os módulos bloqueados
   const { data: lockedModules, error: modulesError } = await supabase
     .from('modules')
@@ -589,12 +590,12 @@ async function unlockMentoriaDirect(userId: string) {
   // Tentar inserir módulos desbloqueados
   let successCount = 0;
   let errorCount = 0;
-  
+
   for (const module of lockedModules) {
     const { error: unlockError } = await supabase
       .from('unlocked_modules')
       .insert({ user_id: userId, module_id: module.id });
-    
+
     if (unlockError) {
       // Ignorar erros de duplicata (código 23505 é unique violation)
       if (unlockError.code === '23505') {
@@ -610,7 +611,7 @@ async function unlockMentoriaDirect(userId: string) {
   }
 
   console.log(`✅ [unlockMentoriaDirect] Processamento concluído: ${successCount} sucesso, ${errorCount} erros`);
-  
+
   if (errorCount > 0 && successCount === 0) {
     throw new Error(`Não foi possível desbloquear nenhum módulo. Verifique as permissões RLS.`);
   }
@@ -626,12 +627,12 @@ export function useUpdateUserPoints() {
   const isAdmin = isAdminEmail(user?.email) || profileData?.role === 'admin';
 
   return useMutation({
-    mutationFn: async ({ 
-      userId, 
-      points, 
-    }: { 
-      userId: string; 
-      points: number; 
+    mutationFn: async ({
+      userId,
+      points,
+    }: {
+      userId: string;
+      points: number;
       reason?: string;
     }) => {
       if (!isAdmin) {
@@ -704,7 +705,7 @@ export function useUpdateUserPoints() {
           console.error('❌ Função RPC retornou erro:', rpcData.error);
           throw new Error(rpcData.error || 'Erro ao atualizar pontos');
         }
-        
+
         if (rpcData.success === true) {
           console.log('✅ Pontos atualizados com sucesso via RPC:', rpcData);
           // Buscar o perfil atualizado para retornar
@@ -713,13 +714,13 @@ export function useUpdateUserPoints() {
             .select('user_id, username, points, email, role')
             .eq('user_id', userId)
             .single();
-          
+
           if (fetchError) {
             console.error('Erro ao buscar perfil atualizado:', fetchError);
             // Mesmo assim retornar sucesso, pois os pontos foram atualizados
             return { user_id: userId, points: points };
           }
-          
+
           return updatedProfile;
         }
       }
@@ -728,9 +729,9 @@ export function useUpdateUserPoints() {
       console.warn('⚠️ RPC não retornou resultado esperado, tentando UPDATE direto...');
       const { data, error } = await supabase
         .from('profiles')
-        .update({ 
+        .update({
           points: points,
-          updated_at: new Date().toISOString() 
+          updated_at: new Date().toISOString()
         })
         .eq('user_id', userId)
         .select('user_id, username, points, email, role');
@@ -748,13 +749,13 @@ export function useUpdateUserPoints() {
           hint: error.hint,
           status: (error as any).status
         });
-        
+
         // Mensagem de erro mais específica
         let errorMessage = `Erro ao atualizar pontos: ${error.message}`;
         if (error.code === '42501' || error.message?.includes('permission') || error.message?.includes('policy')) {
           errorMessage = 'Erro de permissão. Verifique se a policy RLS foi criada. Execute o script criar-policy-admin-update-profiles.sql no Supabase.';
         }
-        
+
         throw new Error(`${errorMessage} (Código: ${error.code})`);
       }
 
@@ -767,7 +768,7 @@ export function useUpdateUserPoints() {
       console.log('✅ Pontos atualizados com sucesso!');
       console.log('Dados atualizados:', data[0]);
       console.log('=== FIM ATUALIZAÇÃO DE PONTOS ===');
-      
+
       return data[0];
     },
     onSuccess: () => {
