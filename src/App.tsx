@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { InstallPrompt } from "@/components/pwa/InstallPrompt";
+import { AppPopup } from "@/components/AppPopup";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -45,7 +46,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const [isBanned, setIsBanned] = useState(false);
   const [banMessage, setBanMessage] = useState<string | null>(null);
   const [loadingTimeout, setLoadingTimeout] = useState(false);
-  
+
   // Timeout de segurança: se loading demorar mais de 10 segundos, libera
   useEffect(() => {
     if (loading) {
@@ -56,34 +57,34 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
       return () => clearTimeout(timeout);
     }
   }, [loading]);
-  
+
   useEffect(() => {
     const checkBan = async () => {
       if (!user) {
         setCheckingBan(false);
         return;
       }
-      
+
       try {
         const { data: profile, error } = await supabase
           .from('profiles')
           .select('*')
           .eq('user_id', user.id)
           .maybeSingle();
-        
+
         if (error) {
           console.error('Erro ao verificar ban:', error);
           setCheckingBan(false);
           return;
         }
-        
+
         const isBannedProfile = (profile as { is_banned?: boolean; banned_until?: string | null })?.is_banned;
         const bannedUntilStr = (profile as { is_banned?: boolean; banned_until?: string | null })?.banned_until;
-        
+
         if (isBannedProfile) {
           const bannedUntil = bannedUntilStr ? new Date(bannedUntilStr) : null;
           const now = new Date();
-          
+
           // Se tem data de expiração e já passou, não está mais banido
           if (bannedUntil && bannedUntil < now) {
             // Atualizar status no banco
@@ -95,11 +96,11 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
           } else {
             // Está banido
             setIsBanned(true);
-            const daysLeft = bannedUntil 
+            const daysLeft = bannedUntil
               ? Math.ceil((bannedUntil.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
               : null;
             setBanMessage(
-              bannedUntil 
+              bannedUntil
                 ? `Sua conta foi banida. Você poderá acessar novamente em ${daysLeft} dia(s) (${bannedUntil.toLocaleDateString('pt-BR')}).`
                 : 'Sua conta foi banida permanentemente.'
             );
@@ -117,14 +118,14 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
         setCheckingBan(false);
       }
     };
-    
+
     if (!loading && user) {
       checkBan();
     } else if (!loading && !user) {
       setCheckingBan(false);
     }
   }, [user, loading]);
-  
+
   // Se loading demorar muito, libera mesmo assim
   if ((loading && !loadingTimeout) || checkingBan) {
     return (
@@ -135,11 +136,11 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
       </div>
     );
   }
-  
+
   if (!user) {
     return <Navigate to="/auth" replace />;
   }
-  
+
   if (isBanned) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#0a0a0a] p-4">
@@ -157,13 +158,13 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
       </div>
     );
   }
-  
+
   return <>{children}</>;
 }
 
 function SupportRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
-  
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#0a0a0a]">
@@ -173,11 +174,11 @@ function SupportRoute({ children }: { children: React.ReactNode }) {
       </div>
     );
   }
-  
+
   if (!user) {
     return <Navigate to="/support/login" replace />;
   }
-  
+
   return <>{children}</>;
 }
 
@@ -214,6 +215,7 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <AuthProvider>
+            <AppPopup />
             <AppRoutes />
             <InstallPrompt />
           </AuthProvider>

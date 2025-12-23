@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Shield, Users, MessageSquare, LogOut, Home, Gift, BookOpen, Trophy, Settings } from 'lucide-react';
+import { Shield, Users, MessageSquare, LogOut, Home, Gift, BookOpen, Trophy, Settings, MessageCircle } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -14,6 +14,7 @@ import { RewardEditManagement } from '@/components/support/RewardEditManagement'
 import { ContentManagement } from '@/components/support/ContentManagement';
 import { BadgeManagement } from '@/components/support/BadgeManagement';
 import { SettingsManagement } from '@/components/support/SettingsManagement';
+import { PopupManagement } from '@/components/support/PopupManagement';
 import { cn } from '@/lib/utils';
 
 export default function SupportDashboard() {
@@ -109,7 +110,7 @@ export default function SupportDashboard() {
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
           <TabsList className={cn(
             "bg-[#1a1a1a] border border-[#2a2a2a] w-full grid",
-            canAccessAdminPanel ? "grid-cols-7" : "grid-cols-6"
+            canAccessAdminPanel ? "grid-cols-8" : "grid-cols-7"
           )}>
             <TabsTrigger value="chat" className="data-[state=active]:bg-primary text-xs">
               <MessageSquare className="h-4 w-4 sm:mr-2" />
@@ -135,6 +136,10 @@ export default function SupportDashboard() {
             <TabsTrigger value="settings" className="data-[state=active]:bg-primary text-xs">
               <Settings className="h-4 w-4 sm:mr-2" />
               <span className="hidden sm:inline">Config</span>
+            </TabsTrigger>
+            <TabsTrigger value="popup" className="data-[state=active]:bg-primary text-xs">
+              <MessageCircle className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Popup</span>
             </TabsTrigger>
             {canAccessAdminPanel && (
               <TabsTrigger value="users" className="data-[state=active]:bg-primary text-xs">
@@ -166,6 +171,10 @@ export default function SupportDashboard() {
 
           <TabsContent value="settings" className="space-y-4">
             <SettingsManagement />
+          </TabsContent>
+
+          <TabsContent value="popup" className="space-y-4">
+            <PopupManagement />
           </TabsContent>
 
 
