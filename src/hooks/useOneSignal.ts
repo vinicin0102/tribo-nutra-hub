@@ -10,7 +10,27 @@ const ONESIGNAL_APP_ID = import.meta.env.VITE_ONESIGNAL_APP_ID || 'e1e6712a-5457
 declare global {
   interface Window {
     OneSignal?: {
-      init: (options: { appId: string; allowLocalhostAsSecureOrigin?: boolean }) => Promise<void>;
+      init: (options: {
+        appId: string;
+        allowLocalhostAsSecureOrigin?: boolean;
+        promptOptions?: {
+          slidedown?: {
+            prompts?: Array<{
+              type: string;
+              autoPrompt?: boolean;
+              text?: {
+                actionMessage?: string;
+                acceptButton?: string;
+                cancelButton?: string;
+              };
+              delay?: {
+                pageViews?: number;
+                timeDelay?: number;
+              };
+            }>;
+          };
+        };
+      }) => Promise<void>;
       isPushNotificationsEnabled: () => Promise<boolean>;
       showNativePrompt: () => Promise<void>;
       setNotificationOpenedHandler: (handler: (result: any) => void) => void;
@@ -18,7 +38,7 @@ declare global {
       setExternalUserId: (userId: string) => Promise<void>;
       removeExternalUserId: () => Promise<void>;
       push: (args: any[]) => void;
-      on: (event: string, callback: () => void) => void;
+      on: (event: string, callback: (data?: any) => void) => void;
       off: (event: string, callback: () => void) => void;
       once: (event: string, callback: () => void) => void;
     };
@@ -39,7 +59,7 @@ export function useOneSignal() {
       console.log('[OneSignal] Window disponível?', typeof window !== 'undefined');
       console.log('[OneSignal] OneSignal disponível?', !!window.OneSignal);
       console.log('[OneSignal] App ID:', ONESIGNAL_APP_ID);
-      
+
       // Verificar se o script do OneSignal foi carregado
       if (typeof window === 'undefined') {
         console.error('[OneSignal] Window não disponível (SSR?)');
@@ -49,7 +69,7 @@ export function useOneSignal() {
 
       if (!window.OneSignal) {
         console.log('[OneSignal] Script não carregado ainda, carregando...');
-        
+
         // Verificar se já existe um script carregando
         const existingScript = document.querySelector('script[src*="OneSignal"]');
         if (existingScript) {
@@ -60,7 +80,7 @@ export function useOneSignal() {
           });
           return;
         }
-        
+
         // Carregar o script do OneSignal
         const script = document.createElement('script');
         script.src = 'https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js';
@@ -93,11 +113,11 @@ export function useOneSignal() {
     const initializeOneSignal = async () => {
       try {
         console.log('[OneSignal] ========== INICIALIZANDO ==========');
-        
+
         // Verificar se está em localhost - OneSignal pode não funcionar em dev
-        const isLocalhost = window.location.hostname === 'localhost' || 
-                           window.location.hostname === '127.0.0.1';
-        
+        const isLocalhost = window.location.hostname === 'localhost' ||
+          window.location.hostname === '127.0.0.1';
+
         if (!window.OneSignal) {
           console.error('[OneSignal] ❌ OneSignal não disponível após tentativa de carregar');
           setIsSupported(false);
@@ -108,20 +128,39 @@ export function useOneSignal() {
         console.log('[OneSignal] Ambiente:', isLocalhost ? 'LOCALHOST (dev)' : 'PRODUÇÃO');
         console.log('[OneSignal] Tipo do OneSignal:', typeof window.OneSignal);
         console.log('[OneSignal] Métodos disponíveis:', Object.keys(window.OneSignal));
-        
+
         // Inicializar OneSignal
         try {
           await window.OneSignal.init({
             appId: ONESIGNAL_APP_ID,
             allowLocalhostAsSecureOrigin: true, // Para desenvolvimento local
+            promptOptions: {
+              slidedown: {
+                prompts: [
+                  {
+                    type: "push",
+                    autoPrompt: true,
+                    text: {
+                      actionMessage: "Receba notificações sobre novos conteúdos, promoções exclusivas e atualizações. Você pode desativar a qualquer momento.",
+                      acceptButton: "Ativar",
+                      cancelButton: "Agora não"
+                    },
+                    delay: {
+                      pageViews: 1,
+                      timeDelay: 5
+                    }
+                  }
+                ]
+              }
+            }
           });
           console.log('[OneSignal] ✅ Init chamado com sucesso');
         } catch (initError: any) {
           // Se o erro for de domínio não permitido, apenas desabilitar silenciosamente
           const errorMessage = initError?.message || String(initError) || '';
-          if (errorMessage.includes('Can only be used on') || 
-              errorMessage.includes('not allowed') ||
-              errorMessage.includes('domain')) {
+          if (errorMessage.includes('Can only be used on') ||
+            errorMessage.includes('not allowed') ||
+            errorMessage.includes('domain')) {
             console.warn('[OneSignal] ⚠️ OneSignal não está configurado para este domínio. Notificações push desabilitadas.');
             if (isLocalhost) {
               console.log('[OneSignal] 💡 Dica: No localhost, as notificações funcionarão apenas em produção.');
@@ -154,7 +193,7 @@ export function useOneSignal() {
           try {
             const oneSignalUserId = await window.OneSignal.getUserId();
             console.log('[OneSignal] OneSignal User ID:', oneSignalUserId);
-            
+
             if (oneSignalUserId) {
               // Associar o user_id do Supabase ao OneSignal
               await window.OneSignal.setExternalUserId(user.id);
@@ -172,7 +211,7 @@ export function useOneSignal() {
         window.OneSignal.on('subscriptionChange', async (isSubscribed: boolean) => {
           console.log('[OneSignal] Status de subscription mudou:', isSubscribed);
           setIsSubscribed(isSubscribed);
-          
+
           if (isSubscribed && user) {
             const oneSignalUserId = await window.OneSignal.getUserId();
             if (oneSignalUserId) {
@@ -199,7 +238,7 @@ export function useOneSignal() {
   const saveSubscriptionToDatabase = async (oneSignalUserId: string, supabaseUserId: string) => {
     try {
       console.log('[OneSignal] Salvando subscription no banco...');
-      
+
       const { error } = await supabase
         .from('push_subscriptions')
         .upsert({
@@ -233,10 +272,10 @@ export function useOneSignal() {
 
     try {
       console.log('[OneSignal] Solicitando permissão...');
-      
+
       // Solicitar permissão e mostrar prompt nativo
       await window.OneSignal.showNativePrompt();
-      
+
       // Verificar se foi habilitado
       const isEnabled = await window.OneSignal.isPushNotificationsEnabled();
       setIsSubscribed(isEnabled);
@@ -279,7 +318,7 @@ export function useOneSignal() {
       // Mas podemos remover a associação do user_id
       if (user) {
         await window.OneSignal.removeExternalUserId();
-        
+
         // Remover do banco
         const oneSignalUserId = await window.OneSignal.getUserId();
         if (oneSignalUserId) {
