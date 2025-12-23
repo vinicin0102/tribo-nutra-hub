@@ -1,69 +1,81 @@
 <!doctype html>
 <html lang="pt-BR">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="alternate icon" href="/favicon.ico" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content" />
-    <title>Sociedade Nutra - Comunidade Fitness</title>
-    <meta name="description" content="Comunidade fitness e nutrição para alunos do Rodrigo Nutra. Compartilhe sua evolução, conecte-se e alcance seus objetivos!" />
-    <meta name="author" content="Sociedade Nutra" />
 
-    <!-- PWA Meta Tags - Android -->
-    <meta name="theme-color" content="#FF6B00" />
-    <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="application-name" content="Comunidade dos Sócios" />
-    <meta name="msapplication-TileColor" content="#FF6B00" />
-    <meta name="msapplication-TileImage" content="/icons/icon-144x144.png" />
-    <meta name="msapplication-config" content="/browserconfig.xml" />
-    
-    <!-- PWA Meta Tags - iOS -->
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="Comunidade dos Sócios" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="format-detection" content="telephone=no" />
-    
-    <!-- iOS Splash Screens -->
-    <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
-    <link rel="apple-touch-icon" sizes="72x72" href="/icons/icon-72x72.png" />
-    <link rel="apple-touch-icon" sizes="96x96" href="/icons/icon-96x96.png" />
-    <link rel="apple-touch-icon" sizes="128x128" href="/icons/icon-128x128.png" />
-    <link rel="apple-touch-icon" sizes="144x144" href="/icons/icon-144x144.png" />
-    <link rel="apple-touch-icon" sizes="152x152" href="/icons/icon-152x152.png" />
-    <link rel="apple-touch-icon" sizes="192x192" href="/icons/icon-192x192.png" />
-    <link rel="apple-touch-icon" sizes="384x384" href="/icons/icon-384x384.png" />
-    <link rel="apple-touch-icon" sizes="512x512" href="/icons/icon-512x512.png" />
-    
-    <!-- iOS Splash Screen Meta Tags -->
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-touch-fullscreen" content="yes" />
-    
-    <!-- Android Chrome -->
-    <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#FF6B00" />
-    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#FF6B00" />
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="alternate icon" href="/favicon.ico" />
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content" />
+  <title>Sociedade Nutra - Comunidade Fitness</title>
+  <meta name="description"
+    content="Comunidade fitness e nutrição para alunos do Rodrigo Nutra. Compartilhe sua evolução, conecte-se e alcance seus objetivos!" />
+  <meta name="author" content="Sociedade Nutra" />
 
-    <!-- Manifest -->
-    <link rel="manifest" href="/manifest.json" />
+  <!-- PWA Meta Tags - Android -->
+  <meta name="theme-color" content="#FF6B00" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="application-name" content="Comunidade dos Sócios" />
+  <meta name="msapplication-TileColor" content="#FF6B00" />
+  <meta name="msapplication-TileImage" content="/icons/icon-144x144.png" />
+  <meta name="msapplication-config" content="/browserconfig.xml" />
 
-    <!-- Open Graph -->
-    <meta property="og:title" content="Sociedade Nutra - Comunidade Fitness" />
-    <meta property="og:description" content="Comunidade fitness e nutrição para alunos do Rodrigo Nutra" />
-    <meta property="og:type" content="website" />
-    <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+  <!-- PWA Meta Tags - iOS -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Comunidade dos Sócios" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="format-detection" content="telephone=no" />
 
-    <!-- Twitter -->
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@TriboNutraPrime" />
-    <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+  <!-- iOS Splash Screens -->
+  <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
+  <link rel="apple-touch-icon" sizes="72x72" href="/icons/icon-72x72.png" />
+  <link rel="apple-touch-icon" sizes="96x96" href="/icons/icon-96x96.png" />
+  <link rel="apple-touch-icon" sizes="128x128" href="/icons/icon-128x128.png" />
+  <link rel="apple-touch-icon" sizes="144x144" href="/icons/icon-144x144.png" />
+  <link rel="apple-touch-icon" sizes="152x152" href="/icons/icon-152x152.png" />
+  <link rel="apple-touch-icon" sizes="192x192" href="/icons/icon-192x192.png" />
+  <link rel="apple-touch-icon" sizes="384x384" href="/icons/icon-384x384.png" />
+  <link rel="apple-touch-icon" sizes="512x512" href="/icons/icon-512x512.png" />
 
-    <!-- OneSignal SDK -->
-    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
-  </head>
+  <!-- iOS Splash Screen Meta Tags -->
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-touch-fullscreen" content="yes" />
 
-  <body class="dark">
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+  <!-- Android Chrome -->
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#FF6B00" />
+  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#FF6B00" />
+
+  <!-- Manifest -->
+  <link rel="manifest" href="/manifest.json" />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="Sociedade Nutra - Comunidade Fitness" />
+  <meta property="og:description" content="Comunidade fitness e nutrição para alunos do Rodrigo Nutra" />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:site" content="@TriboNutraPrime" />
+  <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+
+  <!-- OneSignal SDK -->
+  <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+  <script>
+    window.OneSignalDeferred = window.OneSignalDeferred || [];
+    OneSignalDeferred.push(async function (OneSignal) {
+      await OneSignal.init({
+        appId: "e1e6712a-5457-4991-a922-f22b1f151c25",
+      });
+    });
+  </script>
+</head>
+
+<body class="dark">
+  <div id="root"></div>
+  <script type="module" src="/src/main.tsx"></script>
+</body>
+
 </html>
