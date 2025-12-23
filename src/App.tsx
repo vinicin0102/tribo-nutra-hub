@@ -7,6 +7,7 @@ import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { InstallPrompt } from "@/components/pwa/InstallPrompt";
 import { AppPopup } from "@/components/AppPopup";
+import { PushPromptPortugues } from "@/components/push/PushPromptPortugues";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -216,6 +217,7 @@ const App = () => (
         <BrowserRouter>
           <AuthProvider>
             <AppPopup />
+            <PushPromptPortugues />
             <AppRoutes />
             <InstallPrompt />
           </AuthProvider>
