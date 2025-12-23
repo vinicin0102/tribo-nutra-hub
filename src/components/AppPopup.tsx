@@ -2,9 +2,33 @@ import { X, ExternalLink } from 'lucide-react';
 import { useAppPopup } from '@/hooks/useAppPopup';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { useEffect, useState } from 'react';
+
+const AUTO_CLOSE_SECONDS = 5;
 
 export function AppPopup() {
     const { popup, markAsViewed } = useAppPopup();
+    const [timeLeft, setTimeLeft] = useState(AUTO_CLOSE_SECONDS);
+
+    // Timer para auto-fechar após 5 segundos
+    useEffect(() => {
+        if (!popup) return;
+
+        setTimeLeft(AUTO_CLOSE_SECONDS);
+
+        const timer = setInterval(() => {
+            setTimeLeft((prev) => {
+                if (prev <= 1) {
+                    clearInterval(timer);
+                    markAsViewed(popup.id);
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+
+        return () => clearInterval(timer);
+    }, [popup?.id]);
 
     if (!popup) {
         return null;
@@ -66,6 +90,20 @@ export function AppPopup() {
                     )}
 
                     <div className="flex flex-col gap-3 pt-2">
+                        {/* Indicador de tempo restante */}
+                        <div className="space-y-2">
+                            <div className="flex items-center justify-between text-xs text-gray-400">
+                                <span>Fechando automaticamente</span>
+                                <span>{timeLeft}s</span>
+                            </div>
+                            <div className="w-full h-1 bg-gray-700 rounded-full overflow-hidden">
+                                <div
+                                    className="h-full bg-primary transition-all duration-1000 ease-linear"
+                                    style={{ width: `${(timeLeft / AUTO_CLOSE_SECONDS) * 100}%` }}
+                                />
+                            </div>
+                        </div>
+
                         {popup.button_text && popup.button_link && (
                             <Button
                                 onClick={handleButtonClick}
