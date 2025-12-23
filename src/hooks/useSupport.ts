@@ -286,10 +286,14 @@ export function useDeleteSupportMessage() {
 export function useBanUserTemporary() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
-  const isAdmin = user?.email && isAdminEmail(user.email);
+  const { data: profile } = useProfile();
 
   return useMutation({
     mutationFn: async ({ userId, days = 3 }: { userId: string; days?: number }) => {
+      // Verificar permissão no momento da execução
+      const profileData = profile as { role?: string } | undefined;
+      const isAdmin = isAdminEmail(user?.email) || profileData?.role === 'admin' || profileData?.role === 'support';
+
       if (!isAdmin) throw new Error('Sem permissão. Apenas administradores podem executar esta ação.');
 
       console.log('Banindo usuário:', { userId, days, isAdmin, userEmail: user?.email });
@@ -329,10 +333,14 @@ export function useBanUserTemporary() {
 export function useMuteUser() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
-  const isAdmin = user?.email && isAdminEmail(user.email);
+  const { data: profile } = useProfile();
 
   return useMutation({
     mutationFn: async ({ userId, days }: { userId: string; days?: number }) => {
+      // Verificar permissão no momento da execução
+      const profileData = profile as { role?: string } | undefined;
+      const isAdmin = isAdminEmail(user?.email) || profileData?.role === 'admin' || profileData?.role === 'support';
+
       if (!isAdmin) throw new Error('Sem permissão. Apenas administradores podem executar esta ação.');
 
       console.log('Mutando usuário:', { userId, days, isAdmin, userEmail: user?.email });
@@ -373,11 +381,13 @@ export function useUnmuteUser() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const { data: profile } = useProfile();
-  const profileData = profile as { role?: string } | undefined;
-  const isAdmin = isAdminEmail(user?.email) || profileData?.role === 'admin' || profileData?.role === 'support';
 
   return useMutation({
     mutationFn: async (userId: string) => {
+      // Verificar permissão no momento da execução
+      const profileData = profile as { role?: string } | undefined;
+      const isAdmin = isAdminEmail(user?.email) || profileData?.role === 'admin' || profileData?.role === 'support';
+
       if (!isAdmin) throw new Error('Sem permissão. Apenas admins podem executar esta ação.');
 
       console.log('Desmutando usuário via RPC:', { userId });
@@ -410,10 +420,14 @@ export function useUnmuteUser() {
 export function useDeleteUser() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
-  const isAdmin = user?.email && isAdminEmail(user.email);
+  const { data: profile } = useProfile();
 
   return useMutation({
     mutationFn: async (userId: string) => {
+      // Verificar permissão no momento da execução
+      const profileData = profile as { role?: string } | undefined;
+      const isAdmin = isAdminEmail(user?.email) || profileData?.role === 'admin' || profileData?.role === 'support';
+
       if (!isAdmin) throw new Error('Sem permissão. Apenas administradores podem executar esta ação.');
 
       // Delete user profile (cascade will handle related records)
@@ -435,8 +449,6 @@ export function useChangeUserPlan() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const { data: profile } = useProfile();
-  const profileData = profile as { role?: string } | undefined;
-  const isAdmin = isAdminEmail(user?.email) || profileData?.role === 'admin';
 
   return useMutation({
     mutationFn: async ({
@@ -448,8 +460,19 @@ export function useChangeUserPlan() {
       plan: 'free' | 'diamond';
       expiresAt?: string | null;
     }) => {
+      // Verificar permissão no momento da execução
+      const profileData = profile as { role?: string } | undefined;
+      const isAdmin = isAdminEmail(user?.email) || profileData?.role === 'admin' || profileData?.role === 'support';
+
+      console.log('🔐 [useChangeUserPlan] Verificando permissão:', {
+        userEmail: user?.email,
+        role: profileData?.role,
+        isAdminByEmail: isAdminEmail(user?.email),
+        isAdmin
+      });
+
       if (!isAdmin) {
-        console.error('Acesso negado - não é admin:', { userEmail: user?.email, role: profileData?.role });
+        console.error('❌ Acesso negado - não é admin:', { userEmail: user?.email, role: profileData?.role });
         throw new Error('Sem permissão. Apenas admins podem executar esta ação.');
       }
 
@@ -623,8 +646,6 @@ export function useUpdateUserPoints() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const { data: profile } = useProfile();
-  const profileData = profile as { role?: string } | undefined;
-  const isAdmin = isAdminEmail(user?.email) || profileData?.role === 'admin';
 
   return useMutation({
     mutationFn: async ({
@@ -635,6 +656,10 @@ export function useUpdateUserPoints() {
       points: number;
       reason?: string;
     }) => {
+      // Verificar permissão no momento da execução
+      const profileData = profile as { role?: string } | undefined;
+      const isAdmin = isAdminEmail(user?.email) || profileData?.role === 'admin' || profileData?.role === 'support';
+
       if (!isAdmin) {
         console.error('Acesso negado - não é admin:', { userEmail: user?.email, role: profileData?.role });
         throw new Error('Sem permissão. Apenas administradores podem executar esta ação.');
