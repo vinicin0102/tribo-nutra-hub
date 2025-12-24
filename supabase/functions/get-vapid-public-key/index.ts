@@ -44,10 +44,11 @@ Deno.serve(async (req) => {
         }
       }
     );
-  } catch (error) {
+  } catch (error: unknown) {
+    const err = error as Error;
     return new Response(
       JSON.stringify({ 
-        error: error.message,
+        error: err.message,
         vapidPublicKey: null 
       }),
       { 

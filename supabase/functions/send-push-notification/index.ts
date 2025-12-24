@@ -246,15 +246,12 @@ serve(async (req) => {
       try {
         console.log(`📨 Tentando enviar para: ${sub.endpoint.substring(0, 60)}...`);
         
-        // Converter chaves de base64 para Uint8Array
-        const p256dh = Uint8Array.from(atob(sub.p256dh), c => c.charCodeAt(0));
-        const auth = Uint8Array.from(atob(sub.auth), c => c.charCodeAt(0));
-        
+        // Usar as chaves como strings base64 (web-push espera strings)
         const subscription = {
           endpoint: sub.endpoint,
           keys: {
-            p256dh: p256dh,
-            auth: auth,
+            p256dh: sub.p256dh,
+            auth: sub.auth,
           },
         };
 
