@@ -415,6 +415,72 @@ export function useDeleteUser() {
   });
 }
 
+// Função para alterar role do usuário (tornar admin/suporte/user)
+export function useChangeUserRole() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      userId,
+      email,
+      role,
+    }: {
+      userId: string;
+      email: string;
+      role: 'user' | 'admin' | 'support';
+    }) => {
+      console.log('🔄 Alterando role do usuário:', { userId, email, role });
+
+      // Atualizar role na tabela profiles
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({ role, updated_at: new Date().toISOString() })
+        .eq('user_id', userId);
+
+      if (profileError) {
+        console.error('Erro ao atualizar profile:', profileError);
+        throw new Error(profileError.message);
+      }
+
+      // Se for admin ou support, adicionar na tabela admin_users
+      if (role === 'admin' || role === 'support') {
+        const { error: adminError } = await (supabase.rpc as any)('add_admin_user', {
+          p_email: email,
+          p_role: role,
+        });
+
+        // Se a RPC não existir, tentar inserir diretamente
+        if (adminError) {
+          console.log('RPC não existe, tentando inserir diretamente');
+          const { error: insertError } = await (supabase as any)
+            .from('admin_users')
+            .upsert({ email, role, updated_at: new Date().toISOString() }, { onConflict: 'email' });
+
+          if (insertError && !insertError.message?.includes('does not exist')) {
+            console.error('Erro ao adicionar admin_users:', insertError);
+          }
+        }
+      } else {
+        // Se for user, remover da tabela admin_users
+        const { error: removeError } = await (supabase as any)
+          .from('admin_users')
+          .delete()
+          .eq('email', email);
+
+        if (removeError && !removeError.message?.includes('does not exist')) {
+          console.log('Nota: tabela admin_users pode não existir');
+        }
+      }
+
+      return { success: true, message: `Role alterado para ${role}` };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['support-users'] });
+      queryClient.invalidateQueries({ queryKey: ['profiles'] });
+    },
+  });
+}
+
 export function useChangeUserPlan() {
   const queryClient = useQueryClient();
 

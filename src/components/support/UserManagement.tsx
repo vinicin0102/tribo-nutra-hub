@@ -1,19 +1,20 @@
 import { useState, useEffect } from 'react';
-import { Ban, CheckCircle, Trash2, Search, VolumeX, Volume2, Crown, Coins, MoreVertical, Unlock, Mail, Phone, Download } from 'lucide-react';
+import { Ban, CheckCircle, Trash2, Search, VolumeX, Volume2, Crown, Coins, MoreVertical, Unlock, Mail, Phone, Download, Shield } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { 
-  useSupportUsers, 
-  useBanUserTemporary, 
+import {
+  useSupportUsers,
+  useBanUserTemporary,
   useUnbanUser,
   useMuteUser,
   useUnmuteUser,
   useDeleteUser,
   useChangeUserPlan,
   useUpdateUserPoints,
-  useUnlockMentoria
+  useUnlockMentoria,
+  useChangeUserRole
 } from '@/hooks/useSupport';
 import { useIsAdmin } from '@/hooks/useAdmin';
 import { toast } from 'sonner';
@@ -68,7 +69,7 @@ export function UserManagement() {
   const isAdmin = useIsAdmin();
   const { data: usersData = [], isLoading, error } = useSupportUsers();
   const users = usersData as unknown as UserProfile[];
-  
+
   // Debug: verificar se telefone está sendo buscado
   if (users.length > 0) {
     console.log('🔍 [UserManagement] Primeiro usuário:', {
@@ -78,7 +79,7 @@ export function UserManagement() {
       hasTelefone: !!users[0].telefone
     });
   }
-  
+
   const banUserTemporary = useBanUserTemporary();
   const unbanUser = useUnbanUser();
   const muteUser = useMuteUser();
@@ -87,13 +88,16 @@ export function UserManagement() {
   const changePlan = useChangeUserPlan();
   const updatePoints = useUpdateUserPoints();
   const unlockMentoria = useUnlockMentoria();
-  
+  const changeRole = useChangeUserRole();
+
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const [showPlanDialog, setShowPlanDialog] = useState(false);
   const [showPointsDialog, setShowPointsDialog] = useState(false);
+  const [showRoleDialog, setShowRoleDialog] = useState(false);
   const [newPlan, setNewPlan] = useState<'free' | 'diamond'>('free');
   const [newPoints, setNewPoints] = useState('');
+  const [newRole, setNewRole] = useState<'user' | 'admin' | 'support'>('user');
 
   // Função para formatar telefone para exibição
   const formatPhoneDisplay = (phone: string) => {
@@ -158,13 +162,13 @@ export function UserManagement() {
     try {
       const result = await unlockMentoria.mutateAsync(userId);
       console.log('✅ [UserManagement] Resultado:', result);
-      
+
       const typedResult = result as { modules_unlocked?: number; unlocked?: number; total_modules?: number } | undefined;
       const modulesCount = typedResult?.modules_unlocked || typedResult?.unlocked || typedResult?.total_modules || 'todos';
       toast.success(`Mentoria liberada para ${username}! ${username} precisa recarregar a página para ver os módulos desbloqueados.`, {
         duration: 8000
       });
-      
+
       console.log('ℹ️ [UserManagement] O usuário precisa recarregar a página para ver as alterações');
     } catch (error: any) {
       console.error('❌ [UserManagement] Erro ao liberar mentoria:', error);
@@ -184,14 +188,33 @@ export function UserManagement() {
     }
   };
 
+  const handleChangeRole = async () => {
+    if (!selectedUser) return;
+
+    try {
+      await changeRole.mutateAsync({
+        userId: selectedUser.user_id,
+        email: selectedUser.email || '',
+        role: newRole,
+      });
+
+      const roleLabel = newRole === 'admin' ? 'Administrador' : newRole === 'support' ? 'Suporte' : 'Usuário';
+      toast.success(`${selectedUser.username} agora é ${roleLabel}`);
+      setShowRoleDialog(false);
+      setSelectedUser(null);
+    } catch (error: any) {
+      toast.error(`Erro ao alterar permissão: ${error?.message || 'Erro desconhecido'}`);
+    }
+  };
+
   const handleChangePlan = async (e?: React.MouseEvent) => {
     if (e) {
       e.preventDefault();
       e.stopPropagation();
     }
 
-    console.log('🔄 [UserManagement] handleChangePlan chamado', { 
-      selectedUser: selectedUser?.user_id, 
+    console.log('🔄 [UserManagement] handleChangePlan chamado', {
+      selectedUser: selectedUser?.user_id,
       newPlan,
       isPending: changePlan.isPending
     });
@@ -203,11 +226,11 @@ export function UserManagement() {
     }
 
     try {
-      console.log('🔄 [UserManagement] Tentando alterar plano:', { 
-        userId: selectedUser.user_id, 
+      console.log('🔄 [UserManagement] Tentando alterar plano:', {
+        userId: selectedUser.user_id,
         username: selectedUser.username,
         currentPlan: selectedUser.subscription_plan,
-        newPlan 
+        newPlan
       });
 
       const result = await changePlan.mutateAsync({
@@ -219,12 +242,12 @@ export function UserManagement() {
       console.log('✅ [UserManagement] Plano alterado com sucesso:', result);
 
       toast.success(`Plano de ${selectedUser.username} alterado para ${newPlan === 'diamond' ? '💎 Diamond' : 'Free'}`);
-      
+
       // Fechar dialog e limpar
       setShowPlanDialog(false);
       setSelectedUser(null);
       setNewPlan('free');
-      
+
       // Forçar refresh da lista de usuários após 500ms
       setTimeout(() => {
         window.location.reload();
@@ -237,9 +260,9 @@ export function UserManagement() {
         stack: error?.stack,
         name: error?.name
       });
-      
+
       const errorMessage = error?.message || 'Erro desconhecido ao alterar plano';
-      
+
       // Mensagem mais específica baseada no erro
       if (errorMessage.includes('RLS') || errorMessage.includes('policy') || errorMessage.includes('permission') || errorMessage.includes('42501')) {
         toast.error('Erro de permissão. Execute o script criar-funcao-change-plan-admin.sql no Supabase SQL Editor.', {
@@ -277,12 +300,12 @@ export function UserManagement() {
       ];
 
       const csvRows = users.map(user => {
-        const status = user.is_banned 
-          ? 'Banido' 
-          : user.is_muted 
-            ? 'Mutado' 
+        const status = user.is_banned
+          ? 'Banido'
+          : user.is_muted
+            ? 'Mutado'
             : 'Ativo';
-        
+
         return [
           user.username || '',
           user.full_name || '',
@@ -303,7 +326,7 @@ export function UserManagement() {
       // Criar CSV
       const csvContent = [
         csvHeaders.join(','),
-        ...csvRows.map(row => 
+        ...csvRows.map(row =>
           row.map(cell => {
             // Escapar vírgulas e aspas no conteúdo
             const cellStr = String(cell || '');
@@ -318,7 +341,7 @@ export function UserManagement() {
       // Adicionar BOM para Excel reconhecer UTF-8
       const BOM = '\uFEFF';
       const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
-      
+
       // Criar link de download
       const link = document.createElement('a');
       const url = URL.createObjectURL(blob);
@@ -328,7 +351,7 @@ export function UserManagement() {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      
+
       toast.success(`Dados de ${users.length} usuários exportados com sucesso!`);
     } catch (error) {
       console.error('Erro ao exportar dados:', error);
@@ -342,8 +365,8 @@ export function UserManagement() {
       e.stopPropagation();
     }
 
-    console.log('🔄 [UserManagement] handleUpdatePoints chamado', { 
-      selectedUser: selectedUser?.user_id, 
+    console.log('🔄 [UserManagement] handleUpdatePoints chamado', {
+      selectedUser: selectedUser?.user_id,
       newPoints,
       isPending: updatePoints.isPending
     });
@@ -359,7 +382,7 @@ export function UserManagement() {
       toast.error('Preencha o campo de pontos');
       return;
     }
-    
+
     try {
       const points = parseInt(newPoints.trim());
       console.log('📊 Pontos parseados:', { raw: newPoints, parsed: points, isNaN: isNaN(points) });
@@ -376,11 +399,11 @@ export function UserManagement() {
         return;
       }
 
-      console.log('🔄 [UserManagement] Tentando atualizar pontos:', { 
-        userId: selectedUser.user_id, 
+      console.log('🔄 [UserManagement] Tentando atualizar pontos:', {
+        userId: selectedUser.user_id,
         username: selectedUser.username,
         currentPoints: selectedUser.points,
-        newPoints: points 
+        newPoints: points
       });
 
       const result = await updatePoints.mutateAsync({
@@ -391,12 +414,12 @@ export function UserManagement() {
       console.log('✅ [UserManagement] Pontos atualizados com sucesso:', result);
 
       toast.success(`Pontuação de ${selectedUser.username} alterada para ${points.toLocaleString('pt-BR')} pontos`);
-      
+
       // Fechar dialog e limpar
       setShowPointsDialog(false);
       setSelectedUser(null);
       setNewPoints('');
-      
+
       // Forçar refresh da lista de usuários após 500ms
       setTimeout(() => {
         window.location.reload();
@@ -409,9 +432,9 @@ export function UserManagement() {
         stack: error?.stack,
         name: error?.name
       });
-      
+
       const errorMessage = error?.message || 'Erro desconhecido ao alterar pontuação';
-      
+
       // Mensagem mais específica baseada no erro
       if (errorMessage.includes('RLS') || errorMessage.includes('policy') || errorMessage.includes('permission') || errorMessage.includes('42501')) {
         toast.error('Erro de permissão. Execute o script FIX-RLS-DEFINITIVO.sql no Supabase SQL Editor. Veja EXECUTAR-SQL-AGORA.md', {
@@ -446,12 +469,12 @@ export function UserManagement() {
   }
 
   if (error) {
-    const errorMessage = error instanceof Error 
-      ? error.message 
+    const errorMessage = error instanceof Error
+      ? error.message
       : typeof error === 'object' && error !== null
         ? JSON.stringify(error, null, 2)
         : String(error);
-    
+
     return (
       <Card className="border border-[#2a2a2a] bg-[#1a1a1a]">
         <CardContent className="pt-6">
@@ -538,11 +561,10 @@ export function UserManagement() {
                       <div className="flex items-center gap-2 mt-1 flex-wrap">
                         <span className="text-xs text-gray-500">{user.points || 0} pontos</span>
                         {user.subscription_plan && (
-                          <span className={`text-xs px-2 py-0.5 rounded ${
-                            user.subscription_plan === 'diamond' 
-                              ? 'bg-cyan-500/20 text-cyan-500' 
-                              : 'bg-gray-500/20 text-gray-400'
-                          }`}>
+                          <span className={`text-xs px-2 py-0.5 rounded ${user.subscription_plan === 'diamond'
+                            ? 'bg-cyan-500/20 text-cyan-500'
+                            : 'bg-gray-500/20 text-gray-400'
+                            }`}>
                             {user.subscription_plan === 'diamond' ? '💎 Diamond' : 'Free'}
                           </span>
                         )}
@@ -605,7 +627,7 @@ export function UserManagement() {
                           Desbanir
                         </DropdownMenuItem>
                       )}
-                      
+
                       {!user.is_muted ? (
                         <>
                           <AlertDialog>
@@ -640,7 +662,7 @@ export function UserManagement() {
                           Desmutar
                         </DropdownMenuItem>
                       )}
-                      
+
                       <DropdownMenuItem
                         onClick={() => {
                           setSelectedUser(user);
@@ -652,7 +674,7 @@ export function UserManagement() {
                         <Crown className="h-4 w-4 mr-2" />
                         Mudar plano
                       </DropdownMenuItem>
-                      
+
                       <DropdownMenuItem
                         onClick={() => {
                           setSelectedUser(user);
@@ -664,7 +686,7 @@ export function UserManagement() {
                         <Coins className="h-4 w-4 mr-2" />
                         Alterar pontuação
                       </DropdownMenuItem>
-                      
+
                       <DropdownMenuItem
                         onClick={() => handleUnlockMentoria(user.user_id, user.username)}
                         className="text-cyan-400"
@@ -673,7 +695,19 @@ export function UserManagement() {
                         <Unlock className="h-4 w-4 mr-2" />
                         {unlockMentoria.isPending ? 'Liberando...' : 'Liberar Mentoria'}
                       </DropdownMenuItem>
-                      
+
+                      <DropdownMenuItem
+                        onClick={() => {
+                          setSelectedUser(user);
+                          setNewRole((user.role as 'user' | 'admin' | 'support') || 'user');
+                          setShowRoleDialog(true);
+                        }}
+                        className="text-purple-400"
+                      >
+                        <Shield className="h-4 w-4 mr-2" />
+                        Alterar Permissão
+                      </DropdownMenuItem>
+
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-400">
@@ -735,13 +769,13 @@ export function UserManagement() {
             <Button variant="outline" onClick={() => setShowPlanDialog(false)} className="border-[#3a3a3a] text-white">
               Cancelar
             </Button>
-            <Button 
+            <Button
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 console.log('🖱️ Botão Salvar (Plano) clicado');
                 handleChangePlan(e);
-              }} 
+              }}
               className="bg-primary"
               disabled={changePlan.isPending || !selectedUser}
             >
@@ -773,29 +807,76 @@ export function UserManagement() {
             </div>
           </div>
           <DialogFooter>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => {
                 setShowPointsDialog(false);
                 setSelectedUser(null);
                 setNewPoints('');
-              }} 
+              }}
               className="border-[#3a3a3a] text-white"
               disabled={updatePoints.isPending}
             >
               Cancelar
             </Button>
-            <Button 
+            <Button
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 console.log('🖱️ Botão Salvar clicado');
                 handleUpdatePoints();
-              }} 
+              }}
               className="bg-primary"
               disabled={updatePoints.isPending || !newPoints || newPoints.trim() === ''}
             >
               {updatePoints.isPending ? 'Salvando...' : 'Salvar'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de alteração de permissão */}
+      <Dialog open={showRoleDialog} onOpenChange={setShowRoleDialog}>
+        <DialogContent className="bg-[#1a1a1a] border-[#2a2a2a]">
+          <DialogHeader>
+            <DialogTitle className="text-white">Alterar Permissão</DialogTitle>
+            <DialogDescription className="text-gray-400">
+              Alterar permissão de {selectedUser?.username}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label className="text-white">Nível de Acesso</Label>
+              <Select value={newRole} onValueChange={(value: 'user' | 'admin' | 'support') => setNewRole(value)}>
+                <SelectTrigger className="bg-[#2a2a2a] border-[#3a3a3a] text-white">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-[#2a2a2a] border-[#3a3a3a]">
+                  <SelectItem value="user" className="text-white">Usuário (sem permissões admin)</SelectItem>
+                  <SelectItem value="support" className="text-white">Suporte (pode ver painel)</SelectItem>
+                  <SelectItem value="admin" className="text-white">Administrador (controle total)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowRoleDialog(false);
+                setSelectedUser(null);
+              }}
+              className="border-[#3a3a3a] text-white"
+              disabled={changeRole.isPending}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleChangeRole}
+              className="bg-purple-600 hover:bg-purple-700"
+              disabled={changeRole.isPending}
+            >
+              {changeRole.isPending ? 'Salvando...' : 'Salvar'}
             </Button>
           </DialogFooter>
         </DialogContent>
