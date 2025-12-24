@@ -13,6 +13,15 @@ interface AppPopup {
     show_once_per_user: boolean;
 }
 
+// Helper para acessar tabelas de popup (não existem no schema ainda)
+const getAppPopupsTable = () => {
+    return (supabase as any).from('app_popups');
+};
+
+const getPopupViewsTable = () => {
+    return (supabase as any).from('popup_views');
+};
+
 export function useAppPopup() {
     const { user } = useAuth();
     const queryClient = useQueryClient();
@@ -21,39 +30,43 @@ export function useAppPopup() {
     const { data: popup, isLoading } = useQuery({
         queryKey: ['active-popup', user?.id],
         queryFn: async (): Promise<AppPopup | null> => {
-            // Buscar popup ativo
-            const { data: popups, error } = await (supabase
-                .from('app_popups') as any)
-                .select('*')
-                .eq('is_active', true)
-                .limit(1);
-
-            if (error) {
-                console.error('Erro ao buscar popup:', error);
-                return null;
-            }
-
-            if (!popups || popups.length === 0) {
-                return null;
-            }
-
-            const activePopup = popups[0] as AppPopup;
-
-            // Se o popup deve ser mostrado apenas 1x, verificar se usuário já viu
-            if (activePopup.show_once_per_user && user?.id) {
-                const { data: views } = await (supabase
-                    .from('popup_views') as any)
-                    .select('id')
-                    .eq('popup_id', activePopup.id)
-                    .eq('user_id', user.id)
+            try {
+                // Buscar popup ativo
+                const { data: popups, error } = await getAppPopupsTable()
+                    .select('*')
+                    .eq('is_active', true)
                     .limit(1);
 
-                if (views && views.length > 0) {
-                    return null; // Usuário já viu este popup
+                if (error) {
+                    console.error('Erro ao buscar popup:', error);
+                    return null;
                 }
-            }
 
-            return activePopup;
+                if (!popups || popups.length === 0) {
+                    return null;
+                }
+
+                const activePopup = popups[0] as AppPopup;
+
+                // Se o popup deve ser mostrado apenas 1x, verificar se usuário já viu
+                if (activePopup.show_once_per_user && user?.id) {
+                    const { data: views } = await getPopupViewsTable()
+                        .select('id')
+                        .eq('popup_id', activePopup.id)
+                        .eq('user_id', user.id)
+                        .limit(1);
+
+                    if (views && views.length > 0) {
+                        return null; // Usuário já viu este popup
+                    }
+                }
+
+                return activePopup;
+            } catch (error) {
+                // Tabela não existe, retornar null silenciosamente
+                console.warn('Sistema de popups não configurado');
+                return null;
+            }
         },
         enabled: true,
         staleTime: 30000, // 30 segundos
@@ -65,16 +78,19 @@ export function useAppPopup() {
         mutationFn: async (popupId: string) => {
             if (!user?.id) return;
 
-            const { error } = await (supabase
-                .from('popup_views') as any)
-                .insert({
-                    popup_id: popupId,
-                    user_id: user.id,
-                });
+            try {
+                const { error } = await getPopupViewsTable()
+                    .insert({
+                        popup_id: popupId,
+                        user_id: user.id,
+                    });
 
-            // Ignorar erro de duplicata (usuário já viu)
-            if (error && !error.message.includes('duplicate')) {
-                console.error('Erro ao marcar popup como visto:', error);
+                // Ignorar erro de duplicata (usuário já viu)
+                if (error && !error.message.includes('duplicate')) {
+                    console.error('Erro ao marcar popup como visto:', error);
+                }
+            } catch (error) {
+                console.warn('Não foi possível marcar popup como visto:', error);
             }
         },
         onSuccess: () => {
