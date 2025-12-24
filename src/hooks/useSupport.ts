@@ -6,7 +6,7 @@ import { deleteImage } from '@/lib/upload';
 import { deleteAudio } from '@/lib/audioUpload';
 
 // Lista de emails admin
-const ADMIN_EMAILS = ['auxiliodp1@gmail.com', 'admin02@gmail.com', 'vv9250400@gmail.com'];
+const ADMIN_EMAILS = ['admin02@gmail.com', 'auxiliodp1@gmail.com', 'vv9250400@gmail.com'];
 
 // Função helper para verificar se é admin por email
 function isAdminEmail(email: string | undefined | null): boolean {
