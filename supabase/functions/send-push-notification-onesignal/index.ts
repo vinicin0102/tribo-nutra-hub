@@ -119,7 +119,7 @@ serve(async (req) => {
     }
 
     // Preparar payload para OneSignal API
-    const onesignalPayload = {
+    const onesignalPayload: Record<string, unknown> = {
       app_id: onesignalAppId,
       include_player_ids: playerIds,
       headings: { en: title, pt: title },

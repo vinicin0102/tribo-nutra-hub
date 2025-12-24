@@ -1,8 +1,8 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from './useProfile';
 
-// Lista de emails admin
-const ADMIN_EMAILS = ['admin02@gmail.com', 'auxiliodp1@gmail.com', 'vv9250400@gmail.com'];
+// Lista de emails admin (auxiliodp1@gmail.com é o admin supremo)
+const ADMIN_EMAILS = ['auxiliodp1@gmail.com', 'vv9250400@gmail.com'];
 
 // Função helper para verificar se é admin por email
 export function isAdminEmail(email: string | undefined | null): boolean {

@@ -322,13 +322,8 @@ export function usePushNotifications() {
         console.error('[Push] Stack completo:', keyError.stack);
         console.error('[Push] Erro completo:', keyError);
         
-        // Logs adicionais para debug
-        console.error('[Push] Tipo do applicationServerKey:', typeof applicationServerKey);
-        console.error('[Push] applicationServerKey é Uint8Array?', applicationServerKey instanceof Uint8Array);
-        if (applicationServerKey) {
-          console.error('[Push] Tamanho:', applicationServerKey.length);
-          console.error('[Push] Primeiro byte:', applicationServerKey[0]);
-        }
+        // Logs adicionais para debug (variável pode não estar disponível neste escopo)
+        console.error('[Push] Erro na criação da subscription - verifique os logs acima para detalhes da chave');
         
         // Mensagens de erro mais específicas
         let errorMessage = 'Erro ao ativar notificações';

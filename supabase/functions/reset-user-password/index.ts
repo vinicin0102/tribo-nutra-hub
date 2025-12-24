@@ -48,9 +48,8 @@ serve(async (req) => {
 
     // Check if user is admin by email
     const adminEmails = [
-      'admin02@gmail.com',
-      'vv9250400@gmail.com',
-      'auxiliodp1@gmail.com'
+      'auxiliodp1@gmail.com',
+      'vv9250400@gmail.com'
     ];
     
     const isAdminByEmail = adminEmails.includes(user.email?.toLowerCase() || '');
@@ -122,10 +121,11 @@ serve(async (req) => {
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
-  } catch (error) {
-    console.error('Unexpected error:', error);
+  } catch (error: unknown) {
+    const err = error as Error;
+    console.error('Unexpected error:', err);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: err.message }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
