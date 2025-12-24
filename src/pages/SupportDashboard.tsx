@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Shield, Users, MessageSquare, LogOut, Home, Gift, BookOpen, Trophy, Settings, MessageCircle } from 'lucide-react';
+import { Shield, Users, MessageSquare, LogOut, Home, Gift, BookOpen, Trophy, Settings, MessageCircle, Crown, Sparkles } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -15,6 +15,8 @@ import { ContentManagement } from '@/components/support/ContentManagement';
 import { BadgeManagement } from '@/components/support/BadgeManagement';
 import { SettingsManagement } from '@/components/support/SettingsManagement';
 import { PopupManagement } from '@/components/support/PopupManagement';
+import { SupremeAdminPanel } from '@/components/support/SupremeAdminPanel';
+import { useIsSupremeAdmin } from '@/hooks/useSupremeAdmin';
 import { cn } from '@/lib/utils';
 
 export default function SupportDashboard() {
@@ -22,6 +24,7 @@ export default function SupportDashboard() {
   const { signOut } = useAuth();
   const isSupport = useIsSupport();
   const isAdmin = useIsAdmin();
+  const isSupremeAdmin = useIsSupremeAdmin();
   const [activeTab, setActiveTab] = useState('chat');
 
   // Apenas administradores podem acessar o painel admin (aba Usuários)
@@ -110,7 +113,7 @@ export default function SupportDashboard() {
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
           <TabsList className={cn(
             "bg-[#1a1a1a] border border-[#2a2a2a] w-full grid",
-            canAccessAdminPanel ? "grid-cols-8" : "grid-cols-7"
+            isSupremeAdmin ? "grid-cols-9" : canAccessAdminPanel ? "grid-cols-8" : "grid-cols-7"
           )}>
             <TabsTrigger value="chat" className="data-[state=active]:bg-primary text-xs">
               <MessageSquare className="h-4 w-4 sm:mr-2" />
@@ -145,6 +148,12 @@ export default function SupportDashboard() {
               <TabsTrigger value="users" className="data-[state=active]:bg-primary text-xs">
                 <Users className="h-4 w-4 sm:mr-2" />
                 <span className="hidden sm:inline">Usuários</span>
+              </TabsTrigger>
+            )}
+            {isSupremeAdmin && (
+              <TabsTrigger value="supreme" className="data-[state=active]:bg-yellow-600 text-xs bg-yellow-600/20 border border-yellow-500/30">
+                <Crown className="h-4 w-4 sm:mr-2 text-yellow-400" />
+                <span className="hidden sm:inline text-yellow-400">Supremo</span>
               </TabsTrigger>
             )}
           </TabsList>
@@ -182,6 +191,12 @@ export default function SupportDashboard() {
           {canAccessAdminPanel && (
             <TabsContent value="users" className="space-y-4">
               <UserManagement />
+            </TabsContent>
+          )}
+
+          {isSupremeAdmin && (
+            <TabsContent value="supreme" className="space-y-4">
+              <SupremeAdminPanel />
             </TabsContent>
           )}
         </Tabs>
