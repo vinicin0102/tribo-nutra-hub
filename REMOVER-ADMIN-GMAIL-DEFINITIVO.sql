@@ -18,8 +18,16 @@ ON CONFLICT (email) DO UPDATE SET role = 'admin', name = 'Admin Supremo', update
 
 UPDATE profiles SET role = 'admin', updated_at = NOW() WHERE email = 'auxiliodp1@gmail.com';
 
--- 4. SUBSTITUIR A FUNÇÃO is_admin_user (SEM admin@gmail.com)
-DROP FUNCTION IF EXISTS is_admin_user();
+-- 4. DROPAR POLICIES QUE DEPENDEM DE is_admin_user()
+DROP POLICY IF EXISTS "Admins can view admin_users" ON admin_users;
+DROP POLICY IF EXISTS "Admins can insert admin_users" ON admin_users;
+DROP POLICY IF EXISTS "Admins can update admin_users" ON admin_users;
+DROP POLICY IF EXISTS "Admins can delete admin_users" ON admin_users;
+
+-- 5. DESABILITAR RLS TEMPORARIAMENTE
+ALTER TABLE admin_users DISABLE ROW LEVEL SECURITY;
+
+-- 6. SUBSTITUIR A FUNÇÃO is_admin_user (usando CREATE OR REPLACE, não DROP)
 CREATE OR REPLACE FUNCTION is_admin_user()
 RETURNS BOOLEAN
 LANGUAGE plpgsql
@@ -55,8 +63,7 @@ BEGIN
 END;
 $$;
 
--- 5. ATUALIZAR change_user_plan_admin (SEM admin@gmail.com)
-DROP FUNCTION IF EXISTS change_user_plan_admin(UUID, TEXT, TIMESTAMP WITH TIME ZONE);
+-- 7. ATUALIZAR change_user_plan_admin (SEM admin@gmail.com)
 CREATE OR REPLACE FUNCTION change_user_plan_admin(p_user_id UUID, p_plan TEXT, p_expires_at TIMESTAMP WITH TIME ZONE DEFAULT NULL)
 RETURNS JSON LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 DECLARE v_email TEXT;
@@ -80,8 +87,7 @@ END;$$;
 
 GRANT EXECUTE ON FUNCTION change_user_plan_admin(UUID, TEXT, TIMESTAMP WITH TIME ZONE) TO authenticated;
 
--- 6. ATUALIZAR OUTRAS FUNÇÕES RPC
-DROP FUNCTION IF EXISTS ban_user_temporary(UUID, INTEGER);
+-- 8. ATUALIZAR OUTRAS FUNÇÕES RPC
 CREATE OR REPLACE FUNCTION ban_user_temporary(p_user_id UUID, p_days INTEGER DEFAULT 3)
 RETURNS JSON LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 DECLARE v_email TEXT;
@@ -96,7 +102,6 @@ EXCEPTION WHEN OTHERS THEN RETURN json_build_object('success', false, 'error', S
 END;$$;
 GRANT EXECUTE ON FUNCTION ban_user_temporary(UUID, INTEGER) TO authenticated;
 
-DROP FUNCTION IF EXISTS unban_user(UUID);
 CREATE OR REPLACE FUNCTION unban_user(p_user_id UUID)
 RETURNS JSON LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 DECLARE v_email TEXT;
@@ -111,7 +116,6 @@ EXCEPTION WHEN OTHERS THEN RETURN json_build_object('success', false, 'error', S
 END;$$;
 GRANT EXECUTE ON FUNCTION unban_user(UUID) TO authenticated;
 
-DROP FUNCTION IF EXISTS mute_user(UUID, INTEGER);
 CREATE OR REPLACE FUNCTION mute_user(p_user_id UUID, p_hours INTEGER DEFAULT NULL)
 RETURNS JSON LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 DECLARE v_email TEXT; v_mute_until TIMESTAMP WITH TIME ZONE;
@@ -127,7 +131,6 @@ EXCEPTION WHEN OTHERS THEN RETURN json_build_object('success', false, 'error', S
 END;$$;
 GRANT EXECUTE ON FUNCTION mute_user(UUID, INTEGER) TO authenticated;
 
-DROP FUNCTION IF EXISTS unmute_user_admin(UUID);
 CREATE OR REPLACE FUNCTION unmute_user_admin(p_user_id UUID)
 RETURNS JSON LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 DECLARE v_email TEXT;
@@ -142,7 +145,6 @@ EXCEPTION WHEN OTHERS THEN RETURN json_build_object('success', false, 'error', S
 END;$$;
 GRANT EXECUTE ON FUNCTION unmute_user_admin(UUID) TO authenticated;
 
-DROP FUNCTION IF EXISTS update_user_points_admin(UUID, INTEGER);
 CREATE OR REPLACE FUNCTION update_user_points_admin(p_user_id UUID, p_points INTEGER)
 RETURNS JSON LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 DECLARE v_email TEXT;

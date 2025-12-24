@@ -64,6 +64,11 @@ export function SupremeAdminPanel() {
     const [newAdminEmail, setNewAdminEmail] = useState('');
     const [newAdminRole, setNewAdminRole] = useState<'admin' | 'support'>('admin');
     const [newPlan, setNewPlan] = useState<'free' | 'diamond'>('free');
+    const [showNotifyDialog, setShowNotifyDialog] = useState(false);
+    const [notifyTitle, setNotifyTitle] = useState('');
+    const [notifyMessage, setNotifyMessage] = useState('');
+    const [notifyUrl, setNotifyUrl] = useState('');
+    const [isSendingNotification, setIsSendingNotification] = useState(false);
 
     if (!isSupreme) {
         return (
@@ -229,6 +234,50 @@ export function SupremeAdminPanel() {
         toast.success('Dados do usuário exportados!');
     };
 
+    const handleNotifyAll = async () => {
+        if (!notifyTitle.trim()) {
+            toast.error('Digite o título da notificação');
+            return;
+        }
+        if (!notifyMessage.trim()) {
+            toast.error('Digite a mensagem da notificação');
+            return;
+        }
+
+        setIsSendingNotification(true);
+
+        try {
+            const { data, error } = await supabase.functions.invoke('send-push-notification-onesignal', {
+                body: {
+                    title: notifyTitle.trim(),
+                    body: notifyMessage.trim(),
+                    url: notifyUrl.trim() || undefined,
+                },
+            });
+
+            if (error) {
+                console.error('Erro ao enviar notificação:', error);
+                toast.error('Erro ao enviar notificação: ' + error.message);
+                return;
+            }
+
+            if (data?.success) {
+                toast.success(`Notificação enviada com sucesso! ${data.success_count} usuário(s) notificado(s).`);
+                setShowNotifyDialog(false);
+                setNotifyTitle('');
+                setNotifyMessage('');
+                setNotifyUrl('');
+            } else {
+                toast.error('Erro ao enviar notificação: ' + (data?.error || 'Erro desconhecido'));
+            }
+        } catch (error: any) {
+            console.error('Erro ao enviar notificação:', error);
+            toast.error('Erro ao enviar notificação: ' + (error.message || 'Erro desconhecido'));
+        } finally {
+            setIsSendingNotification(false);
+        }
+    };
+
     return (
         <div className="space-y-6">
             {/* Header exclusivo */}
@@ -311,7 +360,7 @@ export function SupremeAdminPanel() {
                     <Button
                         variant="outline"
                         className="border-yellow-500 text-yellow-400 hover:bg-yellow-500/10"
-                        onClick={() => toast.info('Em breve: Enviar notificação para todos')}
+                        onClick={() => setShowNotifyDialog(true)}
                     >
                         <Bell className="h-4 w-4 mr-2" />
                         Notificar Todos
@@ -669,6 +718,67 @@ export function SupremeAdminPanel() {
                         </Button>
                         <Button onClick={() => setShowUserDetailsDialog(false)} className="bg-gray-700 hover:bg-gray-600">
                             Fechar
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Dialog Notificar Todos */}
+            <Dialog open={showNotifyDialog} onOpenChange={setShowNotifyDialog}>
+                <DialogContent className="bg-[#1a1a1a] border-[#2a2a2a]">
+                    <DialogHeader>
+                        <DialogTitle className="text-white flex items-center gap-2">
+                            <Bell className="h-5 w-5 text-yellow-400" />
+                            Enviar Notificação para Todos
+                        </DialogTitle>
+                        <DialogDescription className="text-gray-400">
+                            A notificação será enviada para todos os usuários que habilitaram push notifications
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                            <Label className="text-white">Título da Notificação *</Label>
+                            <Input
+                                value={notifyTitle}
+                                onChange={(e) => setNotifyTitle(e.target.value)}
+                                placeholder="Ex: Nova aula disponível!"
+                                className="bg-[#2a2a2a] border-[#3a3a3a] text-white"
+                                maxLength={50}
+                            />
+                            <p className="text-xs text-gray-500">{notifyTitle.length}/50 caracteres</p>
+                        </div>
+                        <div className="space-y-2">
+                            <Label className="text-white">Mensagem *</Label>
+                            <Input
+                                value={notifyMessage}
+                                onChange={(e) => setNotifyMessage(e.target.value)}
+                                placeholder="Ex: Confira o novo conteúdo exclusivo que acabou de sair!"
+                                className="bg-[#2a2a2a] border-[#3a3a3a] text-white"
+                                maxLength={200}
+                            />
+                            <p className="text-xs text-gray-500">{notifyMessage.length}/200 caracteres</p>
+                        </div>
+                        <div className="space-y-2">
+                            <Label className="text-white">URL de Destino (opcional)</Label>
+                            <Input
+                                value={notifyUrl}
+                                onChange={(e) => setNotifyUrl(e.target.value)}
+                                placeholder="https://sociedadenutra.com/aula"
+                                className="bg-[#2a2a2a] border-[#3a3a3a] text-white"
+                            />
+                            <p className="text-xs text-gray-500">Quando o usuário clicar na notificação, será redirecionado para esta URL</p>
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setShowNotifyDialog(false)} className="border-[#3a3a3a] text-white">
+                            Cancelar
+                        </Button>
+                        <Button
+                            onClick={handleNotifyAll}
+                            className="bg-yellow-600 hover:bg-yellow-700"
+                            disabled={isSendingNotification}
+                        >
+                            {isSendingNotification ? 'Enviando...' : 'Enviar Notificação'}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
