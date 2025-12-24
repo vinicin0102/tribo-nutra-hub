@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Pencil, Trash2, Eye, EyeOff, ExternalLink } from 'lucide-react';
+import { Plus, Pencil, Trash2, Eye, EyeOff, ExternalLink, AlertTriangle } from 'lucide-react';
 
 interface Popup {
     id: string;
@@ -34,6 +34,11 @@ interface PopupFormData {
     show_once_per_user: boolean;
 }
 
+// Helper para acessar tabela app_popups (não existe no schema ainda)
+const getAppPopupsTable = () => {
+    return (supabase as any).from('app_popups');
+};
+
 export function PopupManagement() {
     const { user } = useAuth();
     const queryClient = useQueryClient();
@@ -50,11 +55,10 @@ export function PopupManagement() {
     });
 
     // Buscar todos os popups
-    const { data: popups, isLoading } = useQuery({
+    const { data: popups, isLoading, error: fetchError } = useQuery({
         queryKey: ['admin-popups'],
         queryFn: async () => {
-            const { data, error } = await (supabase
-                .from('app_popups') as any)
+            const { data, error } = await getAppPopupsTable()
                 .select('*')
                 .order('created_at', { ascending: false });
 
@@ -66,8 +70,7 @@ export function PopupManagement() {
     // Criar popup
     const createMutation = useMutation({
         mutationFn: async (data: PopupFormData) => {
-            const { error } = await (supabase
-                .from('app_popups') as any)
+            const { error } = await getAppPopupsTable()
                 .insert({
                     ...data,
                     created_by: user?.id,
@@ -89,8 +92,7 @@ export function PopupManagement() {
     // Atualizar popup
     const updateMutation = useMutation({
         mutationFn: async ({ id, data }: { id: string; data: Partial<PopupFormData> }) => {
-            const { error } = await (supabase
-                .from('app_popups') as any)
+            const { error } = await getAppPopupsTable()
                 .update(data)
                 .eq('id', id);
 
@@ -110,8 +112,7 @@ export function PopupManagement() {
     // Deletar popup
     const deleteMutation = useMutation({
         mutationFn: async (id: string) => {
-            const { error } = await (supabase
-                .from('app_popups') as any)
+            const { error } = await getAppPopupsTable()
                 .delete()
                 .eq('id', id);
 
@@ -132,14 +133,12 @@ export function PopupManagement() {
         mutationFn: async ({ id, is_active }: { id: string; is_active: boolean }) => {
             // Se ativando, desativar todos os outros primeiro
             if (is_active) {
-                await (supabase
-                    .from('app_popups') as any)
+                await getAppPopupsTable()
                     .update({ is_active: false })
                     .neq('id', id);
             }
 
-            const { error } = await (supabase
-                .from('app_popups') as any)
+            const { error } = await getAppPopupsTable()
                 .update({ is_active })
                 .eq('id', id);
 
@@ -193,6 +192,20 @@ export function PopupManagement() {
             createMutation.mutate(formData);
         }
     };
+
+    // Se a tabela não existe, mostrar mensagem
+    if (fetchError) {
+        return (
+            <Card className="bg-[#1a1a1a] border-[#2a2a2a]">
+                <CardContent className="p-6">
+                    <div className="flex items-center gap-3 text-yellow-500">
+                        <AlertTriangle className="h-5 w-5" />
+                        <p>Sistema de popups não configurado. A tabela app_popups precisa ser criada.</p>
+                    </div>
+                </CardContent>
+            </Card>
+        );
+    }
 
     return (
         <div className="space-y-6">
