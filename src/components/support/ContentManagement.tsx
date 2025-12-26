@@ -319,6 +319,8 @@ function LessonForm({
   const [orderIndex, setOrderIndex] = useState(lesson?.order_index || 0);
   const [durationMinutes, setDurationMinutes] = useState(lesson?.duration_minutes || 0);
   const [isPublished, setIsPublished] = useState(lesson?.is_published || false);
+  const [isLocked, setIsLocked] = useState(lesson?.is_locked || false);
+  const [unlockAfterDays, setUnlockAfterDays] = useState(lesson?.unlock_after_days || 0);
   const [coverUrl, setCoverUrl] = useState(lesson?.cover_url || '');
   const [externalLinks, setExternalLinks] = useState<ExternalLink[]>(lesson?.external_links || []);
   const [newLinkTitle, setNewLinkTitle] = useState('');
@@ -346,6 +348,8 @@ function LessonForm({
       order_index: orderIndex,
       duration_minutes: durationMinutes,
       is_published: isPublished,
+      is_locked: isLocked,
+      unlock_after_days: isLocked ? unlockAfterDays : 0,
       cover_url: coverUrl || null,
       external_links: externalLinks
     });
@@ -481,6 +485,43 @@ function LessonForm({
             onCheckedChange={setIsPublished}
           />
         </div>
+        <div className="flex items-center justify-between">
+          <Label htmlFor="lessonLocked" className="flex items-center gap-2">
+            <Lock className="w-4 h-4 text-destructive" />
+            Aula Bloqueada
+          </Label>
+          <Switch
+            id="lessonLocked"
+            checked={isLocked}
+            onCheckedChange={setIsLocked}
+          />
+        </div>
+        {isLocked && (
+          <>
+            <p className="text-xs text-muted-foreground bg-destructive/10 p-2 rounded">
+              Aulas bloqueadas só ficam disponíveis após X dias da compra do plano Diamond.
+            </p>
+            <div>
+              <Label htmlFor="lessonUnlockAfterDays" className="flex items-center gap-2">
+                Liberar após quantos dias da compra?
+              </Label>
+              <Input
+                id="lessonUnlockAfterDays"
+                type="number"
+                value={unlockAfterDays}
+                onChange={e => setUnlockAfterDays(parseInt(e.target.value) || 0)}
+                min={0}
+                placeholder="0 = imediato, 7 = após 7 dias"
+                className="mt-1"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                {unlockAfterDays === 0
+                  ? 'Liberado imediatamente após assinatura'
+                  : `Liberado ${unlockAfterDays} dia(s) após compra do plano Diamond`}
+              </p>
+            </div>
+          </>
+        )}
       </div>
 
       <div className="flex gap-2 pt-2">

@@ -85,6 +85,7 @@ export function SettingsManagement() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['support-settings'] });
+      queryClient.invalidateQueries({ queryKey: ['chat-schedule-settings'] });
       toast.success('Configurações salvas com sucesso!');
     },
     onError: (error: any) => {

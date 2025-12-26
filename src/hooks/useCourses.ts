@@ -18,6 +18,8 @@ export interface Lesson {
   external_links: ExternalLink[];
   order_index: number;
   is_published: boolean;
+  is_locked?: boolean;
+  unlock_after_days?: number;
   duration_minutes: number;
   cover_url: string | null;
   created_at: string;

@@ -27,6 +27,7 @@ export function updateOperatingHours(startHour: number, endHour: number) {
  * Atualiza o cache das horas de funcionamento do plano Free
  */
 export function updateFreeOperatingHours(startHour: number, endHour: number) {
+  console.log(`🔄 Atualizando cache de horário FREE: ${cachedFreeStartHour}h-${cachedFreeEndHour}h → ${startHour}h-${endHour}h`);
   cachedFreeStartHour = startHour;
   cachedFreeEndHour = endHour;
 }
@@ -65,7 +66,11 @@ export function isWithinFreeOperatingHours(): boolean {
   const currentHour = brasiliaTime.getHours();
 
   // Usar horas configuradas para Free (ou padrão 10h-15h se não configurado)
-  return currentHour >= cachedFreeStartHour && currentHour < cachedFreeEndHour;
+  const isWithin = currentHour >= cachedFreeStartHour && currentHour < cachedFreeEndHour;
+
+  console.log(`🕐 Verificação de horário FREE: hora atual=${currentHour}, horário permitido=${cachedFreeStartHour}h-${cachedFreeEndHour}h, dentro=${isWithin}`);
+
+  return isWithin;
 }
 
 /**
