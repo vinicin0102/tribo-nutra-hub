@@ -14,10 +14,16 @@ import { useIsSupport } from '@/hooks/useSupport';
 export function SettingsManagement() {
   const queryClient = useQueryClient();
   const isSupport = useIsSupport();
-  
-  // Estados locais
+
+  // Estados locais - Horário geral
   const [chatStartHour, setChatStartHour] = useState('9');
   const [chatEndHour, setChatEndHour] = useState('21');
+
+  // Estados locais - Horário do plano Free
+  const [freeStartHour, setFreeStartHour] = useState('10');
+  const [freeEndHour, setFreeEndHour] = useState('15');
+
+  // Estados locais - Mensagem automática
   const [autoReplyEnabled, setAutoReplyEnabled] = useState(true);
   const [autoReplyMessage, setAutoReplyMessage] = useState('');
   const [loading, setLoading] = useState(false);
@@ -48,6 +54,8 @@ export function SettingsManagement() {
     if (settings) {
       setChatStartHour(settings['chat_start_hour'] || '9');
       setChatEndHour(settings['chat_end_hour'] || '21');
+      setFreeStartHour(settings['free_start_hour'] || '10');
+      setFreeEndHour(settings['free_end_hour'] || '15');
       setAutoReplyEnabled(settings['auto_reply_enabled'] === 'true');
       setAutoReplyMessage(settings['auto_reply_message'] || 'Olá! Recebemos sua mensagem. Nossa equipe de suporte responderá em até 10 minutos. Obrigado pela paciência! 🙏');
     }
@@ -69,7 +77,7 @@ export function SettingsManagement() {
       );
 
       const results = await Promise.all(promises);
-      
+
       const errors = results.filter(r => r.error);
       if (errors.length > 0) {
         throw errors[0].error;
@@ -90,6 +98,8 @@ export function SettingsManagement() {
       const updates: Record<string, string> = {
         chat_start_hour: chatStartHour,
         chat_end_hour: chatEndHour,
+        free_start_hour: freeStartHour,
+        free_end_hour: freeEndHour,
         auto_reply_enabled: String(autoReplyEnabled),
         auto_reply_message: autoReplyMessage,
       };
@@ -163,6 +173,63 @@ export function SettingsManagement() {
           <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
             <p className="text-sm text-blue-400">
               <strong>Horário atual configurado:</strong> {chatStartHour}h às {chatEndHour}h (horário de Brasília)
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Configurações de Horário do Plano Free */}
+      <Card className="border border-[#2a2a2a] bg-[#1a1a1a]">
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Clock className="h-5 w-5 text-green-500" />
+            <CardTitle className="text-white">Horário do Plano Free</CardTitle>
+          </div>
+          <CardDescription className="text-gray-400">
+            Configure em que horário o chat estará disponível para usuários do plano Free. Usuários Diamond têm acesso 24 horas!
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="freeStartHour" className="text-white">
+                Horário de Abertura (Free)
+              </Label>
+              <Input
+                id="freeStartHour"
+                type="number"
+                min="0"
+                max="23"
+                value={freeStartHour}
+                onChange={(e) => setFreeStartHour(e.target.value)}
+                className="bg-[#2a2a2a] border-[#3a3a3a] text-white"
+                placeholder="10"
+              />
+              <p className="text-xs text-gray-400">Horas (0-23). Exemplo: 10 para 10h</p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="freeEndHour" className="text-white">
+                Horário de Fechamento (Free)
+              </Label>
+              <Input
+                id="freeEndHour"
+                type="number"
+                min="0"
+                max="23"
+                value={freeEndHour}
+                onChange={(e) => setFreeEndHour(e.target.value)}
+                className="bg-[#2a2a2a] border-[#3a3a3a] text-white"
+                placeholder="15"
+              />
+              <p className="text-xs text-gray-400">Horas (0-23). Exemplo: 15 para 15h</p>
+            </div>
+          </div>
+          <div className="p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
+            <p className="text-sm text-green-400">
+              <strong>💎 Plano Diamond:</strong> Acesso 24 horas ao chat
+            </p>
+            <p className="text-sm text-gray-400 mt-1">
+              <strong>Plano Free:</strong> {freeStartHour}h às {freeEndHour}h (horário de Brasília)
             </p>
           </div>
         </CardContent>

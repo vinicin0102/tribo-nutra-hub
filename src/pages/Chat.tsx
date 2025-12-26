@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Send, Trash2, Mic, Square, X, RotateCcw, Check, Play, Pause } from 'lucide-react';
+import { Send, Trash2, Mic, Square, X, RotateCcw, Check, Play, Pause, Diamond, User } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { MainLayout } from '@/components/layout/MainLayout';
@@ -13,7 +13,8 @@ import { useDeleteChatMessage, useIsSupport } from '@/hooks/useSupport';
 import { useAuth } from '@/contexts/AuthContext';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AudioPlayer } from '@/components/chat/AudioPlayer';
-import { isWithinOperatingHours, getOperatingHoursMessage } from '@/lib/schedule';
+import { isWithinOperatingHours, getOperatingHoursMessage, isWithinFreeOperatingHours, getFreeOperatingHoursMessage } from '@/lib/schedule';
+import { useChatSchedule } from '@/hooks/useChatSchedule';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,6 +26,14 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -42,7 +51,7 @@ export default function Chat() {
   const { user } = useAuth();
   const { data: messagesData, isLoading } = useChatMessages();
   const messages = messagesData || [];
-  
+
   // Debug: verificar mensagens
   useEffect(() => {
     console.log('🔍 Mensagens no componente:', messages);
@@ -56,6 +65,13 @@ export default function Chat() {
   const isSupport = useIsSupport();
   const hasDiamondAccess = useHasDiamondAccess();
   const navigate = useNavigate();
+
+  // Hook para carregar configurações de horário
+  const { freeStartHour, freeEndHour } = useChatSchedule();
+
+  // Estado para modal de upgrade
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+
   const [newMessage, setNewMessage] = useState('');
   const [viewportHeight, setViewportHeight] = useState(
     window.visualViewport?.height || window.innerHeight
@@ -69,7 +85,7 @@ export default function Chat() {
   const recordingStartTimeRef = useRef<number>(0);
   const recordingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const isCancelledRef = useRef(false);
-  
+
   // Preview de áudio
   const [audioPreview, setAudioPreview] = useState<AudioPreview | null>(null);
   const [isPlayingPreview, setIsPlayingPreview] = useState(false);
@@ -133,7 +149,7 @@ export default function Chat() {
     document.body.style.position = 'fixed';
     document.body.style.width = '100%';
     document.body.style.height = '100%';
-    
+
     return () => {
       document.body.style.overflow = '';
       document.body.style.position = '';
@@ -150,14 +166,7 @@ export default function Chat() {
 
   const startRecording = async () => {
     try {
-      // Verificar horário de funcionamento (9h - 21h, horário de Brasília)
-      if (!isWithinOperatingHours()) {
-        toast.error(getOperatingHoursMessage(), {
-          duration: 6000
-        });
-        return;
-      }
-      
+
       // Limpar preview anterior se existir
       if (audioPreview?.url) {
         URL.revokeObjectURL(audioPreview.url);
@@ -180,7 +189,7 @@ export default function Chat() {
       mediaRecorder.onstop = async () => {
         // Parar todas as tracks do stream
         stream.getTracks().forEach(track => track.stop());
-        
+
         // Se foi cancelado, não fazer nada
         if (isCancelledRef.current) {
           audioChunksRef.current = [];
@@ -189,10 +198,10 @@ export default function Chat() {
 
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
         const audioDuration = Math.round((Date.now() - recordingStartTimeRef.current) / 1000);
-        
+
         // Criar URL para preview
         const previewUrl = URL.createObjectURL(audioBlob);
-        
+
         setAudioPreview({
           blob: audioBlob,
           url: previewUrl,
@@ -203,12 +212,12 @@ export default function Chat() {
       recordingStartTimeRef.current = Date.now();
       mediaRecorder.start();
       setIsRecording(true);
-      
+
       // Iniciar timer
       recordingIntervalRef.current = setInterval(() => {
         setRecordingTime(prev => prev + 1);
       }, 1000);
-      
+
       toast.info('Gravando áudio...');
     } catch (error) {
       console.error('Erro ao acessar microfone:', error);
@@ -221,7 +230,7 @@ export default function Chat() {
       clearInterval(recordingIntervalRef.current);
       recordingIntervalRef.current = null;
     }
-    
+
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop();
       setIsRecording(false);
@@ -230,19 +239,19 @@ export default function Chat() {
 
   const cancelRecording = () => {
     isCancelledRef.current = true;
-    
+
     if (recordingIntervalRef.current) {
       clearInterval(recordingIntervalRef.current);
       recordingIntervalRef.current = null;
     }
-    
+
     if (mediaRecorderRef.current && isRecording) {
       // Parar o stream manualmente
       mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
       mediaRecorderRef.current.stop();
       setIsRecording(false);
     }
-    
+
     setRecordingTime(0);
     toast.info('Gravação cancelada');
   };
@@ -284,20 +293,15 @@ export default function Chat() {
   const confirmSendAudio = async () => {
     if (!audioPreview || !user) return;
 
-    // Verificar horário de funcionamento (9h - 21h, horário de Brasília)
-    if (!isWithinOperatingHours()) {
-      toast.error(getOperatingHoursMessage(), {
-        duration: 6000
-      });
-      return;
-    }
+    // Verificar acesso (inclui verificação de horário para Free e geral)
+    if (!checkDiamondAccess()) return;
 
     setIsSendingAudio(true);
-    
+
     try {
       // Fazer upload do áudio para o Storage
       const audioUrl = await uploadAudio(audioPreview.blob, user.id);
-      
+
       // Salvar mensagem com URL do áudio
       const { error } = await supabase
         .from('chat_messages')
@@ -305,12 +309,12 @@ export default function Chat() {
           user_id: user.id,
           content: `🎤AUDIO:${audioUrl}|${audioPreview.duration}`,
         });
-      
+
       if (error) {
         console.error('Erro ao enviar mensagem:', error);
         throw error;
       }
-      
+
       // Limpar preview
       if (audioPreview.url) {
         URL.revokeObjectURL(audioPreview.url);
@@ -321,7 +325,7 @@ export default function Chat() {
       }
       setAudioPreview(null);
       setIsPlayingPreview(false);
-      
+
       toast.success('Áudio enviado!');
     } catch (error: any) {
       console.error('Erro ao enviar áudio:', error);
@@ -331,20 +335,39 @@ export default function Chat() {
     }
   };
 
+  // Verificar se usuário Free pode enviar mensagem (horário restrito)
+  const checkFreeSchedule = () => {
+    // Suporte e Diamond têm acesso 24h
+    if (isSupport || hasDiamondAccess) return true;
+
+    // Verificar horário para Free
+    if (!isWithinFreeOperatingHours()) {
+      setShowUpgradeModal(true);
+      return false;
+    }
+
+    return true;
+  };
+
   const checkDiamondAccess = () => {
     if (isSupport) return true;
-    
-    if (!hasDiamondAccess) {
-      toast.error('Recurso exclusivo para assinantes Diamond', {
-        description: 'Faça upgrade para enviar mensagens no chat!',
-        action: {
-          label: 'Assinar Diamond',
-          onClick: () => navigate('/upgrade')
-        },
-        duration: 5000,
+
+    // Verificar horário de funcionamento geral
+    if (!isWithinOperatingHours()) {
+      toast.error(getOperatingHoursMessage(), {
+        duration: 6000
       });
       return false;
     }
+
+    // Para Diamond, já passou na verificação geral
+    if (hasDiamondAccess) return true;
+
+    // Para Free, verificar horário específico
+    if (!checkFreeSchedule()) {
+      return false;
+    }
+
     return true;
   };
 
@@ -355,15 +378,7 @@ export default function Chat() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Verificar horário de funcionamento (9h - 21h, horário de Brasília)
-    if (!isWithinOperatingHours()) {
-      toast.error(getOperatingHoursMessage(), {
-        duration: 6000
-      });
-      return;
-    }
-    
+
     if (!newMessage.trim()) return;
 
     if (!checkDiamondAccess()) return;
@@ -473,8 +488,8 @@ export default function Chat() {
 
   // Renderizar formulário padrão
   const renderDefaultForm = () => (
-    <form 
-      onSubmit={handleSubmit} 
+    <form
+      onSubmit={handleSubmit}
       className="border-t border-[#2a2a2a] p-3 sm:p-3 flex gap-1.5 sm:gap-2 items-center flex-shrink-0 bg-[#1a1a1a]"
     >
       <Button
@@ -503,8 +518,8 @@ export default function Chat() {
           }, 300);
         }}
       />
-      <Button 
-        type="submit" 
+      <Button
+        type="submit"
         disabled={sendMessage.isPending || !newMessage.trim()}
         size="icon"
         className="h-8 w-8 sm:h-9 sm:w-9 flex-shrink-0"
@@ -516,10 +531,10 @@ export default function Chat() {
 
   return (
     <MainLayout>
-      <div 
-        className="fixed inset-0 top-0 bg-[#0a0a0a]" 
-        style={{ 
-          touchAction: 'manipulation', 
+      <div
+        className="fixed inset-0 top-0 bg-[#0a0a0a]"
+        style={{
+          touchAction: 'manipulation',
           backgroundColor: '#0a0a0a',
           bottom: 'calc(64px + env(safe-area-inset-bottom, 0px))',
           overflow: 'hidden',
@@ -530,145 +545,209 @@ export default function Chat() {
       >
         <div className="max-w-2xl mx-auto h-full flex flex-col px-0 sm:px-4" style={{ touchAction: 'manipulation', overflow: 'hidden' }}>
           <Card className="flex-1 flex flex-col border border-[#2a2a2a] border-t-2 bg-[#1a1a1a] min-h-0 rounded-lg sm:rounded-xl my-1 sm:my-0" style={{ touchAction: 'manipulation', overflow: 'hidden' }}>
-          <div className="border-b border-[#2a2a2a] px-3 py-2 flex items-center justify-center flex-shrink-0">
-            <Badge className="bg-primary text-primary-foreground text-[10px] sm:text-xs px-2 py-0.5 rounded-full">
-              Chat Comunidade
-            </Badge>
-          </div>
-          <CardContent className="flex flex-col flex-1 p-0 min-h-0" style={{ touchAction: 'manipulation', overflow: 'hidden' }}>
-            <div className="flex-1 overflow-y-auto px-3 pt-4 pb-3 sm:px-4 sm:pt-4 sm:pb-4 space-y-2 sm:space-y-3 min-h-0" style={{ touchAction: 'manipulation', WebkitOverflowScrolling: 'touch' }}>
-              {isLoading ? (
-                <div className="space-y-3">
-                  {[1, 2, 3, 4, 5].map((i) => (
-                    <div key={i} className={cn('flex gap-2', i % 2 === 0 && 'flex-row-reverse')}>
-                      <Skeleton className="h-8 w-8 rounded-full flex-shrink-0" />
-                      <Skeleton className="h-16 w-3/4 rounded-lg" />
-                    </div>
-                  ))}
-                </div>
-              ) : messages && messages.length > 0 ? (
-                <>
-                  {console.log('🎨 Renderizando mensagens:', messages.length)}
-                  {messages.map((message) => {
-                    const isOwn = message.user_id === user?.id;
-                    
-                    return (
-                      <div
-                        key={message.id}
-                        className={cn(
-                          'flex gap-2 animate-fade-in',
-                          isOwn && 'flex-row-reverse'
-                        )}
-                      >
-                        <Avatar className="h-7 w-7 sm:h-8 sm:w-8 flex-shrink-0">
-                          <AvatarImage 
-                            src={message.profiles?.avatar_url || ''} 
-                            className="object-cover object-center"
-                          />
-                          <AvatarFallback className="text-[10px] sm:text-xs gradient-primary text-primary-foreground">
-                            {message.profiles?.username?.charAt(0).toUpperCase() || 'U'}
-                          </AvatarFallback>
-                        </Avatar>
+            <div className="border-b border-[#2a2a2a] px-3 py-2 flex items-center justify-center flex-shrink-0">
+              <Badge className="bg-primary text-primary-foreground text-[10px] sm:text-xs px-2 py-0.5 rounded-full">
+                Chat Comunidade
+              </Badge>
+            </div>
+            <CardContent className="flex flex-col flex-1 p-0 min-h-0" style={{ touchAction: 'manipulation', overflow: 'hidden' }}>
+              <div className="flex-1 overflow-y-auto px-3 pt-4 pb-3 sm:px-4 sm:pt-4 sm:pb-4 space-y-2 sm:space-y-3 min-h-0" style={{ touchAction: 'manipulation', WebkitOverflowScrolling: 'touch' }}>
+                {isLoading ? (
+                  <div className="space-y-3">
+                    {[1, 2, 3, 4, 5].map((i) => (
+                      <div key={i} className={cn('flex gap-2', i % 2 === 0 && 'flex-row-reverse')}>
+                        <Skeleton className="h-8 w-8 rounded-full flex-shrink-0" />
+                        <Skeleton className="h-16 w-3/4 rounded-lg" />
+                      </div>
+                    ))}
+                  </div>
+                ) : messages && messages.length > 0 ? (
+                  <>
+                    {console.log('🎨 Renderizando mensagens:', messages.length)}
+                    {messages.map((message) => {
+                      const isOwn = message.user_id === user?.id;
+
+                      return (
                         <div
+                          key={message.id}
                           className={cn(
-                            'max-w-[80%] sm:max-w-[70%] rounded-xl sm:rounded-2xl px-3 py-2 sm:px-4 sm:py-2 relative group',
-                            isOwn 
-                              ? 'gradient-primary text-primary-foreground rounded-tr-sm' 
-                              : 'bg-[#2a2a2a] text-white rounded-tl-sm'
+                            'flex gap-2 animate-fade-in',
+                            isOwn && 'flex-row-reverse'
                           )}
                         >
-                          {isSupport && (
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="absolute -top-1 -right-1 sm:-top-2 sm:-right-2 h-5 w-5 sm:h-6 sm:w-6 opacity-0 group-hover:opacity-100 transition-opacity bg-red-500/80 hover:bg-red-500 text-white"
-                                >
-                                  <Trash2 className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent className="bg-[#1a1a1a] border-[#2a2a2a]">
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle className="text-white">
-                                    Remover mensagem
-                                  </AlertDialogTitle>
-                                  <AlertDialogDescription className="text-gray-400">
-                                    Tem certeza que deseja remover esta mensagem?
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel className="bg-[#2a2a2a] text-white border-[#3a3a3a]">
-                                    Cancelar
-                                  </AlertDialogCancel>
-                                  <AlertDialogAction
-                                    onClick={() => handleDelete(message.id)}
-                                    className="bg-red-500 hover:bg-red-600"
+                          <Avatar className="h-7 w-7 sm:h-8 sm:w-8 flex-shrink-0">
+                            <AvatarImage
+                              src={message.profiles?.avatar_url || ''}
+                              className="object-cover object-center"
+                            />
+                            <AvatarFallback className="text-[10px] sm:text-xs gradient-primary text-primary-foreground">
+                              {message.profiles?.username?.charAt(0).toUpperCase() || 'U'}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div
+                            className={cn(
+                              'max-w-[80%] sm:max-w-[70%] rounded-xl sm:rounded-2xl px-3 py-2 sm:px-4 sm:py-2 relative group',
+                              isOwn
+                                ? 'gradient-primary text-primary-foreground rounded-tr-sm'
+                                : 'bg-[#2a2a2a] text-white rounded-tl-sm'
+                            )}
+                          >
+                            {isSupport && (
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="absolute -top-1 -right-1 sm:-top-2 sm:-right-2 h-5 w-5 sm:h-6 sm:w-6 opacity-0 group-hover:opacity-100 transition-opacity bg-red-500/80 hover:bg-red-500 text-white"
                                   >
-                                    Remover
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          )}
-                          {!isOwn && (
-                            <p className="text-[10px] sm:text-xs font-semibold mb-0.5 sm:mb-1 opacity-70">
-                              {message.profiles?.username || 'Usuário'}
+                                    <Trash2 className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent className="bg-[#1a1a1a] border-[#2a2a2a]">
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle className="text-white">
+                                      Remover mensagem
+                                    </AlertDialogTitle>
+                                    <AlertDialogDescription className="text-gray-400">
+                                      Tem certeza que deseja remover esta mensagem?
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel className="bg-[#2a2a2a] text-white border-[#3a3a3a]">
+                                      Cancelar
+                                    </AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() => handleDelete(message.id)}
+                                      className="bg-red-500 hover:bg-red-600"
+                                    >
+                                      Remover
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            )}
+                            {!isOwn && (
+                              <div className="flex items-center gap-1.5 mb-0.5 sm:mb-1">
+                                <p className="text-[10px] sm:text-xs font-semibold opacity-70">
+                                  {message.profiles?.username || 'Usuário'}
+                                </p>
+                                {message.profiles?.subscription_plan === 'diamond' ? (
+                                  <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-gradient-to-r from-purple-500/20 to-blue-500/20 border border-purple-500/30 text-[8px] sm:text-[9px] font-semibold text-purple-300">
+                                    <Diamond className="h-2 w-2 sm:h-2.5 sm:w-2.5" />
+                                    Diamond
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-gray-500/20 border border-gray-500/30 text-[8px] sm:text-[9px] font-semibold text-gray-400">
+                                    <User className="h-2 w-2 sm:h-2.5 sm:w-2.5" />
+                                    Free
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                            {message.content.startsWith('🎤AUDIO:') ? (
+                              (() => {
+                                const match = message.content.match(/🎤AUDIO:(.+?)\|(\d+)/);
+                                if (match) {
+                                  const [, audioUrl, duration] = match;
+                                  return (
+                                    <AudioPlayer
+                                      audioUrl={audioUrl}
+                                      duration={parseInt(duration) || undefined}
+                                      isOwn={isOwn}
+                                    />
+                                  );
+                                }
+                                return <p className="text-xs sm:text-sm leading-relaxed break-words">{message.content}</p>;
+                              })()
+                            ) : (
+                              <p className="text-xs sm:text-sm leading-relaxed break-words">{message.content}</p>
+                            )}
+                            <p className={cn(
+                              'text-[9px] sm:text-[10px] mt-0.5 sm:mt-1',
+                              isOwn ? 'text-primary-foreground/70' : 'text-gray-400'
+                            )}>
+                              {formatDistanceToNow(new Date(message.created_at), {
+                                addSuffix: true,
+                                locale: ptBR
+                              })}
                             </p>
-                          )}
-                          {message.content.startsWith('🎤AUDIO:') ? (
-                            (() => {
-                              const match = message.content.match(/🎤AUDIO:(.+?)\|(\d+)/);
-                              if (match) {
-                                const [, audioUrl, duration] = match;
-                                return (
-                                  <AudioPlayer 
-                                    audioUrl={audioUrl} 
-                                    duration={parseInt(duration) || undefined}
-                                    isOwn={isOwn}
-                                  />
-                                );
-                              }
-                              return <p className="text-xs sm:text-sm leading-relaxed break-words">{message.content}</p>;
-                            })()
-                          ) : (
-                            <p className="text-xs sm:text-sm leading-relaxed break-words">{message.content}</p>
-                          )}
-                          <p className={cn(
-                            'text-[9px] sm:text-[10px] mt-0.5 sm:mt-1',
-                            isOwn ? 'text-primary-foreground/70' : 'text-gray-400'
-                          )}>
-                            {formatDistanceToNow(new Date(message.created_at), { 
-                              addSuffix: true, 
-                              locale: ptBR 
-                            })}
-                          </p>
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
-                  <div ref={messagesEndRef} />
-                </>
-              ) : (
-                <div className="flex flex-col items-center justify-center h-full text-center">
-                  <div className="gradient-primary rounded-2xl p-4 mb-4">
-                    <span className="text-4xl">👋</span>
+                      );
+                    })}
+                    <div ref={messagesEndRef} />
+                  </>
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-full text-center">
+                    <div className="gradient-primary rounded-2xl p-4 mb-4">
+                      <span className="text-4xl">👋</span>
+                    </div>
+                    <h3 className="font-display text-lg font-semibold mb-2">
+                      Bem-vindo ao chat!
+                    </h3>
+                    <p className="text-muted-foreground text-sm">
+                      Seja o primeiro a enviar uma mensagem
+                    </p>
                   </div>
-                  <h3 className="font-display text-lg font-semibold mb-2">
-                    Bem-vindo ao chat!
-                  </h3>
-                  <p className="text-muted-foreground text-sm">
-                    Seja o primeiro a enviar uma mensagem
-                  </p>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
 
-            {isRecording ? renderRecordingControls() : audioPreview ? renderAudioPreview() : renderDefaultForm()}
-          </CardContent>
-        </Card>
+              {isRecording ? renderRecordingControls() : audioPreview ? renderAudioPreview() : renderDefaultForm()}
+            </CardContent>
+          </Card>
         </div>
       </div>
+
+      {/* Modal de Upgrade para Diamond */}
+      <Dialog open={showUpgradeModal} onOpenChange={setShowUpgradeModal}>
+        <DialogContent className="bg-gradient-to-br from-[#1a1a1a] to-[#0f0f0f] border border-[#2a2a2a] max-w-md">
+          <DialogHeader className="text-center">
+            <div className="flex justify-center mb-4">
+              <div className="relative">
+                <div className="absolute inset-0 bg-purple-500/20 rounded-full blur-xl animate-pulse"></div>
+                <div className="relative bg-gradient-to-br from-purple-500 to-blue-500 rounded-full p-4 shadow-lg">
+                  <Diamond className="h-10 w-10 text-white" />
+                </div>
+              </div>
+            </div>
+            <DialogTitle className="text-2xl font-bold text-white text-center">
+              Chat Fechado para Free
+            </DialogTitle>
+            <DialogDescription className="text-center space-y-3 pt-2">
+              <p className="text-gray-300">
+                O chat para o plano <span className="text-gray-400 font-semibold">Free</span> está disponível apenas das <span className="text-primary font-semibold">{freeStartHour}h às {freeEndHour}h</span> (horário de Brasília).
+              </p>
+              <div className="p-4 bg-gradient-to-r from-purple-500/10 to-blue-500/10 border border-purple-500/20 rounded-xl">
+                <p className="text-purple-300 font-semibold mb-1">
+                  💎 Assine o Plano Diamond
+                </p>
+                <p className="text-gray-400 text-sm">
+                  Tenha acesso <span className="text-purple-300 font-semibold">24 horas</span> ao chat da comunidade e muito mais!
+                </p>
+              </div>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex flex-col gap-2 sm:flex-col pt-4">
+            <Button
+              onClick={() => {
+                setShowUpgradeModal(false);
+                navigate('/upgrade');
+              }}
+              className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-bold py-3"
+            >
+              <Diamond className="h-4 w-4 mr-2" />
+              Assinar Diamond
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => setShowUpgradeModal(false)}
+              className="w-full text-gray-400 hover:text-white"
+            >
+              Voltar mais tarde
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </MainLayout>
   );
 }
