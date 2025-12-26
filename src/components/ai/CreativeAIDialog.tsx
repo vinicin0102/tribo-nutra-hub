@@ -14,6 +14,7 @@ import { toast } from 'sonner';
 import { useHasDiamondAccess } from '@/hooks/useSubscription';
 import { useIsSupport } from '@/hooks/useSupport';
 import { useNavigate } from 'react-router-dom';
+import { generateVideoScript } from '@/lib/openai';
 
 interface CreativeAIDialogProps {
   open: boolean;
@@ -138,7 +139,7 @@ export function CreativeAIDialog({ open, onOpenChange }: CreativeAIDialogProps) 
 
   const handleNext = () => {
     const currentAnswer = answers[currentQuestion.id as keyof Answers];
-    
+
     if (!currentAnswer || (typeof currentAnswer === 'string' && !currentAnswer.trim())) {
       toast.error('Por favor, responda a pergunta antes de continuar');
       return;
@@ -176,14 +177,31 @@ export function CreativeAIDialog({ open, onOpenChange }: CreativeAIDialogProps) 
 
     setIsGenerating(true);
     setGeneratedScript('');
-    
-    // Simular geração de script baseado nas respostas
-    setTimeout(() => {
-      const script = generateScriptFromAnswers(answers as Answers);
+
+    try {
+      // Chamar a API do ChatGPT
+      const a = answers as Answers;
+      const script = await generateVideoScript(
+        a.productName,
+        a.platform,
+        a.contentType,
+        a.targetAudience,
+        a.mainObjective,
+        a.tone,
+        a.duration,
+        a.mainBenefits,
+        a.callToAction
+      );
       setGeneratedScript(script);
+      toast.success('Script gerado com sucesso! 🎬');
+    } catch (error: any) {
+      console.error('Erro ao gerar script:', error);
+      toast.error('Erro ao gerar script', {
+        description: error.message || 'Tente novamente em alguns segundos',
+      });
+    } finally {
       setIsGenerating(false);
-      toast.success('Script gerado com sucesso!');
-    }, 2000);
+    }
   };
 
   const handleCopy = async () => {
@@ -316,7 +334,7 @@ export function CreativeAIDialog({ open, onOpenChange }: CreativeAIDialogProps) 
                   )}
                 </Button>
               </div>
-              
+
               <Textarea
                 value={generatedScript}
                 readOnly
@@ -498,7 +516,7 @@ Duração: ${durationMap[duration]}
 
 function generateInstagramScript(answers: Answers, duration: string): string {
   const { productName, contentType, tone, mainBenefits, callToAction } = answers;
-  
+
   let hook = '';
   if (tone === 'energético') {
     hook = `"Você está DESPERDIÇANDO seu dinheiro com produtos que não funcionam?"`;
@@ -563,7 +581,7 @@ Sons trending de motivação/transformação
 
 function generateFacebookScript(answers: Answers, duration: string): string {
   const { productName, contentType, mainBenefits, callToAction } = answers;
-  
+
   return `📱 ABERTURA (0-5s)
 [Texto na tela: "ATENÇÃO!"]
 [Pessoa aparece animada]
@@ -635,14 +653,14 @@ ${mainBenefits.split(',').map(b => `✅ ${b.trim()}`).join('\n')}"
 
 function generateTikTokScript(answers: Answers, duration: string): string {
   const { productName, tone, mainBenefits, callToAction } = answers;
-  
+
   let hook = '';
   if (tone === 'energético') {
     hook = `"PARA DE ROLAR! 🛑"`;
   } else {
     hook = `"Você está fazendo TUDO ERRADO! ❌"`;
   }
-  
+
   return `⚡ HOOK - PRIMEIRO SEGUNDO (0-1s)
 [JUMP CUT agressivo, olhar direto]
 ${hook}

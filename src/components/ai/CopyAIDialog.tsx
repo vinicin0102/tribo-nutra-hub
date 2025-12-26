@@ -13,6 +13,7 @@ import { toast } from 'sonner';
 import { useHasDiamondAccess } from '@/hooks/useSubscription';
 import { useIsSupport } from '@/hooks/useSupport';
 import { useNavigate } from 'react-router-dom';
+import { generateCopy } from '@/lib/openai';
 
 interface CopyAIDialogProps {
   open: boolean;
@@ -53,43 +54,20 @@ export function CopyAIDialog({ open, onOpenChange }: CopyAIDialogProps) {
 
     setIsGenerating(true);
     setGeneratedCopy('');
-    
-    // Simular geração de copy (aqui você pode integrar com uma API de IA real)
-    setTimeout(() => {
-      const audienceText = targetAudience ? ` para ${targetAudience}` : '';
-      
-      const copy = `🔥 ATENÇÃO${audienceText}! 🔥
 
-Você está cansado de tentar sem resultados? Chegou a hora de conhecer ${productName}!
-
-✨ O QUE TORNA ${productName.toUpperCase()} ESPECIAL?
-
-${productName} foi desenvolvido especialmente${audienceText} que buscam resultados reais e duradouros.
-
-💪 BENEFÍCIOS COMPROVADOS:
-• Resultados visíveis em poucos dias
-• Fórmula exclusiva e natural
-• Aprovado por milhares de clientes satisfeitos
-• Garantia de satisfação ou seu dinheiro de volta
-
-🎯 POR QUE ESCOLHER ${productName.toUpperCase()}?
-
-Diferente de outros produtos no mercado, ${productName} oferece uma solução completa e eficaz. Nossa fórmula foi testada e aprovada, garantindo que você alcance seus objetivos.
-
-⚡ OFERTA ESPECIAL - POR TEMPO LIMITADO!
-
-Aproveite agora nosso desconto exclusivo e transforme sua vida!
-
-👉 Não perca essa oportunidade única!
-
-🛡️ GARANTIA TOTAL: Se não ficar satisfeito, devolvemos 100% do seu dinheiro!
-
-#${productName.replace(/\s+/g, '')} #Transformação #Resultados`;
-
+    try {
+      // Chamar a API do ChatGPT
+      const copy = await generateCopy(productName, targetAudience || undefined);
       setGeneratedCopy(copy);
+      toast.success('Copy gerada com sucesso! ✨');
+    } catch (error: any) {
+      console.error('Erro ao gerar copy:', error);
+      toast.error('Erro ao gerar copy', {
+        description: error.message || 'Tente novamente em alguns segundos',
+      });
+    } finally {
       setIsGenerating(false);
-      toast.success('Copy gerada com sucesso!');
-    }, 2000);
+    }
   };
 
   const handleCopy = async () => {
@@ -197,7 +175,7 @@ Aproveite agora nosso desconto exclusivo e transforme sua vida!
                   )}
                 </Button>
               </div>
-              
+
               <Textarea
                 value={generatedCopy}
                 readOnly
