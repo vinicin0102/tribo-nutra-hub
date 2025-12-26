@@ -70,7 +70,7 @@ export default function Support() {
     subject: '',
     message: '',
   });
-  
+
   // Estados para visualização de suporte
   const [conversations, setConversations] = useState<{ userId: string; username: string; avatar: string | null; lastMessage: string; lastMessageTime: string; unread: number }[]>([]);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
@@ -90,11 +90,11 @@ export default function Support() {
   useEffect(() => {
     if (isSupport) {
       loadConversations();
-      
+
       // Subscribe para atualizações em tempo real das conversas
       const conversationsChannel = supabase
         .channel('support-conversations')
-        .on('postgres_changes', 
+        .on('postgres_changes',
           { event: '*', schema: 'public', table: 'support_chat' },
           (payload) => {
             console.log('Nova mensagem no suporte:', payload);
@@ -113,16 +113,16 @@ export default function Support() {
   useEffect(() => {
     if (isSupport && selectedUserId) {
       loadMessages(selectedUserId);
-      
+
       // Subscribe para atualizações em tempo real das mensagens específicas
       const messagesChannel = supabase
         .channel(`support-messages-${selectedUserId}`)
-        .on('postgres_changes', 
-          { 
-            event: '*', 
-            schema: 'public', 
-            table: 'support_chat', 
-            filter: `user_id=eq.${selectedUserId}` 
+        .on('postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'support_chat',
+            filter: `user_id=eq.${selectedUserId}`
           },
           (payload) => {
             console.log('Nova mensagem do usuário:', payload);
@@ -137,16 +137,16 @@ export default function Support() {
     } else if (!isSupport && user) {
       // Aluno: carregar suas próprias mensagens
       loadUserMessages();
-      
+
       // Subscribe para atualizações em tempo real (aluno)
       const userMessagesChannel = supabase
         .channel(`user-support-messages-${user.id}`)
-        .on('postgres_changes', 
-          { 
-            event: '*', 
-            schema: 'public', 
-            table: 'support_chat', 
-            filter: `user_id=eq.${user.id}` 
+        .on('postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'support_chat',
+            filter: `user_id=eq.${user.id}`
           },
           (payload) => {
             console.log('Nova mensagem para o aluno:', payload);
@@ -164,7 +164,7 @@ export default function Support() {
   // Carregar mensagens do aluno
   const loadUserMessages = async () => {
     if (!user) return;
-    
+
     setLoadingMessages(true);
     try {
       const { data: messagesData, error } = await supabase
@@ -223,7 +223,7 @@ export default function Support() {
 
       // Agrupar por usuário e pegar última mensagem de cada
       const userMap = new Map<string, { message: string; time: string; unread: number }>();
-      
+
       allMessages?.forEach((msg: any) => {
         if (!msg.is_from_support) {
           if (!userMap.has(msg.user_id)) {
@@ -260,7 +260,7 @@ export default function Support() {
         };
       });
 
-      setConversations(conversationsList.sort((a, b) => 
+      setConversations(conversationsList.sort((a, b) =>
         new Date(b.lastMessageTime).getTime() - new Date(a.lastMessageTime).getTime()
       ));
     } catch (error) {
@@ -353,13 +353,13 @@ export default function Support() {
 
       mediaRecorder.onstop = async () => {
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        
+
         // Parar todas as tracks do stream
         stream.getTracks().forEach(track => track.stop());
-        
+
         // Calcular duração
         const audioDuration = Math.round((Date.now() - recordingStartTimeRef.current) / 1000);
-        
+
         try {
           if (!user) {
             toast.error('Você precisa estar logado');
@@ -367,14 +367,14 @@ export default function Support() {
           }
 
           toast.info('Enviando áudio...');
-          
+
           // Fazer upload do áudio para o Storage
           const audioUrl = await uploadAudio(audioBlob, user.id);
-          
+
           // Salvar mensagem com URL do áudio no message (formato especial para identificar)
           // Formato: 🎤AUDIO:URL|DURATION
           const audioMessage = `🎤AUDIO:${audioUrl}|${audioDuration}`;
-          
+
           if (isSupport && selectedUserId) {
             // Suporte enviando para aluno
             const { error } = await supabase
@@ -385,7 +385,7 @@ export default function Support() {
                 is_from_support: true,
                 message: audioMessage,
               });
-            
+
             if (error) {
               console.error('Erro SQL:', error);
               throw error;
@@ -402,12 +402,12 @@ export default function Support() {
                 is_from_support: false,
                 message: audioMessage,
               });
-            
+
             if (error) {
               console.error('Erro SQL:', error);
               throw error;
             }
-            
+
             // Enviar mensagem automática após 1 segundo (se estiver ativada)
             if (settings?.autoReplyEnabled) {
               setTimeout(async () => {
@@ -430,7 +430,7 @@ export default function Support() {
                 }
               }, 1000);
             }
-            
+
             loadUserMessages();
             toast.success('Áudio enviado!');
           }
@@ -478,7 +478,7 @@ export default function Support() {
 
     setLoading(true);
     try {
-      const messageText = formData.subject.trim() 
+      const messageText = formData.subject.trim()
         ? `[${formData.subject}] ${formData.message}`
         : formData.message;
 
@@ -517,7 +517,7 @@ export default function Support() {
 
       toast.success('Mensagem enviada com sucesso!');
       setFormData({ subject: '', message: '' });
-      
+
       // Recarregar mensagens para mostrar a nova
       if (!isSupport) {
         loadUserMessages();
@@ -559,8 +559,8 @@ export default function Support() {
                       >
                         <div className="flex items-center gap-3">
                           <Avatar className="h-10 w-10">
-                            <AvatarImage 
-                              src={conv.avatar || ''} 
+                            <AvatarImage
+                              src={conv.avatar || ''}
                               className="object-cover object-center"
                             />
                             <AvatarFallback className="bg-primary text-white">
@@ -609,8 +609,8 @@ export default function Support() {
                 <CardHeader className="border-b border-[#2a2a2a] px-3 sm:px-4 py-3">
                   <div className="flex items-center gap-3">
                     <Avatar>
-                      <AvatarImage 
-                        src={selectedUserProfile?.avatar_url || ''} 
+                      <AvatarImage
+                        src={selectedUserProfile?.avatar_url || ''}
                         className="object-cover object-center"
                       />
                       <AvatarFallback className="bg-primary text-white">
@@ -641,8 +641,8 @@ export default function Support() {
                           )}
                         >
                           <Avatar className="h-8 w-8 flex-shrink-0">
-                            <AvatarImage 
-                              src={msg.profiles?.avatar_url || ''} 
+                            <AvatarImage
+                              src={msg.profiles?.avatar_url || ''}
                               className="object-cover object-center"
                             />
                             <AvatarFallback className="text-xs bg-primary text-white">
@@ -664,8 +664,8 @@ export default function Support() {
                                   size="icon"
                                   className={cn(
                                     "absolute -top-1 -right-1 h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity",
-                                    msg.is_from_support 
-                                      ? "text-white hover:bg-white/20" 
+                                    msg.is_from_support
+                                      ? "text-white hover:bg-white/20"
                                       : "text-gray-400 hover:bg-[#3a3a3a]"
                                   )}
                                   onClick={async () => {
@@ -688,39 +688,39 @@ export default function Support() {
                                   <Trash2 className="h-3 w-3" />
                                 </Button>
                               )}
-                            {!msg.is_from_support && (
-                              <p className="text-xs font-semibold mb-1 opacity-70">
-                                {msg.profiles?.username || 'Usuário'}
-                              </p>
-                            )}
-                            {msg.image_url ? (
-                              <div className="space-y-2">
-                                <p className="text-sm">{msg.message}</p>
-                                <img 
-                                  src={msg.image_url} 
-                                  alt="Imagem enviada" 
-                                  className="max-w-full rounded-lg max-h-64 object-cover"
-                                />
-                              </div>
-                            ) : msg.message?.startsWith('🎤AUDIO:') ? (
-                              (() => {
-                                // Extrair URL e duração do formato: 🎤AUDIO:URL|DURATION
-                                const match = msg.message.match(/🎤AUDIO:(.+?)\|(\d+)/);
-                                if (match) {
-                                  const [, audioUrl, duration] = match;
-                                  return (
-                                    <AudioPlayer 
-                                      audioUrl={audioUrl} 
-                                      duration={parseInt(duration) || undefined}
-                                      isOwn={msg.is_from_support}
-                                    />
-                                  );
-                                }
-                                return <p className="text-sm whitespace-pre-wrap">{msg.message}</p>;
-                              })()
-                            ) : (
-                              <p className="text-sm whitespace-pre-wrap">{msg.message}</p>
-                            )}
+                              {!msg.is_from_support && (
+                                <p className="text-xs font-semibold mb-1 opacity-70">
+                                  {msg.profiles?.username || 'Usuário'}
+                                </p>
+                              )}
+                              {msg.image_url ? (
+                                <div className="space-y-2">
+                                  <p className="text-sm">{msg.message}</p>
+                                  <img
+                                    src={msg.image_url}
+                                    alt="Imagem enviada"
+                                    className="max-w-full rounded-lg max-h-64 object-cover"
+                                  />
+                                </div>
+                              ) : msg.message?.startsWith('🎤AUDIO:') ? (
+                                (() => {
+                                  // Extrair URL e duração do formato: 🎤AUDIO:URL|DURATION
+                                  const match = msg.message.match(/🎤AUDIO:(.+?)\|(\d+)/);
+                                  if (match) {
+                                    const [, audioUrl, duration] = match;
+                                    return (
+                                      <AudioPlayer
+                                        audioUrl={audioUrl}
+                                        duration={parseInt(duration) || undefined}
+                                        isOwn={msg.is_from_support}
+                                      />
+                                    );
+                                  }
+                                  return <p className="text-sm whitespace-pre-wrap">{msg.message}</p>;
+                                })()
+                              ) : (
+                                <p className="text-sm whitespace-pre-wrap">{msg.message}</p>
+                              )}
                             </div>
                             <p className={cn(
                               'text-[10px] mt-1 px-1',
@@ -769,8 +769,8 @@ export default function Support() {
                           onClick={handleAudioClick}
                           className={cn(
                             "!h-10 !w-10 sm:!h-11 sm:!w-11 flex-shrink-0",
-                            isRecording 
-                              ? "!text-red-500 hover:!text-red-600 animate-pulse" 
+                            isRecording
+                              ? "!text-red-500 hover:!text-red-600 animate-pulse"
                               : "!text-gray-300 hover:!text-white hover:!bg-[#2a2a2a]"
                           )}
                           title="Enviar áudio"
@@ -817,7 +817,7 @@ export default function Support() {
                             }
 
                             toast.info('Enviando imagem...');
-                            
+
                             // Upload da imagem
                             let imageUrl: string;
                             try {
@@ -826,7 +826,7 @@ export default function Support() {
                             } catch (uploadError: any) {
                               console.error('❌ Erro no upload:', uploadError);
                               const errorMsg = uploadError?.message || 'Erro desconhecido no upload';
-                              
+
                               if (errorMsg.includes('Bucket not found') || errorMsg.includes('não configurado')) {
                                 toast.error('Bucket de imagens não configurado. Configure o bucket "images" no Supabase Storage.');
                               } else if (errorMsg.includes('permission') || errorMsg.includes('policy')) {
@@ -836,7 +836,7 @@ export default function Support() {
                               }
                               return;
                             }
-                            
+
                             // Enviar mensagem com imagem
                             const { error, data } = await supabase
                               .from('support_chat')
@@ -848,10 +848,10 @@ export default function Support() {
                                 is_from_support: true,
                               })
                               .select();
-                            
+
                             if (error) {
                               console.error('❌ Erro ao inserir mensagem:', error);
-                              
+
                               // Mensagens de erro mais específicas
                               if (error.message?.includes('column') && error.message?.includes('image_url')) {
                                 toast.error('Coluna image_url não existe. Execute ADICIONAR-COLUNA-IMAGE-URL-SUPPORT.sql no Supabase.');
@@ -862,13 +862,13 @@ export default function Support() {
                               }
                               return;
                             }
-                            
+
                             console.log('✅ Mensagem com imagem inserida:', data);
-                            
+
                             loadMessages(selectedUserId);
                             loadConversations();
                             toast.success('Imagem enviada!');
-                            
+
                             // Limpar input
                             if (imageInputRef.current) {
                               imageInputRef.current.value = '';
@@ -903,13 +903,13 @@ export default function Support() {
     );
   }
 
-  // Interface para alunos - Chat com suporte
+  // Interface para alunos - Aviso sobre suporte via WhatsApp
   return (
     <MainLayout>
-      <div 
-        className="fixed inset-x-0 top-0 bg-[#0a0a0a]" 
-        style={{ 
-          touchAction: 'manipulation', 
+      <div
+        className="fixed inset-x-0 top-0 bg-[#0a0a0a]"
+        style={{
+          touchAction: 'manipulation',
           backgroundColor: '#0a0a0a',
           bottom: 'calc(64px + env(safe-area-inset-bottom, 0px))',
           overflow: 'hidden',
@@ -918,263 +918,68 @@ export default function Support() {
           paddingTop: 'max(0px, env(safe-area-inset-top, 0px))'
         }}
       >
-        <div className="max-w-2xl mx-auto h-full flex flex-col px-0 sm:px-4" style={{ touchAction: 'manipulation', overflow: 'hidden' }}>
-          <Card className="flex-1 flex flex-col border border-[#2a2a2a] border-t-2 bg-[#1a1a1a] min-h-0 rounded-lg sm:rounded-xl my-1 sm:my-0" style={{ touchAction: 'manipulation', overflow: 'hidden' }}>
-            <div className="border-b border-[#2a2a2a] px-3 py-2 flex items-center justify-center flex-shrink-0">
-              <Badge className="bg-primary text-primary-foreground text-[10px] sm:text-xs px-2 py-0.5 rounded-full">
-                Chat Suporte
-              </Badge>
-            </div>
-            <CardContent className="flex flex-col flex-1 p-0 min-h-0" style={{ touchAction: 'manipulation', overflow: 'hidden' }}>
-              {/* Mensagens */}
-              <div className="flex-1 overflow-y-auto px-3 pt-4 pb-3 sm:px-4 sm:pt-4 sm:pb-4 space-y-2 sm:space-y-3 min-h-0" style={{ touchAction: 'manipulation', WebkitOverflowScrolling: 'touch' }}>
-              {loadingMessages ? (
-                <div className="text-center text-gray-400 py-8">Carregando mensagens...</div>
-              ) : messages.length > 0 ? (
-                messages.map((msg) => (
-                  <div
-                    key={msg.id}
-                    className={cn(
-                      'flex gap-2',
-                      msg.is_from_support && 'flex-row-reverse'
-                    )}
+        <div className="max-w-2xl mx-auto h-full flex flex-col px-4 py-8 items-center justify-center">
+          <Card className="w-full max-w-md border border-[#2a2a2a] bg-gradient-to-br from-[#1a1a1a] to-[#0f0f0f] rounded-2xl shadow-2xl overflow-hidden">
+            <CardContent className="flex flex-col items-center text-center p-8 space-y-6">
+              {/* Ícone do WhatsApp */}
+              <div className="relative">
+                <div className="absolute inset-0 bg-green-500/20 rounded-full blur-2xl animate-pulse"></div>
+                <div className="relative bg-gradient-to-br from-green-500 to-green-600 rounded-full p-5 shadow-lg">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                    className="h-12 w-12 text-white"
                   >
-                    <Avatar className="h-7 w-7 sm:h-8 sm:w-8 flex-shrink-0">
-                      <AvatarImage 
-                        src={msg.profiles?.avatar_url || ''} 
-                        className="object-cover object-center"
-                      />
-                      <AvatarFallback className={cn(
-                        'text-[10px] sm:text-xs',
-                        msg.is_from_support 
-                          ? 'bg-primary text-white' 
-                          : 'bg-[#2a2a2a] text-white'
-                      )}>
-                        {msg.is_from_support 
-                          ? 'S' 
-                          : (msg.profiles?.username?.charAt(0).toUpperCase() || 'U')}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div
-                      className={cn(
-                        'max-w-[80%] sm:max-w-[70%] rounded-xl sm:rounded-2xl px-3 py-2 sm:px-4 sm:py-2',
-                        msg.is_from_support
-                          ? 'bg-primary text-white rounded-tr-sm'
-                          : 'bg-[#2a2a2a] text-white rounded-tl-sm'
-                      )}
-                    >
-                      {msg.is_from_support ? (
-                        <p className="text-[10px] sm:text-xs font-semibold mb-0.5 sm:mb-1 opacity-70">
-                          Suporte
-                        </p>
-                      ) : (
-                        <p className="text-[10px] sm:text-xs font-semibold mb-0.5 sm:mb-1 opacity-70">
-                          Você
-                        </p>
-                      )}
-                      {msg.image_url ? (
-                        <div className="space-y-1.5 sm:space-y-2">
-                          <p className="text-xs sm:text-sm">{msg.message}</p>
-                          <img 
-                            src={msg.image_url} 
-                            alt="Imagem enviada" 
-                            className="max-w-full rounded-lg max-h-48 sm:max-h-64 object-cover"
-                          />
-                        </div>
-                      ) : msg.message?.startsWith('🎤AUDIO:') ? (
-                        (() => {
-                          // Extrair URL e duração do formato: 🎤AUDIO:URL|DURATION
-                          const match = msg.message.match(/🎤AUDIO:(.+?)\|(\d+)/);
-                          if (match) {
-                            const [, audioUrl, duration] = match;
-                            return (
-                              <AudioPlayer 
-                                audioUrl={audioUrl} 
-                                duration={parseInt(duration) || undefined}
-                                isOwn={!msg.is_from_support}
-                              />
-                            );
-                          }
-                          return <p className="text-xs sm:text-sm whitespace-pre-wrap leading-relaxed break-words">{msg.message}</p>;
-                        })()
-                      ) : (
-                        <p className="text-xs sm:text-sm whitespace-pre-wrap leading-relaxed break-words">{msg.message}</p>
-                      )}
-                      <p className={cn(
-                        'text-[9px] sm:text-[10px] mt-0.5 sm:mt-1',
-                        msg.is_from_support ? 'text-white/70' : 'text-gray-400'
-                      )}>
-                        {formatDistanceToNow(new Date(msg.created_at), { addSuffix: true, locale: ptBR })}
-                      </p>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="text-center text-gray-400 py-12">
-                  <MessageSquare className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                  <p>Nenhuma mensagem ainda</p>
-                  <p className="text-sm mt-2">Envie uma mensagem para começar a conversa</p>
+                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+                  </svg>
                 </div>
-              )}
-                <div ref={messagesEndRef} />
               </div>
 
-              {/* Formulário de envio */}
-              <div className="border-t border-[#2a2a2a] p-3 sm:p-3 flex-shrink-0 bg-[#1a1a1a] relative z-20">
-              <form onSubmit={handleSubmit} className="space-y-2 sm:space-y-3">
-                <div className="flex gap-1.5 sm:gap-2 items-end">
-                  <div className="flex gap-1 flex-shrink-0 relative z-30">
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        console.log('📷 Botão de imagem clicado (usuário)');
-                        if (imageInputRef.current) {
-                          imageInputRef.current.click();
-                        } else {
-                          console.error('❌ imageInputRef.current é null');
-                          toast.error('Erro: input de imagem não encontrado');
-                        }
-                      }}
-                      className="flex items-center justify-center text-white bg-[#2a2a2a] hover:bg-[#3a3a3a] active:bg-[#4a4a4a] h-10 w-10 sm:h-11 sm:w-11 flex-shrink-0 border border-[#3a3a3a] hover:border-[#4a4a4a] rounded-lg transition-all shadow-lg cursor-pointer"
-                      title="Enviar imagem"
-                      aria-label="Enviar imagem"
-                      style={{ display: 'flex', visibility: 'visible', opacity: 1 }}
-                    >
-                      <ImageIcon className="h-5 w-5 sm:h-6 sm:w-6" strokeWidth={2.5} />
-                    </button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={handleAudioClick}
-                      className={cn(
-                        "!h-10 !w-10 sm:!h-11 sm:!w-11 flex-shrink-0",
-                        isRecording 
-                          ? "!text-red-500 hover:!text-red-600 animate-pulse" 
-                          : "!text-gray-300 hover:!text-white hover:!bg-[#2a2a2a]"
-                      )}
-                      title="Enviar áudio"
-                      aria-label="Enviar áudio"
-                    >
-                      <Mic className="h-5 w-5 sm:h-6 sm:w-6" />
-                    </Button>
-                  </div>
-                  <Textarea
-                    placeholder="Digite sua mensagem..."
-                    value={formData.message}
-                    onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                    className="flex-1 !bg-[#2a2a2a] !border-[#3a3a3a] !text-white placeholder:!text-gray-500 min-h-[50px] sm:min-h-[60px] max-h-[100px] sm:max-h-[120px] resize-none text-sm sm:text-base"
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        handleSubmit(e as any);
-                      }
-                    }}
-                    required
-                  />
-                  <Button
-                    type="submit"
-                    disabled={loading || !formData.message.trim()}
-                    className="bg-primary hover:bg-primary/90 h-8 w-8 sm:h-9 sm:w-9 p-0 flex-shrink-0"
-                    size="icon"
-                  >
-                    <Send className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                  </Button>
-                </div>
-                <input
-                  ref={imageInputRef}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={async (e) => {
-                    console.log('📷 Input de imagem alterado (usuário)');
-                    const file = e.target.files?.[0];
-                    if (file && user) {
-                      try {
-                        // Validar arquivo
-                        if (!file.type.startsWith('image/')) {
-                          toast.error('Por favor, selecione uma imagem válida');
-                          return;
-                        }
+              {/* Título */}
+              <div className="space-y-2">
+                <h2 className="text-2xl sm:text-3xl font-bold text-white">
+                  Suporte via WhatsApp
+                </h2>
+                <div className="h-1 w-20 bg-gradient-to-r from-green-500 to-green-400 rounded-full mx-auto"></div>
+              </div>
 
-                        toast.info('Enviando imagem...');
-                        
-                        // Upload da imagem
-                        let imageUrl: string;
-                        try {
-                          imageUrl = await uploadImage(file, 'posts', user.id);
-                          console.log('✅ Imagem enviada com sucesso:', imageUrl);
-                        } catch (uploadError: any) {
-                          console.error('❌ Erro no upload:', uploadError);
-                          const errorMsg = uploadError?.message || 'Erro desconhecido no upload';
-                          
-                          if (errorMsg.includes('Bucket not found') || errorMsg.includes('não configurado')) {
-                            toast.error('Bucket de imagens não configurado. Configure o bucket "images" no Supabase Storage.');
-                          } else if (errorMsg.includes('permission') || errorMsg.includes('policy')) {
-                            toast.error('Erro de permissão. Verifique as políticas do Storage no Supabase.');
-                          } else {
-                            toast.error(`Erro ao fazer upload: ${errorMsg}`);
-                          }
-                          return;
-                        }
-                        
-                        // Enviar mensagem com imagem
-                        const { error, data } = await supabase
-                          .from('support_chat')
-                          .insert({
-                            user_id: user.id,
-                            message: '📷 Imagem',
-                            image_url: imageUrl,
-                            is_from_support: false,
-                          })
-                          .select();
-                        
-                        if (error) {
-                          console.error('❌ Erro ao inserir mensagem:', error);
-                          
-                          // Mensagens de erro mais específicas
-                          if (error.message?.includes('column') && error.message?.includes('image_url')) {
-                            toast.error('Coluna image_url não existe. Execute ADICIONAR-COLUNA-IMAGE-URL-SUPPORT.sql no Supabase.');
-                          } else if (error.message?.includes('permission') || error.message?.includes('policy') || error.code === '42501') {
-                            toast.error('Erro de permissão. Verifique as políticas RLS da tabela support_chat.');
-                          } else {
-                            toast.error(`Erro ao enviar mensagem: ${error.message || 'Erro desconhecido'}`);
-                          }
-                          return;
-                        }
-                        
-                        console.log('✅ Mensagem com imagem inserida:', data);
-                        
-                        loadUserMessages();
-                        toast.success('Imagem enviada!');
-                        
-                        // Limpar input
-                        if (imageInputRef.current) {
-                          imageInputRef.current.value = '';
-                        }
-                      } catch (error: any) {
-                        console.error('❌ Erro geral ao enviar imagem:', error);
-                        toast.error(`Erro ao enviar imagem: ${error?.message || 'Erro desconhecido'}`);
-                      }
-                    }
-                  }}
-                />
-                <input
-                  ref={audioInputRef}
-                  type="file"
-                  accept="audio/*"
-                  className="hidden"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      toast.info('Envio de áudio em desenvolvimento');
-                      // TODO: Implementar upload de áudio
-                    }
-                  }}
-                />
-              </form>
+              {/* Mensagem */}
+              <div className="space-y-4">
+                <p className="text-gray-300 text-base sm:text-lg leading-relaxed">
+                  Nosso suporte agora é realizado exclusivamente pelo <span className="text-green-400 font-semibold">WhatsApp</span> para atendê-lo de forma mais rápida e eficiente!
+                </p>
+                <p className="text-gray-400 text-sm sm:text-base">
+                  Clique no botão abaixo para iniciar uma conversa com nossa equipe de suporte.
+                </p>
+              </div>
+
+              {/* Botão do WhatsApp */}
+              <a
+                href="https://wa.me/message/PIBQ65QLRDKMK1"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group relative w-full"
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-green-600 to-green-500 rounded-xl blur-md group-hover:blur-lg transition-all opacity-70 group-hover:opacity-100"></div>
+                <button className="relative w-full bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-white font-bold py-4 px-6 rounded-xl flex items-center justify-center gap-3 transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-lg">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                    className="h-6 w-6"
+                  >
+                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+                  </svg>
+                  <span className="text-lg">Falar com Suporte</span>
+                </button>
+              </a>
+
+              {/* Nota adicional */}
+              <div className="pt-4 border-t border-[#2a2a2a] w-full">
+                <p className="text-gray-500 text-xs sm:text-sm">
+                  💬 Horário de atendimento: Segunda a Sexta, das 9h às 18h
+                </p>
               </div>
             </CardContent>
           </Card>
