@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 // OneSignal App ID
 const ONESIGNAL_APP_ID = import.meta.env.VITE_ONESIGNAL_APP_ID || 'e1e6712a-5457-4991-a922-f22b1f151c25';
 
-// Declaração de tipos para OneSignal (SDK do navegador)
+// Declaração de tipos para OneSignal (SDK v16 do navegador)
 declare global {
   interface Window {
     oneSignalInitialized?: boolean;
@@ -36,12 +36,33 @@ declare global {
           };
         };
       }) => Promise<void>;
-      isPushNotificationsEnabled: () => Promise<boolean>;
-      showNativePrompt: () => Promise<void>;
-      setNotificationOpenedHandler: (handler: (result: any) => void) => void;
-      getUserId: () => Promise<string | null>;
-      setExternalUserId: (userId: string) => Promise<void>;
-      removeExternalUserId: () => Promise<void>;
+      // API v16 - Namespace Notifications
+      Notifications: {
+        permission: boolean;
+        permissionNative: 'default' | 'granted' | 'denied';
+        requestPermission: () => Promise<void>;
+        addEventListener: (event: string, callback: (data?: any) => void) => void;
+        removeEventListener: (event: string, callback: (data?: any) => void) => void;
+      };
+      // API v16 - Namespace User
+      User: {
+        PushSubscription: {
+          id: string | null | undefined;
+          optedIn: boolean;
+          optIn: () => Promise<void>;
+          optOut: () => Promise<void>;
+          addEventListener: (event: string, callback: (data?: any) => void) => void;
+          removeEventListener: (event: string, callback: (data?: any) => void) => void;
+        };
+        addAlias: (label: string, id: string) => void;
+        removeAlias: (label: string) => void;
+        addTag: (key: string, value: string) => void;
+        removeTag: (key: string) => void;
+      };
+      // API v16 - Login/Logout
+      login: (externalId: string) => Promise<void>;
+      logout: () => Promise<void>;
+      // Métodos legados (podem não existir na v16)
       push: (args: any[]) => void;
       on: (event: string, callback: (data?: any) => void) => void;
       off: (event: string, callback: () => void) => void;
@@ -122,10 +143,10 @@ export function useOneSignal() {
         setIsInitialized(true);
         setIsSupported(true);
 
-        // Apenas verificar status atual
+        // Apenas verificar status atual usando API v16
         try {
-          if (window.OneSignal) {
-            const isEnabled = await window.OneSignal.isPushNotificationsEnabled();
+          if (window.OneSignal?.User?.PushSubscription) {
+            const isEnabled = window.OneSignal.User.PushSubscription.optedIn;
             setIsSubscribed(isEnabled);
           }
         } catch (e) {
@@ -217,26 +238,27 @@ export function useOneSignal() {
         setIsInitialized(true);
         setIsSupported(true);
 
-        // Verificar se já está inscrito
-        const isEnabled = await window.OneSignal.isPushNotificationsEnabled();
+        // Verificar se já está inscrito usando API v16
+        const isEnabled = window.OneSignal.User?.PushSubscription?.optedIn || false;
         console.log('[OneSignal] Push notifications habilitadas?', isEnabled);
         setIsSubscribed(isEnabled);
 
-        // Configurar handler para quando notificação for aberta
-        window.OneSignal.setNotificationOpenedHandler((result) => {
-          console.log('[OneSignal] Notificação aberta:', result);
-          // Você pode navegar para uma página específica aqui se necessário
+        // Configurar handler para mudanças na subscription usando API v16
+        window.OneSignal.User?.PushSubscription?.addEventListener('change', (event: any) => {
+          console.log('[OneSignal] Subscription mudou:', event);
+          const subscribed = event?.current?.optedIn || false;
+          setIsSubscribed(subscribed);
         });
 
-        // Associar user_id do Supabase ao OneSignal
+        // Associar user_id do Supabase ao OneSignal usando API v16
         if (user) {
           try {
-            const oneSignalUserId = await window.OneSignal.getUserId();
+            const oneSignalUserId = window.OneSignal.User?.PushSubscription?.id;
             console.log('[OneSignal] OneSignal User ID:', oneSignalUserId);
 
             if (oneSignalUserId) {
-              // Associar o user_id do Supabase ao OneSignal
-              await window.OneSignal.setExternalUserId(user.id);
+              // Associar o user_id do Supabase ao OneSignal usando login
+              await window.OneSignal.login(user.id);
               console.log('[OneSignal] ✅ User ID associado:', user.id);
 
               // Salvar a subscription no banco
@@ -247,18 +269,7 @@ export function useOneSignal() {
           }
         }
 
-        // Listener para mudanças no status de subscription
-        window.OneSignal.on('subscriptionChange', async (isSubscribed: boolean) => {
-          console.log('[OneSignal] Status de subscription mudou:', isSubscribed);
-          setIsSubscribed(isSubscribed);
-
-          if (isSubscribed && user) {
-            const oneSignalUserId = await window.OneSignal.getUserId();
-            if (oneSignalUserId) {
-              await saveSubscriptionToDatabase(oneSignalUserId, user.id);
-            }
-          }
-        });
+        // Listener para mudanças no status de subscription já foi configurado acima
 
       } catch (error: any) {
         console.error('[OneSignal] Erro ao inicializar:', error);
@@ -311,21 +322,24 @@ export function useOneSignal() {
     setIsLoading(true);
 
     try {
-      console.log('[OneSignal] Solicitando permissão...');
+      console.log('[OneSignal] Solicitando permissão usando API v16...');
 
-      // Solicitar permissão e mostrar prompt nativo
-      await window.OneSignal.showNativePrompt();
+      // Solicitar permissão usando a nova API v16
+      await window.OneSignal.Notifications.requestPermission();
 
-      // Verificar se foi habilitado
-      const isEnabled = await window.OneSignal.isPushNotificationsEnabled();
+      // Fazer opt-in na subscription
+      await window.OneSignal.User.PushSubscription.optIn();
+
+      // Verificar se foi habilitado usando API v16
+      const isEnabled = window.OneSignal.User?.PushSubscription?.optedIn || false;
       setIsSubscribed(isEnabled);
 
       if (isEnabled) {
-        // Associar user_id se houver usuário logado
+        // Associar user_id se houver usuário logado usando API v16
         if (user) {
-          const oneSignalUserId = await window.OneSignal.getUserId();
+          const oneSignalUserId = window.OneSignal.User?.PushSubscription?.id;
           if (oneSignalUserId) {
-            await window.OneSignal.setExternalUserId(user.id);
+            await window.OneSignal.login(user.id);
             await saveSubscriptionToDatabase(oneSignalUserId, user.id);
           }
         }
@@ -353,14 +367,15 @@ export function useOneSignal() {
     setIsLoading(true);
 
     try {
-      // OneSignal não tem um método direto para desabilitar
-      // O usuário precisa desabilitar nas configurações do navegador
-      // Mas podemos remover a associação do user_id
+      // Usar optOut da API v16 para desinscrever
+      await window.OneSignal.User.PushSubscription.optOut();
+
+      // Remover associação do user_id usando logout
       if (user) {
-        await window.OneSignal.removeExternalUserId();
+        await window.OneSignal.logout();
 
         // Remover do banco
-        const oneSignalUserId = await window.OneSignal.getUserId();
+        const oneSignalUserId = window.OneSignal.User?.PushSubscription?.id;
         if (oneSignalUserId) {
           await supabase
             .from('push_subscriptions')
