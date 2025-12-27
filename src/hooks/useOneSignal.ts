@@ -9,6 +9,7 @@ const ONESIGNAL_APP_ID = import.meta.env.VITE_ONESIGNAL_APP_ID || 'e1e6712a-5457
 // Declaração de tipos para OneSignal (SDK do navegador)
 declare global {
   interface Window {
+    oneSignalInitialized?: boolean;
     OneSignal?: {
       init: (options: {
         appId: string;
@@ -115,6 +116,24 @@ export function useOneSignal() {
     };
 
     const initializeOneSignal = async () => {
+      // Verificar se já foi inicializado globalmente
+      if (window.oneSignalInitialized) {
+        console.log('[OneSignal] SDK já inicializado globalmente, pulando...');
+        setIsInitialized(true);
+        setIsSupported(true);
+
+        // Apenas verificar status atual
+        try {
+          if (window.OneSignal) {
+            const isEnabled = await window.OneSignal.isPushNotificationsEnabled();
+            setIsSubscribed(isEnabled);
+          }
+        } catch (e) {
+          console.warn('[OneSignal] Erro ao verificar status:', e);
+        }
+        return;
+      }
+
       try {
         console.log('[OneSignal] ========== INICIALIZANDO ==========');
 
@@ -163,9 +182,20 @@ export function useOneSignal() {
             }
           });
           console.log('[OneSignal] ✅ Init chamado com sucesso');
+          window.oneSignalInitialized = true; // Marcar como inicializado globalmente
         } catch (initError: any) {
-          // Se o erro for de domínio não permitido, apenas desabilitar silenciosamente
+          // Se o erro for de domínio não permitido ou SDK já inicializado
           const errorMessage = initError?.message || String(initError) || '';
+
+          // Se já foi inicializado, apenas marcar e continuar
+          if (errorMessage.includes('already initialized') || errorMessage.includes('SDK already')) {
+            console.log('[OneSignal] SDK já foi inicializado anteriormente');
+            window.oneSignalInitialized = true;
+            setIsSupported(true);
+            setIsInitialized(true);
+            return;
+          }
+
           if (errorMessage.includes('Can only be used on') ||
             errorMessage.includes('not allowed') ||
             errorMessage.includes('domain')) {
@@ -178,7 +208,9 @@ export function useOneSignal() {
             return;
           }
           console.error('[OneSignal] ❌ Erro no init:', initError);
-          throw initError;
+          // Não lançar erro - apenas continuar silenciosamente
+          setIsInitialized(true);
+          return;
         }
 
         console.log('[OneSignal] ✅ Inicializado com sucesso');
