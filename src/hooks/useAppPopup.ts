@@ -38,6 +38,11 @@ export function useAppPopup() {
                     .limit(1);
 
                 if (error) {
+                    // Tabela não existe ou outro erro - retornar null silenciosamente
+                    if (error.code === 'PGRST205' || error.message?.includes('not exist')) {
+                        console.warn('Sistema de popups não configurado ainda');
+                        return null;
+                    }
                     console.error('Erro ao buscar popup:', error);
                     return null;
                 }
