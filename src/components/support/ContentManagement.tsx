@@ -265,22 +265,40 @@ function ModuleForm({
               Módulos bloqueados aparecem em preto e branco com um cadeado para os alunos.
             </p>
             <div>
-              <Label htmlFor="unlockAfterDays" className="flex items-center gap-2">
+              <Label htmlFor="unlockAfterDays" className="flex items-center gap-2 mb-2">
                 Liberar após quantos dias da assinatura Diamond?
               </Label>
-              <Input
-                id="unlockAfterDays"
-                type="number"
-                value={unlockAfterDays}
-                onChange={e => setUnlockAfterDays(parseInt(e.target.value) || 0)}
-                min={0}
-                placeholder="0 = imediato"
-                className="mt-1"
-              />
-              <p className="text-xs text-muted-foreground mt-1">
+              <div className="grid grid-cols-3 gap-2 mb-2">
+                {[0, 7, 14, 30, 60, 90].map((days) => (
+                  <Button
+                    key={days}
+                    type="button"
+                    variant={unlockAfterDays === days ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setUnlockAfterDays(days)}
+                    className="text-xs"
+                  >
+                    {days === 0 ? 'Imediato' : `${days} dias`}
+                  </Button>
+                ))}
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">Personalizado:</span>
+                <Input
+                  id="unlockAfterDays"
+                  type="number"
+                  value={unlockAfterDays}
+                  onChange={e => setUnlockAfterDays(parseInt(e.target.value) || 0)}
+                  min={0}
+                  placeholder="Dias"
+                  className="w-24 h-8 text-sm"
+                />
+                <span className="text-xs text-muted-foreground">dias</span>
+              </div>
+              <p className="text-xs text-muted-foreground mt-2 p-2 bg-primary/10 rounded">
                 {unlockAfterDays === 0
-                  ? 'Liberado imediatamente após assinatura'
-                  : `Liberado ${unlockAfterDays} dia(s) após assinatura Diamond`}
+                  ? '✅ Liberado imediatamente após assinatura'
+                  : `⏰ Liberado ${unlockAfterDays} dia(s) após assinatura Diamond`}
               </p>
             </div>
           </>
@@ -502,22 +520,40 @@ function LessonForm({
               Aulas bloqueadas só ficam disponíveis após X dias da compra do plano Diamond.
             </p>
             <div>
-              <Label htmlFor="lessonUnlockAfterDays" className="flex items-center gap-2">
+              <Label htmlFor="lessonUnlockAfterDays" className="flex items-center gap-2 mb-2">
                 Liberar após quantos dias da compra?
               </Label>
-              <Input
-                id="lessonUnlockAfterDays"
-                type="number"
-                value={unlockAfterDays}
-                onChange={e => setUnlockAfterDays(parseInt(e.target.value) || 0)}
-                min={0}
-                placeholder="0 = imediato, 7 = após 7 dias"
-                className="mt-1"
-              />
-              <p className="text-xs text-muted-foreground mt-1">
+              <div className="grid grid-cols-3 gap-2 mb-2">
+                {[0, 7, 14, 30, 60, 90].map((days) => (
+                  <Button
+                    key={days}
+                    type="button"
+                    variant={unlockAfterDays === days ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setUnlockAfterDays(days)}
+                    className="text-xs"
+                  >
+                    {days === 0 ? 'Imediato' : `${days} dias`}
+                  </Button>
+                ))}
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">Personalizado:</span>
+                <Input
+                  id="lessonUnlockAfterDays"
+                  type="number"
+                  value={unlockAfterDays}
+                  onChange={e => setUnlockAfterDays(parseInt(e.target.value) || 0)}
+                  min={0}
+                  placeholder="Dias"
+                  className="w-24 h-8 text-sm"
+                />
+                <span className="text-xs text-muted-foreground">dias</span>
+              </div>
+              <p className="text-xs text-muted-foreground mt-2 p-2 bg-primary/10 rounded">
                 {unlockAfterDays === 0
-                  ? 'Liberado imediatamente após assinatura'
-                  : `Liberado ${unlockAfterDays} dia(s) após compra do plano Diamond`}
+                  ? '✅ Liberado imediatamente após assinatura'
+                  : `⏰ Liberado ${unlockAfterDays} dia(s) após compra do plano Diamond`}
               </p>
             </div>
           </>
