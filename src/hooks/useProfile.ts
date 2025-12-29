@@ -25,6 +25,7 @@ export interface Profile {
   comments_given_count?: number;
   consecutive_days?: number;
   last_login_date?: string | null;
+  first_login_at?: string | null; // Data do primeiro login - usada para liberação de aulas
   created_at: string;
   updated_at: string;
 }
@@ -64,20 +65,20 @@ export function useProfile() {
     queryKey: ['profile', user?.id],
     queryFn: async () => {
       if (!user) return null;
-      
+
       try {
         const { data, error } = await supabase
           .from('profiles')
           .select('*')
           .eq('user_id', user.id)
           .maybeSingle();
-        
+
         if (error) {
           console.error('Erro ao carregar perfil:', error);
           // Não lançar erro, retornar null para não quebrar a UI
           return null;
         }
-        
+
         return data as Profile | null;
       } catch (err) {
         console.error('Erro inesperado ao carregar perfil:', err);
@@ -98,14 +99,14 @@ export function useUpdateProfile() {
   return useMutation({
     mutationFn: async (updates: Partial<Profile>) => {
       if (!user) throw new Error('Not authenticated');
-      
+
       const { data, error } = await supabase
         .from('profiles')
         .update(updates)
         .eq('user_id', user.id)
         .select()
         .single();
-      
+
       if (error) throw error;
       return data;
     },
@@ -123,7 +124,7 @@ export function useProfiles() {
         .from('profiles')
         .select('*')
         .order('points', { ascending: false });
-      
+
       if (error) throw error;
       return data as Profile[];
     },

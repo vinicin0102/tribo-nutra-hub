@@ -11,7 +11,7 @@ export function useDailyLogin() {
 
   useEffect(() => {
     if (!user) return;
-    
+
     // Verificar se já checou hoje (usando localStorage)
     const today = new Date().toISOString().split('T')[0];
     const lastCheckKey = `daily_login_${user.id}_${today}`;
@@ -40,11 +40,11 @@ export function useDailyLogin() {
         // Verificar resultado da função
         if (data) {
           const result = data as any;
-          
+
           if (result.points_earned && result.points_earned > 0) {
             // Forçar atualização imediata do perfil
             await queryClient.refetchQueries({ queryKey: ['profile'] });
-            
+
             // Mostrar notificação apenas se ganhou pontos
             toast.success(`🎉 +${result.points_earned} pontos por login diário!`, {
               description: 'Continue voltando todos os dias!'
@@ -58,6 +58,27 @@ export function useDailyLogin() {
         } else {
           // Se não retornou dados, ainda assim atualizar
           await queryClient.refetchQueries({ queryKey: ['profile'] });
+        }
+
+        // Garantir que first_login_at seja definido (para liberação de aulas)
+        // Esta é uma redundância para garantir funcionamento mesmo sem o trigger SQL
+        // Nota: first_login_at é um campo customizado que precisa ser adicionado via SQL
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('user_id', user.id)
+          .single();
+
+        const profileData = profile as { first_login_at?: string | null } | null;
+        if (profileData && !profileData.first_login_at) {
+          await (supabase
+            .from('profiles') as any)
+            .update({ first_login_at: new Date().toISOString() })
+            .eq('user_id', user.id);
+
+          // Atualizar o cache do perfil
+          await queryClient.refetchQueries({ queryKey: ['profile'] });
+          console.log('✅ first_login_at definido para o usuário');
         }
       } catch (error) {
         console.error('Erro ao registrar login diário:', error);

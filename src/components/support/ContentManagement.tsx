@@ -266,7 +266,7 @@ function ModuleForm({
             </p>
             <div>
               <Label htmlFor="unlockAfterDays" className="flex items-center gap-2 mb-2">
-                Liberar após quantos dias da assinatura Diamond?
+                Liberar após quantos dias do primeiro login?
               </Label>
               <div className="grid grid-cols-3 gap-2 mb-2">
                 {[0, 7, 14, 30, 60, 90].map((days) => (
@@ -297,8 +297,8 @@ function ModuleForm({
               </div>
               <p className="text-xs text-muted-foreground mt-2 p-2 bg-primary/10 rounded">
                 {unlockAfterDays === 0
-                  ? '✅ Liberado imediatamente após assinatura'
-                  : `⏰ Liberado ${unlockAfterDays} dia(s) após assinatura Diamond`}
+                  ? '✅ Liberado imediatamente'
+                  : `⏰ Liberado ${unlockAfterDays} dia(s) após primeiro login`}
               </p>
             </div>
           </>
@@ -517,11 +517,11 @@ function LessonForm({
         {isLocked && (
           <>
             <p className="text-xs text-muted-foreground bg-destructive/10 p-2 rounded">
-              Aulas bloqueadas só ficam disponíveis após X dias da compra do plano Diamond.
+              Aulas bloqueadas só ficam disponíveis após X dias do primeiro login do usuário.
             </p>
             <div>
               <Label htmlFor="lessonUnlockAfterDays" className="flex items-center gap-2 mb-2">
-                Liberar após quantos dias da compra?
+                Liberar após quantos dias do primeiro login?
               </Label>
               <div className="grid grid-cols-3 gap-2 mb-2">
                 {[0, 7, 14, 30, 60, 90].map((days) => (
@@ -552,8 +552,8 @@ function LessonForm({
               </div>
               <p className="text-xs text-muted-foreground mt-2 p-2 bg-primary/10 rounded">
                 {unlockAfterDays === 0
-                  ? '✅ Liberado imediatamente após assinatura'
-                  : `⏰ Liberado ${unlockAfterDays} dia(s) após compra do plano Diamond`}
+                  ? '✅ Liberado imediatamente'
+                  : `⏰ Liberado ${unlockAfterDays} dia(s) após primeiro login`}
               </p>
             </div>
           </>

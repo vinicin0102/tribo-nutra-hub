@@ -148,9 +148,10 @@ export function useUnlockedModules() {
 
   // Dados do perfil para verificação de tempo
   const hasDiamondPlan = profile?.subscription_plan === 'diamond';
-  // Usamos updated_at do profile como data de ativação do plano Diamond
-  // Isso funciona porque updated_at é atualizado quando o plano muda
-  const subscriptionStartDate = profile?.updated_at || profile?.created_at;
+  // Usamos first_login_at como data base para liberação dos módulos
+  // first_login_at é definido no primeiro login do usuário e nunca muda
+  // Fallback para created_at caso first_login_at não exista ainda
+  const subscriptionStartDate = profile?.first_login_at || profile?.created_at;
 
   /**
    * Verifica se um módulo está completamente disponível
