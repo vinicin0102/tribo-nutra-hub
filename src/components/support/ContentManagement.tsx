@@ -160,7 +160,21 @@ function ModuleForm({
   const [orderIndex, setOrderIndex] = useState(module?.order_index || 0);
   const [isPublished, setIsPublished] = useState(module?.is_published || false);
   const [coverUrl, setCoverUrl] = useState(module?.cover_url || '');
-  const [releaseDate, setReleaseDate] = useState(module?.unlock_date ? module.unlock_date.split('T')[0] : '');
+  const [unlockAfterDays, setUnlockAfterDays] = useState(module?.unlock_after_days || 0);
+
+  // Opções de dias para liberação
+  const daysOptions = [
+    { value: 0, label: 'Disponível imediatamente' },
+    { value: 7, label: '7 dias após o início' },
+    { value: 10, label: '10 dias após o início' },
+    { value: 14, label: '14 dias após o início' },
+    { value: 20, label: '20 dias após o início' },
+    { value: 30, label: '30 dias após o início' },
+    { value: 45, label: '45 dias após o início' },
+    { value: 60, label: '60 dias após o início' },
+    { value: 90, label: '90 dias após o início' },
+    { value: 120, label: '120 dias após o início' },
+  ];
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -170,8 +184,8 @@ function ModuleForm({
       course_id: defaultCourseId,
       order_index: orderIndex,
       is_published: isPublished,
-      is_locked: !!releaseDate,
-      unlock_date: releaseDate ? new Date(releaseDate).toISOString() : null,
+      is_locked: unlockAfterDays > 0,
+      unlock_after_days: unlockAfterDays,
       cover_url: coverUrl || null
     } as any);
   };
@@ -231,22 +245,30 @@ function ModuleForm({
           />
         </div>
         <div>
-          <Label htmlFor="releaseDate" className="flex items-center gap-2 mb-2">
-            📅 Data de Lançamento
+          <Label htmlFor="unlockDays" className="flex items-center gap-2 mb-2">
+            🔒 Liberação do Módulo
           </Label>
-          <Input
-            id="releaseDate"
-            type="date"
-            value={releaseDate}
-            onChange={e => setReleaseDate(e.target.value)}
-            className="w-full"
-          />
+          <Select
+            value={unlockAfterDays.toString()}
+            onValueChange={(value) => setUnlockAfterDays(parseInt(value))}
+          >
+            <SelectTrigger>
+              <SelectValue>
+                {daysOptions.find(opt => opt.value === unlockAfterDays)?.label || 'Selecione'}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              {daysOptions.map(option => (
+                <SelectItem key={option.value} value={option.value.toString()}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <p className="text-xs text-muted-foreground mt-2 p-2 bg-primary/10 rounded">
-            {!releaseDate
-              ? '✅ Disponível imediatamente'
-              : new Date(releaseDate) <= new Date()
-                ? '✅ Já lançado'
-                : `🔒 Será liberado em ${new Date(releaseDate + 'T00:00:00').toLocaleDateString('pt-BR')}`}
+            {unlockAfterDays === 0
+              ? '✅ Disponível imediatamente para todos'
+              : `🔒 Será liberado ${unlockAfterDays} dias após o primeiro login do usuário Diamond`}
           </p>
         </div>
       </div>

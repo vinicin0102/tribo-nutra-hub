@@ -148,7 +148,7 @@ export function useCreateModule() {
 
   return useMutation({
     mutationFn: async (module: Omit<Module, 'id' | 'created_at' | 'updated_at'>) => {
-      // Separar unlock_date pois pode não estar no schema cache
+      // Separar campos que não devem ir para o banco diretamente
       const { unlock_date, course_id, ...restModuleData } = module as any;
 
       // Limpar campos vazios e converter para null quando necessário
@@ -157,7 +157,7 @@ export function useCreateModule() {
       // course_id: converter string vazia para null (UUID não aceita "")
       moduleData.course_id = course_id || null;
 
-      // Criar módulo com campos básicos
+      // Criar módulo com campos básicos (unlock_after_days já está incluído em restModuleData)
       const { data, error } = await supabase
         .from('modules')
         .insert(moduleData)
@@ -165,30 +165,6 @@ export function useCreateModule() {
         .single();
 
       if (error) throw error;
-
-      // Se tiver unlock_date, atualizar via fetch direto
-      if (unlock_date && data?.id) {
-        try {
-          const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-          const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-          await fetch(`${supabaseUrl}/rest/v1/modules?id=eq.${data.id}`, {
-            method: 'PATCH',
-            headers: {
-              'Content-Type': 'application/json',
-              'apikey': supabaseKey,
-              'Authorization': `Bearer ${supabaseKey}`,
-            },
-            body: JSON.stringify({
-              unlock_date: unlock_date,
-              is_locked: true
-            })
-          });
-        } catch (e) {
-          console.warn('Erro ao atualizar unlock_date:', e);
-        }
-      }
-
       return data;
     },
     onSuccess: () => {
@@ -207,7 +183,7 @@ export function useUpdateModule() {
 
   return useMutation({
     mutationFn: async ({ id, ...module }: Partial<Module> & { id: string }) => {
-      // Separar unlock_date pois pode não estar no schema cache
+      // Separar campos que não devem ir diretamente
       const { unlock_date, course_id, ...restModuleData } = module as any;
 
       // Limpar campos vazios e converter para null quando necessário
@@ -218,7 +194,7 @@ export function useUpdateModule() {
         moduleData.course_id = course_id || null;
       }
 
-      // Atualizar campos básicos (sem unlock_date)
+      // Atualizar módulo (unlock_after_days já está incluído em restModuleData)
       const { data, error } = await supabase
         .from('modules')
         .update(moduleData)
@@ -227,49 +203,6 @@ export function useUpdateModule() {
         .single();
 
       if (error) throw error;
-
-      // Atualizar unlock_date via fetch direto à API REST do Supabase
-      // Isso contorna o schema cache
-      try {
-        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-
-        // Pegar o token da sessão atual
-        const { data: sessionData } = await supabase.auth.getSession();
-        const accessToken = sessionData?.session?.access_token;
-
-        if (!accessToken) {
-          console.warn('Sem token de sessão para atualizar unlock_date');
-          return data;
-        }
-
-        const unlockDateValue = unlock_date ? new Date(unlock_date).toISOString() : null;
-
-        console.log('Atualizando unlock_date:', { id, unlock_date: unlockDateValue });
-
-        const response = await fetch(`${supabaseUrl}/rest/v1/modules?id=eq.${id}`, {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-            'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
-            'Authorization': `Bearer ${accessToken}`,
-            'Prefer': 'return=representation'
-          },
-          body: JSON.stringify({
-            unlock_date: unlockDateValue,
-            is_locked: !!unlock_date
-          })
-        });
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('Erro ao atualizar unlock_date via REST:', errorText);
-        } else {
-          console.log('unlock_date atualizado com sucesso!');
-        }
-      } catch (e) {
-        console.error('Erro ao atualizar unlock_date:', e);
-      }
-
       return data;
     },
     onSuccess: () => {
