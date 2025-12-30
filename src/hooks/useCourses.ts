@@ -149,7 +149,13 @@ export function useCreateModule() {
   return useMutation({
     mutationFn: async (module: Omit<Module, 'id' | 'created_at' | 'updated_at'>) => {
       // Separar unlock_date pois pode não estar no schema cache
-      const { unlock_date, ...moduleData } = module as any;
+      const { unlock_date, course_id, ...restModuleData } = module as any;
+
+      // Limpar campos vazios e converter para null quando necessário
+      const moduleData: any = { ...restModuleData };
+
+      // course_id: converter string vazia para null (UUID não aceita "")
+      moduleData.course_id = course_id || null;
 
       // Criar módulo com campos básicos
       const { data, error } = await supabase
@@ -202,7 +208,15 @@ export function useUpdateModule() {
   return useMutation({
     mutationFn: async ({ id, ...module }: Partial<Module> & { id: string }) => {
       // Separar unlock_date pois pode não estar no schema cache
-      const { unlock_date, ...moduleData } = module as any;
+      const { unlock_date, course_id, ...restModuleData } = module as any;
+
+      // Limpar campos vazios e converter para null quando necessário
+      const moduleData: any = { ...restModuleData };
+
+      // course_id: converter string vazia para null (UUID não aceita "")
+      if (course_id !== undefined) {
+        moduleData.course_id = course_id || null;
+      }
 
       // Atualizar campos básicos (sem unlock_date)
       const { data, error } = await supabase
