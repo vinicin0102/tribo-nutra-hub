@@ -148,48 +148,20 @@ export function useCreateModule() {
 
   return useMutation({
     mutationFn: async (module: Omit<Module, 'id' | 'created_at' | 'updated_at'>) => {
-      // Pegar token da sessão
-      const { data: sessionData } = await supabase.auth.getSession();
-      const accessToken = sessionData?.session?.access_token;
-
-      if (!accessToken) {
-        throw new Error('Usuário não autenticado');
-      }
-
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-
-      // Preparar dados do módulo
-      const moduleData = {
-        title: module.title,
-        description: module.description || null,
-        course_id: module.course_id || null,
-        order_index: module.order_index || 0,
-        is_published: module.is_published || false,
-        is_locked: module.is_locked || false,
-        unlock_after_days: (module as any).unlock_after_days || 0,
-        cover_url: module.cover_url || null
-      };
-
-      // Criar via fetch direto (contorna schema cache)
-      const response = await fetch(`${supabaseUrl}/rest/v1/modules`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': supabaseKey,
-          'Authorization': `Bearer ${accessToken}`,
-          'Prefer': 'return=representation'
-        },
-        body: JSON.stringify(moduleData)
+      // Usar função RPC que não depende do schema cache
+      const { data, error } = await (supabase.rpc as any)('admin_create_module', {
+        p_title: module.title || '',
+        p_description: module.description || null,
+        p_course_id: module.course_id || null,
+        p_order_index: module.order_index || 0,
+        p_is_published: module.is_published || false,
+        p_is_locked: module.is_locked || false,
+        p_unlock_after_days: (module as any).unlock_after_days || 0,
+        p_cover_url: module.cover_url || null
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(errorText);
-      }
-
-      const data = await response.json();
-      return data[0];
+      if (error) throw error;
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['modules'] });
@@ -207,50 +179,28 @@ export function useUpdateModule() {
 
   return useMutation({
     mutationFn: async ({ id, ...module }: Partial<Module> & { id: string }) => {
-      // Pegar token da sessão
-      const { data: sessionData } = await supabase.auth.getSession();
-      const accessToken = sessionData?.session?.access_token;
+      // Buscar dados atuais do módulo para mesclar
+      const { data: currentModule } = await supabase
+        .from('modules')
+        .select('*')
+        .eq('id', id)
+        .single();
 
-      if (!accessToken) {
-        throw new Error('Usuário não autenticado');
-      }
-
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-
-      // Preparar dados do módulo (apenas campos que estão sendo atualizados)
-      const moduleData: Record<string, any> = {};
-
-      if (module.title !== undefined) moduleData.title = module.title;
-      if (module.description !== undefined) moduleData.description = module.description;
-      if (module.course_id !== undefined) moduleData.course_id = module.course_id || null;
-      if (module.order_index !== undefined) moduleData.order_index = module.order_index;
-      if (module.is_published !== undefined) moduleData.is_published = module.is_published;
-      if (module.is_locked !== undefined) moduleData.is_locked = module.is_locked;
-      if ((module as any).unlock_after_days !== undefined) {
-        moduleData.unlock_after_days = (module as any).unlock_after_days;
-      }
-      if (module.cover_url !== undefined) moduleData.cover_url = module.cover_url;
-
-      // Atualizar via fetch direto (contorna schema cache)
-      const response = await fetch(`${supabaseUrl}/rest/v1/modules?id=eq.${id}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': supabaseKey,
-          'Authorization': `Bearer ${accessToken}`,
-          'Prefer': 'return=representation'
-        },
-        body: JSON.stringify(moduleData)
+      // Usar função RPC que não depende do schema cache
+      const { data, error } = await (supabase.rpc as any)('admin_update_module', {
+        p_id: id,
+        p_title: module.title ?? currentModule?.title ?? '',
+        p_description: module.description ?? currentModule?.description ?? null,
+        p_course_id: module.course_id ?? currentModule?.course_id ?? null,
+        p_order_index: module.order_index ?? currentModule?.order_index ?? 0,
+        p_is_published: module.is_published ?? currentModule?.is_published ?? false,
+        p_is_locked: module.is_locked ?? currentModule?.is_locked ?? false,
+        p_unlock_after_days: (module as any).unlock_after_days ?? (currentModule as any)?.unlock_after_days ?? 0,
+        p_cover_url: module.cover_url ?? currentModule?.cover_url ?? null
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(errorText);
-      }
-
-      const data = await response.json();
-      return data[0];
+      if (error) throw error;
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['modules'] });
