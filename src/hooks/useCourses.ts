@@ -148,24 +148,48 @@ export function useCreateModule() {
 
   return useMutation({
     mutationFn: async (module: Omit<Module, 'id' | 'created_at' | 'updated_at'>) => {
-      // Separar campos que não devem ir para o banco diretamente
-      const { unlock_date, course_id, ...restModuleData } = module as any;
+      // Pegar token da sessão
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData?.session?.access_token;
 
-      // Limpar campos vazios e converter para null quando necessário
-      const moduleData: any = { ...restModuleData };
+      if (!accessToken) {
+        throw new Error('Usuário não autenticado');
+      }
 
-      // course_id: converter string vazia para null (UUID não aceita "")
-      moduleData.course_id = course_id || null;
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-      // Criar módulo com campos básicos (unlock_after_days já está incluído em restModuleData)
-      const { data, error } = await supabase
-        .from('modules')
-        .insert(moduleData)
-        .select()
-        .single();
+      // Preparar dados do módulo
+      const moduleData = {
+        title: module.title,
+        description: module.description || null,
+        course_id: module.course_id || null,
+        order_index: module.order_index || 0,
+        is_published: module.is_published || false,
+        is_locked: module.is_locked || false,
+        unlock_after_days: (module as any).unlock_after_days || 0,
+        cover_url: module.cover_url || null
+      };
 
-      if (error) throw error;
-      return data;
+      // Criar via fetch direto (contorna schema cache)
+      const response = await fetch(`${supabaseUrl}/rest/v1/modules`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': supabaseKey,
+          'Authorization': `Bearer ${accessToken}`,
+          'Prefer': 'return=representation'
+        },
+        body: JSON.stringify(moduleData)
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText);
+      }
+
+      const data = await response.json();
+      return data[0];
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['modules'] });
@@ -183,27 +207,50 @@ export function useUpdateModule() {
 
   return useMutation({
     mutationFn: async ({ id, ...module }: Partial<Module> & { id: string }) => {
-      // Separar campos que não devem ir diretamente
-      const { unlock_date, course_id, ...restModuleData } = module as any;
+      // Pegar token da sessão
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData?.session?.access_token;
 
-      // Limpar campos vazios e converter para null quando necessário
-      const moduleData: any = { ...restModuleData };
-
-      // course_id: converter string vazia para null (UUID não aceita "")
-      if (course_id !== undefined) {
-        moduleData.course_id = course_id || null;
+      if (!accessToken) {
+        throw new Error('Usuário não autenticado');
       }
 
-      // Atualizar módulo (unlock_after_days já está incluído em restModuleData)
-      const { data, error } = await supabase
-        .from('modules')
-        .update(moduleData)
-        .eq('id', id)
-        .select()
-        .single();
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-      if (error) throw error;
-      return data;
+      // Preparar dados do módulo (apenas campos que estão sendo atualizados)
+      const moduleData: Record<string, any> = {};
+
+      if (module.title !== undefined) moduleData.title = module.title;
+      if (module.description !== undefined) moduleData.description = module.description;
+      if (module.course_id !== undefined) moduleData.course_id = module.course_id || null;
+      if (module.order_index !== undefined) moduleData.order_index = module.order_index;
+      if (module.is_published !== undefined) moduleData.is_published = module.is_published;
+      if (module.is_locked !== undefined) moduleData.is_locked = module.is_locked;
+      if ((module as any).unlock_after_days !== undefined) {
+        moduleData.unlock_after_days = (module as any).unlock_after_days;
+      }
+      if (module.cover_url !== undefined) moduleData.cover_url = module.cover_url;
+
+      // Atualizar via fetch direto (contorna schema cache)
+      const response = await fetch(`${supabaseUrl}/rest/v1/modules?id=eq.${id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': supabaseKey,
+          'Authorization': `Bearer ${accessToken}`,
+          'Prefer': 'return=representation'
+        },
+        body: JSON.stringify(moduleData)
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText);
+      }
+
+      const data = await response.json();
+      return data[0];
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['modules'] });
