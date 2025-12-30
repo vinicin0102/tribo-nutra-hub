@@ -155,7 +155,8 @@ function ModuleForm({
 }) {
   const [title, setTitle] = useState(module?.title || '');
   const [description, setDescription] = useState(module?.description || '');
-  const [courseId, setCourseId] = useState(module?.course_id || '');
+  // Usar o primeiro curso automaticamente ou o curso do módulo sendo editado
+  const defaultCourseId = module?.course_id || (courses.length > 0 ? courses[0].id : '');
   const [orderIndex, setOrderIndex] = useState(module?.order_index || 0);
   const [isPublished, setIsPublished] = useState(module?.is_published || false);
   const [coverUrl, setCoverUrl] = useState(module?.cover_url || '');
@@ -163,14 +164,10 @@ function ModuleForm({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!courseId) {
-      alert('Por favor, selecione um curso');
-      return;
-    }
     onSubmit({
       title,
       description,
-      course_id: courseId,
+      course_id: defaultCourseId,
       order_index: orderIndex,
       is_published: isPublished,
       is_locked: !!releaseDate,
@@ -190,21 +187,6 @@ function ModuleForm({
           folder="modules"
           aspectRatio="16:9"
         />
-      </div>
-      <div>
-        <Label htmlFor="course">Curso</Label>
-        <Select value={courseId} onValueChange={setCourseId}>
-          <SelectTrigger>
-            <SelectValue>
-              {courseId ? courses.find(c => c.id === courseId)?.title || 'Selecione o curso' : 'Selecione o curso'}
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            {courses.map(c => (
-              <SelectItem key={c.id} value={c.id}>{c.title}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
       </div>
       <div>
         <Label htmlFor="title">Título do Módulo</Label>
