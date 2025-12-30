@@ -193,9 +193,11 @@ function ModuleForm({
       </div>
       <div>
         <Label htmlFor="course">Curso</Label>
-        <Select value={courseId} onValueChange={setCourseId} required>
+        <Select value={courseId} onValueChange={setCourseId}>
           <SelectTrigger>
-            <SelectValue placeholder="Selecione o curso" />
+            <SelectValue>
+              {courseId ? courses.find(c => c.id === courseId)?.title || 'Selecione o curso' : 'Selecione o curso'}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             {courses.map(c => (
@@ -347,9 +349,11 @@ function LessonForm({
       </div>
       <div>
         <Label htmlFor="module">Módulo</Label>
-        <Select value={moduleId} onValueChange={setModuleId} required>
+        <Select value={moduleId} onValueChange={setModuleId}>
           <SelectTrigger>
-            <SelectValue placeholder="Selecione o módulo" />
+            <SelectValue>
+              {moduleId ? modules.find(m => m.id === moduleId)?.title || 'Selecione o módulo' : 'Selecione o módulo'}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             {modules.map(m => (
