@@ -159,6 +159,7 @@ function ModuleForm({
   const [orderIndex, setOrderIndex] = useState(module?.order_index || 0);
   const [isPublished, setIsPublished] = useState(module?.is_published || false);
   const [coverUrl, setCoverUrl] = useState(module?.cover_url || '');
+  const [releaseDate, setReleaseDate] = useState(module?.unlock_date ? module.unlock_date.split('T')[0] : '');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -172,8 +173,8 @@ function ModuleForm({
       course_id: courseId,
       order_index: orderIndex,
       is_published: isPublished,
-      is_locked: false,
-      unlock_date: null,
+      is_locked: !!releaseDate,
+      unlock_date: releaseDate ? new Date(releaseDate).toISOString() : null,
       cover_url: coverUrl || null
     } as any);
   };
@@ -244,6 +245,25 @@ function ModuleForm({
             checked={isPublished}
             onCheckedChange={setIsPublished}
           />
+        </div>
+        <div>
+          <Label htmlFor="releaseDate" className="flex items-center gap-2 mb-2">
+            📅 Data de Lançamento
+          </Label>
+          <Input
+            id="releaseDate"
+            type="date"
+            value={releaseDate}
+            onChange={e => setReleaseDate(e.target.value)}
+            className="w-full"
+          />
+          <p className="text-xs text-muted-foreground mt-2 p-2 bg-primary/10 rounded">
+            {!releaseDate
+              ? '✅ Disponível imediatamente'
+              : new Date(releaseDate) <= new Date()
+                ? '✅ Já lançado'
+                : `🔒 Será liberado em ${new Date(releaseDate + 'T00:00:00').toLocaleDateString('pt-BR')}`}
+          </p>
         </div>
       </div>
       <div className="flex gap-2 pt-2">
