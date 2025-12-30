@@ -148,19 +148,33 @@ export function useCreateModule() {
 
   return useMutation({
     mutationFn: async (module: Omit<Module, 'id' | 'created_at' | 'updated_at'>) => {
-      // Usar função RPC que não depende do schema cache
-      const { data, error } = await (supabase.rpc as any)('admin_create_module', {
-        p_title: module.title || '',
-        p_description: module.description || null,
-        p_course_id: module.course_id || null,
-        p_order_index: module.order_index || 0,
-        p_is_published: module.is_published || false,
-        p_is_locked: module.is_locked || false,
-        p_unlock_after_days: (module as any).unlock_after_days || 0,
-        p_cover_url: module.cover_url || null
-      });
+      // Preparar dados básicos (sem campos que podem não existir no schema cache)
+      const moduleData = {
+        title: module.title,
+        description: module.description || null,
+        course_id: module.course_id || null,
+        order_index: module.order_index || 0,
+        is_published: module.is_published || false,
+        is_locked: module.is_locked || false,
+        cover_url: module.cover_url || null
+      };
+
+      const { data, error } = await supabase
+        .from('modules')
+        .insert(moduleData)
+        .select()
+        .single();
 
       if (error) throw error;
+
+      // Salvar unlock_after_days no localStorage como fallback
+      const unlockAfterDays = (module as any).unlock_after_days || 0;
+      if (unlockAfterDays > 0 && data?.id) {
+        const storedDays = JSON.parse(localStorage.getItem('module_unlock_days') || '{}');
+        storedDays[data.id] = unlockAfterDays;
+        localStorage.setItem('module_unlock_days', JSON.stringify(storedDays));
+      }
+
       return data;
     },
     onSuccess: () => {
@@ -179,27 +193,34 @@ export function useUpdateModule() {
 
   return useMutation({
     mutationFn: async ({ id, ...module }: Partial<Module> & { id: string }) => {
-      // Buscar dados atuais do módulo para mesclar
-      const { data: currentModule } = await supabase
+      // Preparar dados básicos (sem campos que podem não existir no schema cache)
+      const moduleData: Record<string, any> = {};
+
+      if (module.title !== undefined) moduleData.title = module.title;
+      if (module.description !== undefined) moduleData.description = module.description;
+      if (module.course_id !== undefined) moduleData.course_id = module.course_id || null;
+      if (module.order_index !== undefined) moduleData.order_index = module.order_index;
+      if (module.is_published !== undefined) moduleData.is_published = module.is_published;
+      if (module.is_locked !== undefined) moduleData.is_locked = module.is_locked;
+      if (module.cover_url !== undefined) moduleData.cover_url = module.cover_url;
+
+      const { data, error } = await supabase
         .from('modules')
-        .select('*')
+        .update(moduleData)
         .eq('id', id)
+        .select()
         .single();
 
-      // Usar função RPC que não depende do schema cache
-      const { data, error } = await (supabase.rpc as any)('admin_update_module', {
-        p_id: id,
-        p_title: module.title ?? currentModule?.title ?? '',
-        p_description: module.description ?? currentModule?.description ?? null,
-        p_course_id: module.course_id ?? currentModule?.course_id ?? null,
-        p_order_index: module.order_index ?? currentModule?.order_index ?? 0,
-        p_is_published: module.is_published ?? currentModule?.is_published ?? false,
-        p_is_locked: module.is_locked ?? currentModule?.is_locked ?? false,
-        p_unlock_after_days: (module as any).unlock_after_days ?? (currentModule as any)?.unlock_after_days ?? 0,
-        p_cover_url: module.cover_url ?? currentModule?.cover_url ?? null
-      });
-
       if (error) throw error;
+
+      // Salvar unlock_after_days no localStorage como fallback
+      const unlockAfterDays = (module as any).unlock_after_days;
+      if (unlockAfterDays !== undefined) {
+        const storedDays = JSON.parse(localStorage.getItem('module_unlock_days') || '{}');
+        storedDays[id] = unlockAfterDays;
+        localStorage.setItem('module_unlock_days', JSON.stringify(storedDays));
+      }
+
       return data;
     },
     onSuccess: () => {
