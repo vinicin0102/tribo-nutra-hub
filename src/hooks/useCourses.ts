@@ -148,11 +148,17 @@ export function useCreateModule() {
 
   return useMutation({
     mutationFn: async (module: Omit<Module, 'id' | 'created_at' | 'updated_at'>) => {
-      const { data, error } = await supabase
-        .from('modules')
-        .insert(module)
-        .select()
-        .single();
+      // Usar função RPC para contornar problema do schema cache
+      const { data, error } = await (supabase.rpc as any)('create_module_with_unlock_date', {
+        p_title: module.title,
+        p_description: module.description,
+        p_course_id: module.course_id,
+        p_order_index: module.order_index,
+        p_is_published: module.is_published,
+        p_is_locked: module.is_locked,
+        p_unlock_date: module.unlock_date || null,
+        p_cover_url: module.cover_url
+      });
 
       if (error) throw error;
       return data;
@@ -173,12 +179,18 @@ export function useUpdateModule() {
 
   return useMutation({
     mutationFn: async ({ id, ...module }: Partial<Module> & { id: string }) => {
-      const { data, error } = await supabase
-        .from('modules')
-        .update(module)
-        .eq('id', id)
-        .select()
-        .single();
+      // Usar função RPC para contornar problema do schema cache
+      const { data, error } = await (supabase.rpc as any)('update_module_with_unlock_date', {
+        p_id: id,
+        p_title: module.title,
+        p_description: module.description,
+        p_course_id: module.course_id,
+        p_order_index: module.order_index,
+        p_is_published: module.is_published,
+        p_is_locked: module.is_locked,
+        p_unlock_date: module.unlock_date || null,
+        p_cover_url: module.cover_url
+      });
 
       if (error) throw error;
       return data;
