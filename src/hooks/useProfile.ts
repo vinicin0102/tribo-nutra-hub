@@ -25,7 +25,6 @@ export interface Profile {
   comments_given_count?: number;
   consecutive_days?: number;
   last_login_date?: string | null;
-  first_login_at?: string | null; // Data do primeiro login - usada para liberação de aulas
   created_at: string;
   updated_at: string;
 }

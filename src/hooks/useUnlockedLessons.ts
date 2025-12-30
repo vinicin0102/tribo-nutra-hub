@@ -6,35 +6,33 @@ interface LessonForTimeCheck {
     id: string;
     is_locked?: boolean;
     unlock_after_days?: number;
+    unlock_date?: string | null; // Data fixa de liberação
 }
 
 /**
  * Calcula quantos dias faltam para uma aula ser liberada
+ * Agora usa unlock_date (data fixa definida pelo admin)
  * Retorna 0 se já está liberada, ou número de dias restantes
  */
 export function getDaysUntilLessonUnlock(
-    lesson: LessonForTimeCheck,
-    subscriptionStartDate: string | null | undefined
+    lesson: LessonForTimeCheck
 ): number {
-    // Se aula não está bloqueada ou não tem dias configurados, já está liberada
-    if (!lesson.is_locked || !lesson.unlock_after_days || lesson.unlock_after_days === 0) {
+    // Se aula não está bloqueada, já está liberada
+    if (!lesson.is_locked) {
         return 0;
     }
 
-    // Se não tem data de início de assinatura, está bloqueada indefinidamente
-    if (!subscriptionStartDate) {
-        return -1; // -1 indica bloqueada permanentemente
+    // Se tem data fixa de liberação (unlock_date), usar ela
+    if (lesson.unlock_date) {
+        const unlockDate = new Date(lesson.unlock_date);
+        const now = new Date();
+        const diffTime = unlockDate.getTime() - now.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        return diffDays > 0 ? diffDays : 0;
     }
 
-    const startDate = new Date(subscriptionStartDate);
-    const unlockDate = new Date(startDate);
-    unlockDate.setDate(unlockDate.getDate() + lesson.unlock_after_days);
-
-    const now = new Date();
-    const diffTime = unlockDate.getTime() - now.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-    return diffDays > 0 ? diffDays : 0;
+    // Se não tem data de liberação definida, está bloqueada indefinidamente
+    return -1;
 }
 
 /**
@@ -42,7 +40,6 @@ export function getDaysUntilLessonUnlock(
  */
 export function isLessonAvailableByTime(
     lesson: LessonForTimeCheck,
-    subscriptionStartDate: string | null | undefined,
     hasDiamondPlan: boolean
 ): boolean {
     // Se aula não está bloqueada, sempre disponível
@@ -55,8 +52,8 @@ export function isLessonAvailableByTime(
         return false;
     }
 
-    // Verifica se já passou tempo suficiente
-    const daysRemaining = getDaysUntilLessonUnlock(lesson, subscriptionStartDate);
+    // Verifica se já passou a data de liberação
+    const daysRemaining = getDaysUntilLessonUnlock(lesson);
     return daysRemaining === 0;
 }
 
@@ -64,16 +61,12 @@ export function useUnlockedLessons() {
     const { user } = useAuth();
     const { data: profile } = useProfile();
 
-    // Dados do perfil para verificação de tempo
+    // Dados do perfil para verificação
     const hasDiamondPlan = profile?.subscription_plan === 'diamond';
-    // Usamos first_login_at como data base para liberação das aulas
-    // first_login_at é definido no primeiro login do usuário e nunca muda
-    // Fallback para created_at caso first_login_at não exista ainda
-    const subscriptionStartDate = profile?.first_login_at || profile?.created_at;
 
     /**
      * Verifica se uma aula está completamente disponível
-     * Considera: bloqueio individual e tempo de liberação
+     * Considera: bloqueio individual e data de liberação
      */
     const isLessonFullyAvailable = (lesson: LessonForTimeCheck): boolean => {
         // Se não está bloqueada
@@ -81,8 +74,8 @@ export function useUnlockedLessons() {
             return true;
         }
 
-        // Verifica disponibilidade por tempo
-        return isLessonAvailableByTime(lesson, subscriptionStartDate, hasDiamondPlan);
+        // Verifica disponibilidade por data
+        return isLessonAvailableByTime(lesson, hasDiamondPlan);
     };
 
     /**
@@ -95,13 +88,22 @@ export function useUnlockedLessons() {
         if (!hasDiamondPlan) {
             return -1; // Bloqueada permanentemente (sem plano)
         }
-        return getDaysUntilLessonUnlock(lesson, subscriptionStartDate);
+        return getDaysUntilLessonUnlock(lesson);
+    };
+
+    /**
+     * Retorna a data de liberação formatada
+     */
+    const getLessonUnlockDateFormatted = (lesson: LessonForTimeCheck): string | null => {
+        if (!lesson.unlock_date) return null;
+        const date = new Date(lesson.unlock_date);
+        return date.toLocaleDateString('pt-BR');
     };
 
     return {
         isLessonFullyAvailable,
         getLessonDaysRemaining,
+        getLessonUnlockDateFormatted,
         hasDiamondPlan,
-        subscriptionStartDate,
     };
 }

@@ -18,7 +18,6 @@ import {
   useDeleteCourse,
   Course
 } from '@/hooks/useCoursesManagement';
-import { useUnlockedModules } from '@/hooks/useUnlockedModules';
 import { useReorderModules } from '@/hooks/useReorderModules';
 import { useReorderLessons } from '@/hooks/useReorderLessons';
 import { useCourseBanner, useUpdateCourseBanner, useDeleteCourseBanner } from '@/hooks/useCourseBanner';
@@ -30,7 +29,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Pencil, Trash2, ChevronDown, ChevronRight, BookOpen, Play, X, Link as LinkIcon, Lock, Unlock, Image as ImageIcon, Image, GraduationCap } from 'lucide-react';
+import { Plus, Pencil, Trash2, ChevronDown, ChevronRight, BookOpen, Play, X, Link as LinkIcon, Image as ImageIcon, Image, GraduationCap } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { CoverUpload } from '@/components/courses/CoverUpload';
@@ -159,8 +158,6 @@ function ModuleForm({
   const [courseId, setCourseId] = useState(module?.course_id || '');
   const [orderIndex, setOrderIndex] = useState(module?.order_index || 0);
   const [isPublished, setIsPublished] = useState(module?.is_published || false);
-  const [isLocked, setIsLocked] = useState(module?.is_locked || false);
-  const [unlockAfterDays, setUnlockAfterDays] = useState(module?.unlock_after_days || 0);
   const [coverUrl, setCoverUrl] = useState(module?.cover_url || '');
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -175,10 +172,10 @@ function ModuleForm({
       course_id: courseId,
       order_index: orderIndex,
       is_published: isPublished,
-      is_locked: isLocked,
-      unlock_after_days: isLocked ? unlockAfterDays : 0,
+      is_locked: false,
+      unlock_date: null,
       cover_url: coverUrl || null
-    });
+    } as any);
   };
 
   return (
@@ -248,61 +245,6 @@ function ModuleForm({
             onCheckedChange={setIsPublished}
           />
         </div>
-        <div className="flex items-center justify-between">
-          <Label htmlFor="locked" className="flex items-center gap-2">
-            <Lock className="w-4 h-4 text-destructive" />
-            Módulo Bloqueado
-          </Label>
-          <Switch
-            id="locked"
-            checked={isLocked}
-            onCheckedChange={setIsLocked}
-          />
-        </div>
-        {isLocked && (
-          <>
-            <p className="text-xs text-muted-foreground bg-destructive/10 p-2 rounded">
-              Módulos bloqueados aparecem em preto e branco com um cadeado para os alunos.
-            </p>
-            <div>
-              <Label htmlFor="unlockAfterDays" className="flex items-center gap-2 mb-2">
-                Liberar após quantos dias do primeiro login?
-              </Label>
-              <div className="grid grid-cols-3 gap-2 mb-2">
-                {[0, 7, 14, 30, 60, 90].map((days) => (
-                  <Button
-                    key={days}
-                    type="button"
-                    variant={unlockAfterDays === days ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setUnlockAfterDays(days)}
-                    className="text-xs"
-                  >
-                    {days === 0 ? 'Imediato' : `${days} dias`}
-                  </Button>
-                ))}
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground">Personalizado:</span>
-                <Input
-                  id="unlockAfterDays"
-                  type="number"
-                  value={unlockAfterDays}
-                  onChange={e => setUnlockAfterDays(parseInt(e.target.value) || 0)}
-                  min={0}
-                  placeholder="Dias"
-                  className="w-24 h-8 text-sm"
-                />
-                <span className="text-xs text-muted-foreground">dias</span>
-              </div>
-              <p className="text-xs text-muted-foreground mt-2 p-2 bg-primary/10 rounded">
-                {unlockAfterDays === 0
-                  ? '✅ Liberado imediatamente'
-                  : `⏰ Liberado ${unlockAfterDays} dia(s) após primeiro login`}
-              </p>
-            </div>
-          </>
-        )}
       </div>
       <div className="flex gap-2 pt-2">
         <Button type="button" variant="outline" onClick={onCancel} className="flex-1">
@@ -337,8 +279,6 @@ function LessonForm({
   const [orderIndex, setOrderIndex] = useState(lesson?.order_index || 0);
   const [durationMinutes, setDurationMinutes] = useState(lesson?.duration_minutes || 0);
   const [isPublished, setIsPublished] = useState(lesson?.is_published || false);
-  const [isLocked, setIsLocked] = useState(lesson?.is_locked || false);
-  const [unlockAfterDays, setUnlockAfterDays] = useState(lesson?.unlock_after_days || 0);
   const [coverUrl, setCoverUrl] = useState(lesson?.cover_url || '');
   const [externalLinks, setExternalLinks] = useState<ExternalLink[]>(lesson?.external_links || []);
   const [newLinkTitle, setNewLinkTitle] = useState('');
@@ -366,11 +306,11 @@ function LessonForm({
       order_index: orderIndex,
       duration_minutes: durationMinutes,
       is_published: isPublished,
-      is_locked: isLocked,
-      unlock_after_days: isLocked ? unlockAfterDays : 0,
+      is_locked: false,
+      unlock_date: null,
       cover_url: coverUrl || null,
       external_links: externalLinks
-    });
+    } as any);
   };
 
   return (
@@ -503,61 +443,6 @@ function LessonForm({
             onCheckedChange={setIsPublished}
           />
         </div>
-        <div className="flex items-center justify-between">
-          <Label htmlFor="lessonLocked" className="flex items-center gap-2">
-            <Lock className="w-4 h-4 text-destructive" />
-            Aula Bloqueada
-          </Label>
-          <Switch
-            id="lessonLocked"
-            checked={isLocked}
-            onCheckedChange={setIsLocked}
-          />
-        </div>
-        {isLocked && (
-          <>
-            <p className="text-xs text-muted-foreground bg-destructive/10 p-2 rounded">
-              Aulas bloqueadas só ficam disponíveis após X dias do primeiro login do usuário.
-            </p>
-            <div>
-              <Label htmlFor="lessonUnlockAfterDays" className="flex items-center gap-2 mb-2">
-                Liberar após quantos dias do primeiro login?
-              </Label>
-              <div className="grid grid-cols-3 gap-2 mb-2">
-                {[0, 7, 14, 30, 60, 90].map((days) => (
-                  <Button
-                    key={days}
-                    type="button"
-                    variant={unlockAfterDays === days ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setUnlockAfterDays(days)}
-                    className="text-xs"
-                  >
-                    {days === 0 ? 'Imediato' : `${days} dias`}
-                  </Button>
-                ))}
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground">Personalizado:</span>
-                <Input
-                  id="lessonUnlockAfterDays"
-                  type="number"
-                  value={unlockAfterDays}
-                  onChange={e => setUnlockAfterDays(parseInt(e.target.value) || 0)}
-                  min={0}
-                  placeholder="Dias"
-                  className="w-24 h-8 text-sm"
-                />
-                <span className="text-xs text-muted-foreground">dias</span>
-              </div>
-              <p className="text-xs text-muted-foreground mt-2 p-2 bg-primary/10 rounded">
-                {unlockAfterDays === 0
-                  ? '✅ Liberado imediatamente'
-                  : `⏰ Liberado ${unlockAfterDays} dia(s) após primeiro login`}
-              </p>
-            </div>
-          </>
-        )}
       </div>
 
       <div className="flex gap-2 pt-2">
@@ -584,7 +469,6 @@ export function ContentManagement() {
   const createLesson = useCreateLesson();
   const updateLesson = useUpdateLesson();
   const deleteLesson = useDeleteLesson();
-  const { isUnlocked, unlockModule, lockModule } = useUnlockedModules();
   const reorderModules = useReorderModules();
   const reorderLessons = useReorderLessons();
 

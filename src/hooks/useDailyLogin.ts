@@ -59,27 +59,6 @@ export function useDailyLogin() {
           // Se não retornou dados, ainda assim atualizar
           await queryClient.refetchQueries({ queryKey: ['profile'] });
         }
-
-        // Garantir que first_login_at seja definido (para liberação de aulas)
-        // Esta é uma redundância para garantir funcionamento mesmo sem o trigger SQL
-        // Nota: first_login_at é um campo customizado que precisa ser adicionado via SQL
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('user_id', user.id)
-          .single();
-
-        const profileData = profile as { first_login_at?: string | null } | null;
-        if (profileData && !profileData.first_login_at) {
-          await (supabase
-            .from('profiles') as any)
-            .update({ first_login_at: new Date().toISOString() })
-            .eq('user_id', user.id);
-
-          // Atualizar o cache do perfil
-          await queryClient.refetchQueries({ queryKey: ['profile'] });
-          console.log('✅ first_login_at definido para o usuário');
-        }
       } catch (error) {
         console.error('Erro ao registrar login diário:', error);
       }

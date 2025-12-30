@@ -16,35 +16,33 @@ interface ModuleForTimeCheck {
   id: string;
   is_locked: boolean;
   unlock_after_days?: number;
+  unlock_date?: string | null; // Data fixa de liberação
 }
 
 /**
  * Calcula quantos dias faltam para um módulo ser liberado
+ * Agora usa unlock_date (data fixa definida pelo admin)
  * Retorna 0 se já está liberado, ou número de dias restantes
  */
 export function getDaysUntilUnlock(
-  module: ModuleForTimeCheck,
-  subscriptionStartDate: string | null | undefined
+  module: ModuleForTimeCheck
 ): number {
-  // Se módulo não está bloqueado ou não tem dias configurados, já está liberado
-  if (!module.is_locked || !module.unlock_after_days || module.unlock_after_days === 0) {
+  // Se módulo não está bloqueado, já está liberado
+  if (!module.is_locked) {
     return 0;
   }
 
-  // Se não tem data de início de assinatura, está bloqueado indefinidamente
-  if (!subscriptionStartDate) {
-    return -1; // -1 indica bloqueado permanentemente
+  // Se tem data fixa de liberação (unlock_date), usar ela
+  if (module.unlock_date) {
+    const unlockDate = new Date(module.unlock_date);
+    const now = new Date();
+    const diffTime = unlockDate.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays > 0 ? diffDays : 0;
   }
 
-  const startDate = new Date(subscriptionStartDate);
-  const unlockDate = new Date(startDate);
-  unlockDate.setDate(unlockDate.getDate() + module.unlock_after_days);
-
-  const now = new Date();
-  const diffTime = unlockDate.getTime() - now.getTime();
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-  return diffDays > 0 ? diffDays : 0;
+  // Se não tem data de liberação definida, está bloqueado indefinidamente
+  return -1;
 }
 
 /**
@@ -52,7 +50,6 @@ export function getDaysUntilUnlock(
  */
 export function isModuleAvailableByTime(
   module: ModuleForTimeCheck,
-  subscriptionStartDate: string | null | undefined,
   hasDiamondPlan: boolean
 ): boolean {
   // Se módulo não está bloqueado, sempre disponível
@@ -65,8 +62,8 @@ export function isModuleAvailableByTime(
     return false;
   }
 
-  // Verifica se já passou tempo suficiente
-  const daysRemaining = getDaysUntilUnlock(module, subscriptionStartDate);
+  // Verifica se já passou a data de liberação
+  const daysRemaining = getDaysUntilUnlock(module);
   return daysRemaining === 0;
 }
 
@@ -146,16 +143,12 @@ export function useUnlockedModules() {
 
   const isUnlocked = (moduleId: string): boolean => (unlockedModules as string[]).includes(moduleId);
 
-  // Dados do perfil para verificação de tempo
+  // Dados do perfil para verificação
   const hasDiamondPlan = profile?.subscription_plan === 'diamond';
-  // Usamos first_login_at como data base para liberação dos módulos
-  // first_login_at é definido no primeiro login do usuário e nunca muda
-  // Fallback para created_at caso first_login_at não exista ainda
-  const subscriptionStartDate = profile?.first_login_at || profile?.created_at;
 
   /**
    * Verifica se um módulo está completamente disponível
-   * Considera: desbloqueio manual, desbloqueio por plano, e desbloqueio por tempo
+   * Considera: desbloqueio manual, desbloqueio por plano, e data de liberação
    */
   const isModuleFullyAvailable = (module: ModuleForTimeCheck): boolean => {
     // Se já está na lista de desbloqueados manualmente
@@ -168,8 +161,8 @@ export function useUnlockedModules() {
       return true;
     }
 
-    // Verifica disponibilidade por tempo
-    return isModuleAvailableByTime(module, subscriptionStartDate, hasDiamondPlan);
+    // Verifica disponibilidade por data
+    return isModuleAvailableByTime(module, hasDiamondPlan);
   };
 
   /**
@@ -182,7 +175,16 @@ export function useUnlockedModules() {
     if (!hasDiamondPlan) {
       return -1; // Bloqueado permanentemente (sem plano)
     }
-    return getDaysUntilUnlock(module, subscriptionStartDate);
+    return getDaysUntilUnlock(module);
+  };
+
+  /**
+   * Retorna a data de liberação formatada
+   */
+  const getUnlockDateFormatted = (module: ModuleForTimeCheck): string | null => {
+    if (!module.unlock_date) return null;
+    const date = new Date(module.unlock_date);
+    return date.toLocaleDateString('pt-BR');
   };
 
   return {
@@ -191,6 +193,7 @@ export function useUnlockedModules() {
     isUnlocked,
     isModuleFullyAvailable,
     getDaysRemaining,
+    getUnlockDateFormatted,
     hasDiamondPlan,
     unlockModule: unlockModule.mutate,
     lockModule: lockModule.mutate,

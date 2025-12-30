@@ -20,6 +20,7 @@ export interface Lesson {
   is_published: boolean;
   is_locked?: boolean;
   unlock_after_days?: number;
+  unlock_date?: string | null; // Data fixa de liberação (definida pelo admin)
   duration_minutes: number;
   cover_url: string | null;
   created_at: string;
@@ -34,7 +35,8 @@ export interface Module {
   order_index: number;
   is_published: boolean;
   is_locked: boolean;
-  unlock_after_days?: number; // Dias após assinatura Diamond para liberar (0 = imediato)
+  unlock_after_days?: number; // Dias para liberar (legacy)
+  unlock_date?: string | null; // Data fixa de liberação (definida pelo admin)
   cover_url: string | null;
   created_at: string;
   updated_at: string;
