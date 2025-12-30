@@ -232,27 +232,42 @@ export function useUpdateModule() {
       // Isso contorna o schema cache
       try {
         const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-        const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+        // Pegar o token da sessão atual
+        const { data: sessionData } = await supabase.auth.getSession();
+        const accessToken = sessionData?.session?.access_token;
+
+        if (!accessToken) {
+          console.warn('Sem token de sessão para atualizar unlock_date');
+          return data;
+        }
+
+        const unlockDateValue = unlock_date ? new Date(unlock_date).toISOString() : null;
+
+        console.log('Atualizando unlock_date:', { id, unlock_date: unlockDateValue });
 
         const response = await fetch(`${supabaseUrl}/rest/v1/modules?id=eq.${id}`, {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
-            'apikey': supabaseKey,
-            'Authorization': `Bearer ${supabaseKey}`,
+            'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${accessToken}`,
             'Prefer': 'return=representation'
           },
           body: JSON.stringify({
-            unlock_date: unlock_date || null,
+            unlock_date: unlockDateValue,
             is_locked: !!unlock_date
           })
         });
 
         if (!response.ok) {
-          console.warn('Não foi possível atualizar unlock_date via REST:', await response.text());
+          const errorText = await response.text();
+          console.error('Erro ao atualizar unlock_date via REST:', errorText);
+        } else {
+          console.log('unlock_date atualizado com sucesso!');
         }
       } catch (e) {
-        console.warn('Erro ao atualizar unlock_date:', e);
+        console.error('Erro ao atualizar unlock_date:', e);
       }
 
       return data;
