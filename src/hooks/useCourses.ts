@@ -148,7 +148,6 @@ export function useCreateModule() {
 
   return useMutation({
     mutationFn: async (module: Omit<Module, 'id' | 'created_at' | 'updated_at'>) => {
-      // Preparar dados básicos (sem campos que podem não existir no schema cache)
       const moduleData = {
         title: module.title,
         description: module.description || null,
@@ -166,15 +165,6 @@ export function useCreateModule() {
         .single();
 
       if (error) throw error;
-
-      // Salvar unlock_after_days no localStorage como fallback
-      const unlockAfterDays = (module as any).unlock_after_days || 0;
-      if (unlockAfterDays > 0 && data?.id) {
-        const storedDays = JSON.parse(localStorage.getItem('module_unlock_days') || '{}');
-        storedDays[data.id] = unlockAfterDays;
-        localStorage.setItem('module_unlock_days', JSON.stringify(storedDays));
-      }
-
       return data;
     },
     onSuccess: () => {
@@ -193,7 +183,6 @@ export function useUpdateModule() {
 
   return useMutation({
     mutationFn: async ({ id, ...module }: Partial<Module> & { id: string }) => {
-      // Preparar dados básicos (sem campos que podem não existir no schema cache)
       const moduleData: Record<string, any> = {};
 
       if (module.title !== undefined) moduleData.title = module.title;
@@ -212,15 +201,6 @@ export function useUpdateModule() {
         .single();
 
       if (error) throw error;
-
-      // Salvar unlock_after_days no localStorage como fallback
-      const unlockAfterDays = (module as any).unlock_after_days;
-      if (unlockAfterDays !== undefined) {
-        const storedDays = JSON.parse(localStorage.getItem('module_unlock_days') || '{}');
-        storedDays[id] = unlockAfterDays;
-        localStorage.setItem('module_unlock_days', JSON.stringify(storedDays));
-      }
-
       return data;
     },
     onSuccess: () => {

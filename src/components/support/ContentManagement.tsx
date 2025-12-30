@@ -160,21 +160,7 @@ function ModuleForm({
   const [orderIndex, setOrderIndex] = useState(module?.order_index || 0);
   const [isPublished, setIsPublished] = useState(module?.is_published || false);
   const [coverUrl, setCoverUrl] = useState(module?.cover_url || '');
-  const [unlockAfterDays, setUnlockAfterDays] = useState(module?.unlock_after_days || 0);
-
-  // Opções de dias para liberação
-  const daysOptions = [
-    { value: 0, label: 'Disponível imediatamente' },
-    { value: 7, label: '7 dias após o início' },
-    { value: 10, label: '10 dias após o início' },
-    { value: 14, label: '14 dias após o início' },
-    { value: 20, label: '20 dias após o início' },
-    { value: 30, label: '30 dias após o início' },
-    { value: 45, label: '45 dias após o início' },
-    { value: 60, label: '60 dias após o início' },
-    { value: 90, label: '90 dias após o início' },
-    { value: 120, label: '120 dias após o início' },
-  ];
+  const [isLocked, setIsLocked] = useState(module?.is_locked || false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -184,8 +170,7 @@ function ModuleForm({
       course_id: defaultCourseId,
       order_index: orderIndex,
       is_published: isPublished,
-      is_locked: unlockAfterDays > 0,
-      unlock_after_days: unlockAfterDays,
+      is_locked: isLocked,
       cover_url: coverUrl || null
     } as any);
   };
@@ -244,33 +229,21 @@ function ModuleForm({
             onCheckedChange={setIsPublished}
           />
         </div>
-        <div>
-          <Label htmlFor="unlockDays" className="flex items-center gap-2 mb-2">
-            🔒 Liberação do Módulo
+        <div className="flex items-center justify-between">
+          <Label htmlFor="locked" className="flex items-center gap-2">
+            🔒 Módulo Bloqueado
           </Label>
-          <Select
-            value={unlockAfterDays.toString()}
-            onValueChange={(value) => setUnlockAfterDays(parseInt(value))}
-          >
-            <SelectTrigger>
-              <SelectValue>
-                {daysOptions.find(opt => opt.value === unlockAfterDays)?.label || 'Selecione'}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              {daysOptions.map(option => (
-                <SelectItem key={option.value} value={option.value.toString()}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <p className="text-xs text-muted-foreground mt-2 p-2 bg-primary/10 rounded">
-            {unlockAfterDays === 0
-              ? '✅ Disponível imediatamente para todos'
-              : `🔒 Será liberado ${unlockAfterDays} dias após o primeiro login do usuário Diamond`}
-          </p>
+          <Switch
+            id="locked"
+            checked={isLocked}
+            onCheckedChange={setIsLocked}
+          />
         </div>
+        <p className="text-xs text-muted-foreground p-2 bg-primary/10 rounded">
+          {isLocked
+            ? '🔒 Este módulo está bloqueado - apenas usuários Diamond têm acesso'
+            : '✅ Este módulo está liberado para todos'}
+        </p>
       </div>
       <div className="flex gap-2 pt-2">
         <Button type="button" variant="outline" onClick={onCancel} className="flex-1">
