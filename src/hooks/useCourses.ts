@@ -157,7 +157,7 @@ export function useCreateModule() {
       }
 
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+      const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
       // Preparar dados do módulo
       const moduleData = {
@@ -216,7 +216,7 @@ export function useUpdateModule() {
       }
 
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+      const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
       // Preparar dados do módulo (apenas campos que estão sendo atualizados)
       const moduleData: Record<string, any> = {};
