@@ -148,19 +148,41 @@ export function useCreateModule() {
 
   return useMutation({
     mutationFn: async (module: Omit<Module, 'id' | 'created_at' | 'updated_at'>) => {
-      // Usar função RPC para contornar problema do schema cache
-      const { data, error } = await (supabase.rpc as any)('create_module_with_unlock_date', {
-        p_title: module.title,
-        p_description: module.description,
-        p_course_id: module.course_id,
-        p_order_index: module.order_index,
-        p_is_published: module.is_published,
-        p_is_locked: module.is_locked,
-        p_unlock_date: module.unlock_date || null,
-        p_cover_url: module.cover_url
-      });
+      // Separar unlock_date pois pode não estar no schema cache
+      const { unlock_date, ...moduleData } = module as any;
+
+      // Criar módulo com campos básicos
+      const { data, error } = await supabase
+        .from('modules')
+        .insert(moduleData)
+        .select()
+        .single();
 
       if (error) throw error;
+
+      // Se tiver unlock_date, atualizar via fetch direto
+      if (unlock_date && data?.id) {
+        try {
+          const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+          const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+          await fetch(`${supabaseUrl}/rest/v1/modules?id=eq.${data.id}`, {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+              'apikey': supabaseKey,
+              'Authorization': `Bearer ${supabaseKey}`,
+            },
+            body: JSON.stringify({
+              unlock_date: unlock_date,
+              is_locked: true
+            })
+          });
+        } catch (e) {
+          console.warn('Erro ao atualizar unlock_date:', e);
+        }
+      }
+
       return data;
     },
     onSuccess: () => {
@@ -179,20 +201,46 @@ export function useUpdateModule() {
 
   return useMutation({
     mutationFn: async ({ id, ...module }: Partial<Module> & { id: string }) => {
-      // Usar função RPC para contornar problema do schema cache
-      const { data, error } = await (supabase.rpc as any)('update_module_with_unlock_date', {
-        p_id: id,
-        p_title: module.title,
-        p_description: module.description,
-        p_course_id: module.course_id,
-        p_order_index: module.order_index,
-        p_is_published: module.is_published,
-        p_is_locked: module.is_locked,
-        p_unlock_date: module.unlock_date || null,
-        p_cover_url: module.cover_url
-      });
+      // Separar unlock_date pois pode não estar no schema cache
+      const { unlock_date, ...moduleData } = module as any;
+
+      // Atualizar campos básicos (sem unlock_date)
+      const { data, error } = await supabase
+        .from('modules')
+        .update(moduleData)
+        .eq('id', id)
+        .select()
+        .single();
 
       if (error) throw error;
+
+      // Atualizar unlock_date via fetch direto à API REST do Supabase
+      // Isso contorna o schema cache
+      try {
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+        const response = await fetch(`${supabaseUrl}/rest/v1/modules?id=eq.${id}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': supabaseKey,
+            'Authorization': `Bearer ${supabaseKey}`,
+            'Prefer': 'return=representation'
+          },
+          body: JSON.stringify({
+            unlock_date: unlock_date || null,
+            is_locked: !!unlock_date
+          })
+        });
+
+        if (!response.ok) {
+          console.warn('Não foi possível atualizar unlock_date via REST:', await response.text());
+        }
+      } catch (e) {
+        console.warn('Erro ao atualizar unlock_date:', e);
+      }
+
       return data;
     },
     onSuccess: () => {
