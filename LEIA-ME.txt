@@ -1,0 +1,24 @@
+========================================
+  EXECUTE ESTE ARQUIVO NO SUPABASE:
+========================================
+
+ARQUIVO: EXECUTAR-AGORA.sql
+
+NÃO EXECUTE:
+- Support.tsx
+- Chat.tsx
+- Qualquer arquivo .tsx
+
+========================================
+PASSO A PASSO:
+========================================
+
+1. Abra: EXECUTAR-AGORA.sql
+2. Copie TUDO (Ctrl+A, Ctrl+C)
+3. Supabase → SQL Editor
+4. Cole (Ctrl+V)
+5. Clique em RUN
+6. Deve aparecer: "Bucket criado!"
+
+========================================
+

@@ -1,0 +1,81 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- Borda azul ao redor -->
+  <rect width="512" height="512" fill="#0066CC"/>
+  
+  <!-- Quadrado laranja central -->
+  <rect x="32" y="32" width="448" height="448" fill="#FF6B00" rx="8"/>
+  
+  <!-- Leão coroado (perfil, olhando para a esquerda) -->
+  <g transform="translate(256, 180)">
+    <!-- Coroa -->
+    <path d="M-80,-60 L-60,-80 L-40,-70 L-20,-80 L0,-70 L20,-80 L40,-70 L60,-80 L80,-60 L80,-50 L-80,-50 Z" fill="#2C1810" stroke="#1A0F08" stroke-width="2"/>
+    <circle cx="-60" cy="-75" r="3" fill="#2C1810"/>
+    <circle cx="-20" cy="-75" r="3" fill="#2C1810"/>
+    <circle cx="20" cy="-75" r="3" fill="#2C1810"/>
+    <circle cx="60" cy="-75" r="3" fill="#2C1810"/>
+    
+    <!-- Cabeça do leão -->
+    <ellipse cx="0" cy="0" rx="70" ry="60" fill="#2C1810"/>
+    
+    <!-- Juba (mane) -->
+    <path d="M-70,-30 Q-90,-50 -100,-20 T-90,20 Q-80,30 -70,25 Q-60,20 -50,15 Q-40,10 -30,5 Q-20,0 -10,-5 Q0,-10 10,-5 Q20,0 30,5 Q40,10 50,15 Q60,20 70,25 Q80,30 90,20 T100,-20 Q90,-50 70,-30" fill="#2C1810" stroke="#1A0F08" stroke-width="1"/>
+    
+    <!-- Detalhes da juba -->
+    <path d="M-60,-20 Q-70,-30 -75,-15 T-70,5" fill="#8B4513" opacity="0.6"/>
+    <path d="M-30,-15 Q-40,-25 -45,-10 T-40,10" fill="#8B4513" opacity="0.6"/>
+    <path d="M0,-10 Q-10,-20 -15,-5 T-10,15" fill="#8B4513" opacity="0.6"/>
+    <path d="M30,-10 Q20,-20 15,-5 T20,15" fill="#8B4513" opacity="0.6"/>
+    <path d="M60,-15 Q50,-25 45,-10 T50,10" fill="#8B4513" opacity="0.6"/>
+    
+    <!-- Orelha -->
+    <ellipse cx="-50" cy="-30" rx="12" ry="18" fill="#8B4513"/>
+    <ellipse cx="-50" cy="-30" rx="6" ry="10" fill="#D4A574"/>
+    
+    <!-- Olho -->
+    <ellipse cx="-20" cy="-5" rx="8" ry="12" fill="#000000"/>
+    <ellipse cx="-18" cy="-7" rx="2" ry="3" fill="#FFFFFF"/>
+    
+    <!-- Focinho -->
+    <ellipse cx="10" cy="15" rx="25" ry="20" fill="#8B4513"/>
+    <ellipse cx="5" cy="12" rx="8" ry="6" fill="#D4A574"/>
+    
+    <!-- Boca e dentes -->
+    <path d="M-5,20 Q0,25 5,20" stroke="#1A0F08" stroke-width="2" fill="none"/>
+    <path d="M0,20 L-3,25 L3,25 Z" fill="#FFFFFF"/>
+    <path d="M5,20 L2,25 L8,25 Z" fill="#FFFFFF"/>
+    
+    <!-- Pescoço -->
+    <ellipse cx="0" cy="50" rx="40" ry="30" fill="#2C1810"/>
+  </g>
+  
+  <!-- Texto SOCIEDADE (grande, bold, uppercase, marrom escuro) -->
+  <text 
+    x="256" 
+    y="320" 
+    font-family="Arial, sans-serif" 
+    font-size="64" 
+    font-weight="bold" 
+    fill="#2C1810" 
+    text-anchor="middle" 
+    letter-spacing="4"
+    dominant-baseline="middle"
+  >
+    SOCIEDADE
+  </text>
+  
+  <!-- Texto NUTRA (menor, marrom escuro, uppercase) -->
+  <text 
+    x="256" 
+    y="380" 
+    font-family="Arial, sans-serif" 
+    font-size="48" 
+    font-weight="600" 
+    fill="#2C1810" 
+    text-anchor="middle" 
+    letter-spacing="3"
+    dominant-baseline="middle"
+  >
+    NUTRA
+  </text>
+</svg>
+

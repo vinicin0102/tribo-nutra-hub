@@ -1,0 +1,34 @@
+<svg width="32" height="32" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- Fundo laranja vibrante -->
+  <rect width="512" height="512" fill="#FF6B00"/>
+  
+  <!-- Texto SOCIEDADE (grande, bold, uppercase, branco) -->
+  <text 
+    x="256" 
+    y="280" 
+    font-family="Arial, sans-serif" 
+    font-size="120" 
+    font-weight="bold" 
+    fill="#FFFFFF" 
+    text-anchor="middle" 
+    letter-spacing="8"
+    dominant-baseline="middle"
+  >
+    SOCIEDADE
+  </text>
+  
+  <!-- Texto NUTRA (menor, branco, uppercase) -->
+  <text 
+    x="256" 
+    y="360" 
+    font-family="Arial, sans-serif" 
+    font-size="60" 
+    font-weight="600" 
+    fill="#FFFFFF" 
+    text-anchor="middle" 
+    letter-spacing="4"
+    dominant-baseline="middle"
+  >
+    NUTRA
+  </text>
+</svg>
