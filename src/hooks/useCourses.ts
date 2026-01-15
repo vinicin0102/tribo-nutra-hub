@@ -14,13 +14,10 @@ export interface Lesson {
   title: string;
   description: string | null;
   vturb_code: string | null;
-  pdf_url: string | null;
+  // removed pdf_url, is_locked, etc as they are not in the schema
   external_links: ExternalLink[];
   order_index: number;
   is_published: boolean;
-  is_locked?: boolean;
-  unlock_after_days?: number;
-  unlock_date?: string | null; // Data fixa de liberação (definida pelo admin)
   duration_minutes: number;
   cover_url: string | null;
   created_at: string;
@@ -242,12 +239,22 @@ export function useCreateLesson() {
 
   return useMutation({
     mutationFn: async (lesson: Omit<Lesson, 'id' | 'created_at' | 'updated_at'>) => {
+      // Create a clean object with only allowed fields
+      const lessonData = {
+        module_id: lesson.module_id,
+        title: lesson.title,
+        description: lesson.description || null,
+        vturb_code: lesson.vturb_code || null,
+        order_index: lesson.order_index || 0,
+        is_published: lesson.is_published || false,
+        duration_minutes: lesson.duration_minutes || 0,
+        cover_url: lesson.cover_url || null,
+        external_links: lesson.external_links as any
+      };
+
       const { data, error } = await supabase
         .from('lessons')
-        .insert({
-          ...lesson,
-          external_links: lesson.external_links as any
-        })
+        .insert(lessonData)
         .select()
         .single();
 
@@ -270,12 +277,22 @@ export function useUpdateLesson() {
 
   return useMutation({
     mutationFn: async ({ id, ...lesson }: Partial<Lesson> & { id: string }) => {
+      // Build update object only with defined fields
+      const lessonData: Record<string, any> = {};
+
+      if (lesson.module_id !== undefined) lessonData.module_id = lesson.module_id;
+      if (lesson.title !== undefined) lessonData.title = lesson.title;
+      if (lesson.description !== undefined) lessonData.description = lesson.description;
+      if (lesson.vturb_code !== undefined) lessonData.vturb_code = lesson.vturb_code;
+      if (lesson.order_index !== undefined) lessonData.order_index = lesson.order_index;
+      if (lesson.is_published !== undefined) lessonData.is_published = lesson.is_published;
+      if (lesson.duration_minutes !== undefined) lessonData.duration_minutes = lesson.duration_minutes;
+      if (lesson.cover_url !== undefined) lessonData.cover_url = lesson.cover_url;
+      if (lesson.external_links !== undefined) lessonData.external_links = lesson.external_links;
+
       const { data, error } = await supabase
         .from('lessons')
-        .update({
-          ...lesson,
-          external_links: lesson.external_links as any
-        })
+        .update(lessonData)
         .eq('id', id)
         .select()
         .single();

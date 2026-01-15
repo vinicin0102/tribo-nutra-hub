@@ -81,7 +81,7 @@ export function ModuleLessons({ module, onBack }: ModuleLessonsProps) {
                 const isCompleted = completedLessons.includes(lesson.id);
                 const isAvailable = isAdmin || isLessonFullyAvailable(lesson);
                 const daysRemaining = getLessonDaysRemaining(lesson);
-                const isLocked = !isAvailable && lesson.is_locked;
+                const isLocked = false;
 
                 return (
                   <button
