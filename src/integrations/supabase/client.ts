@@ -5,19 +5,23 @@ import type { Database } from './types';
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
-// Validate environment variables
+// Validate environment variables (Non-blocking)
 if (!SUPABASE_URL) {
-  throw new Error('Missing env.VITE_SUPABASE_URL');
+  console.error('CRITICAL ERROR: Missing env.VITE_SUPABASE_URL. The app will likely fail to fetch data.');
 }
 
 if (!SUPABASE_PUBLISHABLE_KEY) {
-  throw new Error('Missing env.VITE_SUPABASE_PUBLISHABLE_KEY');
+  console.error('CRITICAL ERROR: Missing env.VITE_SUPABASE_PUBLISHABLE_KEY. The app will likely fail to fetch data.');
 }
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
-export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+// Use fallbacks to prevent crash during module initialization
+const url = SUPABASE_URL || 'https://placeholder.supabase.co';
+const key = SUPABASE_PUBLISHABLE_KEY || 'placeholder';
+
+export const supabase = createClient<Database>(url, key, {
   auth: {
     storage: localStorage,
     persistSession: true,
