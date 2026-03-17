@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Shield, Users, MessageSquare, LogOut, Home, Gift, BookOpen, Trophy, Settings, MessageCircle, Crown, Sparkles } from 'lucide-react';
+import { Shield, Users, MessageSquare, LogOut, Home, Gift, BookOpen, Trophy, Settings, MessageCircle, Crown, Sparkles, Globe } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -15,6 +15,7 @@ import { ContentManagement } from '@/components/support/ContentManagement';
 import { BadgeManagement } from '@/components/support/BadgeManagement';
 import { SettingsManagement } from '@/components/support/SettingsManagement';
 import { PopupManagement } from '@/components/support/PopupManagement';
+import { WebhookSettings } from '@/components/support/WebhookSettings';
 import { SupremeAdminPanel } from '@/components/support/SupremeAdminPanel';
 import { useIsSupremeAdmin } from '@/hooks/useSupremeAdmin';
 import { cn } from '@/lib/utils';
@@ -113,7 +114,7 @@ export default function SupportDashboard() {
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
           <TabsList className={cn(
             "bg-[#1a1a1a] border border-[#2a2a2a] w-full grid",
-            isSupremeAdmin ? "grid-cols-9" : canAccessAdminPanel ? "grid-cols-8" : "grid-cols-7"
+            isSupremeAdmin ? "grid-cols-10" : canAccessAdminPanel ? "grid-cols-9" : "grid-cols-8"
           )}>
             <TabsTrigger value="chat" className="data-[state=active]:bg-primary text-xs">
               <MessageSquare className="h-4 w-4 sm:mr-2" />
@@ -143,6 +144,10 @@ export default function SupportDashboard() {
             <TabsTrigger value="popup" className="data-[state=active]:bg-primary text-xs">
               <MessageCircle className="h-4 w-4 sm:mr-2" />
               <span className="hidden sm:inline">Popup</span>
+            </TabsTrigger>
+            <TabsTrigger value="webhooks" className="data-[state=active]:bg-primary text-xs">
+              <Globe className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Webhooks</span>
             </TabsTrigger>
             {canAccessAdminPanel && (
               <TabsTrigger value="users" className="data-[state=active]:bg-primary text-xs">
@@ -186,7 +191,9 @@ export default function SupportDashboard() {
             <PopupManagement />
           </TabsContent>
 
-
+          <TabsContent value="webhooks" className="space-y-4">
+            <WebhookSettings />
+          </TabsContent>
 
           {canAccessAdminPanel && (
             <TabsContent value="users" className="space-y-4">
